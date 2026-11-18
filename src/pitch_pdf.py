@@ -322,6 +322,16 @@ h1::after {
     margin-top: 10mm;
     max-width: 200mm;
 }
+/* Integrantes na capa: nomes em linha, discretos, para a banca
+   associar quem apresenta ao trabalho. */
+.capa .integrantes {
+    margin-top: 18mm;
+    font-size: 10.5pt;
+    color: #99f6e4;
+    letter-spacing: .04em;
+    max-width: 230mm;
+    line-height: 1.7;
+}
 .capa .rodape {
     position: absolute;
     bottom: 20mm;
@@ -621,10 +631,22 @@ def renderizar_slide(s: dict) -> str:
     tipo = s["tipo"]
 
     if tipo == "capa":
+        # Nomes na capa: o pitch e apresentado por sete pessoas, e a banca
+        # precisa associar quem esta falando ao trabalho. Se
+        # docs/integrantes.md ainda estiver com os marcadores, a capa nao
+        # imprime lista vazia nem placeholder - apenas omite o bloco.
+        try:
+            from src.relatorio_pdf import ler_integrantes
+            nomes = " · ".join(n for n, _ in ler_integrantes())
+        except Exception:  # noqa: BLE001
+            nomes = ""
+        bloco_nomes = (f'<div class="integrantes">{nomes}</div>'
+                       if nomes else "")
         return f"""
         <section class="slide capa">
           <h1>{s['titulo']}</h1>
           <div class="sub">{s['subtitulo']}</div>
+          {bloco_nomes}
           <div class="rodape">{s['rodape']}</div>
         </section>"""
 
