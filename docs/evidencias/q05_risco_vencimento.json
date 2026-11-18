@@ -1,0 +1,49 @@
+{
+  "colunas": [
+    "departamento",
+    "skus_em_risco",
+    "unidades_em_risco",
+    "valor_em_risco",
+    "validade_media_dias",
+    "cobertura_media_dias",
+    "pct_do_estoque_total"
+  ],
+  "linhas": [
+    [
+      "ACOUGUE",
+      86,
+      3990.0,
+      99907.81,
+      8.0,
+      14.4,
+      11.22
+    ],
+    [
+      "FRIOS_E_LATICINIOS",
+      72,
+      4578.0,
+      45477.67,
+      6.0,
+      16.4,
+      5.11
+    ],
+    [
+      "PADARIA",
+      75,
+      3577.0,
+      24632.14,
+      7.0,
+      15.7,
+      2.77
+    ],
+    [
+      "HORTIFRUTI",
+      75,
+      4781.0,
+      21750.44,
+      10.0,
+      15.7,
+      2.44
+    ]
+  ]
+}

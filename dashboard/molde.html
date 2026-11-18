@@ -1,0 +1,2901 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giro — previsão de estoque e compra</title>
+<style>
+/*__FONTES__*/
+
+/* =====================================================================
+   1. Tokens
+   ===================================================================== */
+:root {
+  --paper: #f1f0ea;
+  --paper-2: #e7e5dc;
+  --paper-3: #dcd9ce;
+  --ink: #16211c;
+  --ink-2: #4a554e;
+  --ink-3: #5e6961;
+  --rule: #c9c7be;
+  --rule-2: #a9a79c;
+  --green: #0b4f3c;
+  --green-deep: #073a2c;
+  --green-wash: #e2e9e5;
+  --red: #a8231b;
+  --ochre: #8a5a00;
+
+  --sans: 'Archivo', 'Segoe UI', system-ui, sans-serif;
+  --serif: 'Piazzolla', Georgia, 'Times New Roman', serif;
+  /* Monoespaçada: usada no textarea de cópia manual, onde conferir
+     caracters um a um importa, e nos identificadores técnicos.
+     Faltava, e var(--mono) caía em herança. */
+  --mono: 'Cascadia Mono', 'Consolas', 'SF Mono', ui-monospace, monospace;
+
+  --step--1: 0.75rem;   /* 12px, piso de leitura: nada abaixo disso */
+  --step-0: 0.8125rem;  /* 13px, celulas de tabela */
+  --step-1: 0.875rem;   /* 14px, texto secundario */
+  --step-2: 1rem;       /* 16px, corpo */
+  --step-3: 1.125rem;
+  --step-4: 1.375rem;
+  --step-5: 1.75rem;
+  --step-6: 2.5rem;
+
+  --gap: 1.5rem;
+  --pad: 3rem;
+  --max: 1560px;
+}
+
+/* =====================================================================
+   2. Base
+   ===================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--step-2);
+  line-height: 1.55;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
+}
+
+::selection { background: var(--green); color: var(--paper); }
+
+h1, h2, h3, p, figure, table { margin: 0; }
+
+button, input, select { font: inherit; color: inherit; }
+
+:where(a) { color: inherit; text-decoration-color: var(--rule-2); text-underline-offset: 3px; }
+
+:where(button, select, input, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+  border-radius: 0;
+}
+
+/* ---------------------------------------------------------------------
+   Diálogo de cópia manual e aviso de JavaScript desligado.
+   --------------------------------------------------------------------- */
+dialog#dlg-copia {
+  border: 1px solid var(--rule-2);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 1.5rem;
+  max-width: min(42rem, 92vw);
+  border-radius: 0;
+}
+dialog#dlg-copia::backdrop { background: rgba(22, 33, 28, .55); }
+dialog#dlg-copia h2 {
+  font-family: var(--serif);
+  font-size: var(--step-2);
+  margin-bottom: .75rem;
+}
+dialog#dlg-copia p {
+  font-size: var(--step-0);
+  color: var(--ink-2);
+  margin-bottom: .75rem;
+  line-height: 1.5;
+}
+dialog#dlg-copia kbd {
+  font-family: var(--sans);
+  font-size: .9em;
+  border: 1px solid var(--rule-2);
+  padding: 0 .25em;
+}
+dialog#dlg-copia textarea {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: .75rem;
+  border: 1px solid var(--rule-2);
+  background: var(--paper-2);
+  color: var(--ink);
+  margin-bottom: 1rem;
+  resize: vertical;
+}
+dialog#dlg-copia form { text-align: right; }
+
+.nojs {
+  max-width: 62ch;
+  margin: 2rem auto;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--rule-2);
+  border-left: 3px solid var(--ochre);
+  background: var(--paper-2);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.nojs strong { color: var(--ink); }
+.nojs code {
+  font-family: var(--mono);
+  font-size: .92em;
+}
+
+/* Sobre a faixa verde, o anel verde tem contraste 1:1 — invisível.
+   No segmento selecionado o anel vai para dentro e para o papel. */
+.band__seg[aria-pressed="true"]:focus-visible {
+  outline-color: var(--paper);
+  outline-offset: -4px;
+}
+
+/* Barras de rolagem: mesma tinta, mecanica padrao. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-2) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--rule-2);
+  border: 3px solid var(--paper);
+  border-radius: 6px;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--ink-3); }
+
+.shell { max-width: var(--max); margin: 0 auto; padding: 0 var(--pad); }
+
+.vh {
+  position: absolute; width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.num { font-variant-numeric: tabular-nums lining-nums; }
+
+/* =====================================================================
+   3. Masthead
+   ===================================================================== */
+.masthead {
+  background-color: #0b4f3c;
+  color: var(--paper);
+  border-bottom: 3px double var(--green-deep);
+}
+.masthead__inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: 0 var(--pad);
+  min-height: 4.25rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: .625rem; }
+.brand__mark { width: 1.5rem; height: 1.5rem; flex: none; }
+.brand__name {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.5rem;
+  letter-spacing: -.01em;
+  line-height: 1;
+  margin: 0;
+}
+.brand__rule {
+  width: 1px; height: 1.5rem; background: rgba(241,240,234,.32);
+}
+.brand__claim {
+  font-size: var(--step--1);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 1;
+  max-width: 15rem;
+  line-height: 1.35;
+}
+
+.masthead__meta {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.field { display: flex; align-items: center; gap: .5rem; }.field__label {
+  font-size: var(--step--1);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: inherit;
+}
+.field select {
+  appearance: none;
+  background: transparent;
+  color: var(--paper);
+  border: 1px solid rgba(241,240,234,.42);
+  padding: .375rem 2rem .375rem .625rem;
+  font-size: var(--step-1);
+  font-weight: 500;
+  cursor: pointer;
+  /* O select precisa poder encolher: com a largura do conteudo ele
+     forcava 367px de documento num viewport de 320. */
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 1.05rem) 52%, calc(100% - .7rem) 52%;
+  background-size: .35rem .35rem, .35rem .35rem;
+  background-repeat: no-repeat;
+}
+.field select:hover { border-color: rgba(241,240,234,.7); }
+.field select option { color: var(--ink); background: var(--paper); }
+
+.stamp { display: flex; flex-direction: column; gap: .0625rem; }
+.stamp__label {
+  font-size: var(--step--1);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: inherit;
+  line-height: 1.2;
+}
+.stamp__value {
+  font-family: var(--serif);
+  font-size: var(--step-2);
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.tag {
+  font-size: var(--step--1);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  border: 1px solid #93a89a;
+  padding: .25rem .5rem;
+  color: #dbe4dd;
+  white-space: nowrap;
+}
+
+/* =====================================================================
+   4. Dateline
+   ===================================================================== */
+.dateline {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper-2);
+}
+.dateline__inner {
+  max-width: var(--max);
+  margin: 0 auto;
+  padding: .5rem var(--pad);
+  display: flex;
+  gap: 0 1.75rem;
+  flex-wrap: wrap;
+  font-size: var(--step--1);
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.dateline strong {
+  color: var(--ink);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* =====================================================================
+   5. Lede
+   ===================================================================== */
+/* A lede usa o degrau 18px da escala fixa. Em 21px ela ocupava tres
+   linhas e empurrava a primeira linha da lista para fora do viewport do
+   notebook de 1366x768 - o aparelho em que o dono le a pagina. */
+.lede { padding: 1rem 0 0; }
+.lede p {
+  font-size: var(--step-3);
+  line-height: 1.45;
+  max-width: 72ch;
+  color: var(--ink-2);
+}
+.lede b {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 1.5em;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: -.015em;
+  white-space: nowrap;
+}
+.lede b[data-tone="red"] { color: var(--red); }
+
+/* =====================================================================
+   6. Sections
+   ===================================================================== */
+.section { padding: 2.5rem 0 0; }
+.section + .section { margin-top: 1rem; }
+
+.section__head {
+  display: flex;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding-bottom: .5rem;
+  border-bottom: 2px solid var(--ink);
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+.section__head h2,
+.section__head h1 {
+  font-family: var(--serif);
+  font-size: var(--step-4);
+  font-weight: 600;
+  letter-spacing: -.012em;
+  line-height: 1.15;
+}
+.section__note {
+  font-size: var(--step-1);
+  color: var(--ink-2);
+  max-width: 62ch;
+  margin-left: auto;
+  line-height: 1.45;
+}
+
+/* =====================================================================
+   7. O pedido — cabecalho, controle, faixa, tabela
+   ===================================================================== */
+.order__top {  display: flex;
+  align-items: flex-end;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+  padding-bottom: 1.25rem;
+}
+
+.poster { min-width: 0; }
+.poster__label {
+  font-size: var(--step--1);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: .375rem;
+}
+.poster__value {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(2.75rem, 4.55vw, 4.125rem);
+  line-height: .96;
+  letter-spacing: -.028em;
+  color: var(--green-deep);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.poster__meta {
+  margin-top: .5rem;
+  font-size: var(--step-1);
+  color: var(--ink-2);
+}
+.poster__meta b { color: var(--ink); font-weight: 600; }
+.poster__delta {
+  margin-top: .25rem;
+  font-size: var(--step-1);
+  color: var(--ochre);
+  min-height: 1.35em;
+}
+
+.service {
+  margin-left: auto;
+  min-width: 19rem;
+  border-top: 1px solid var(--ink);
+  padding-top: .75rem;
+}
+.service__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.service__label {
+  font-size: var(--step--1);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.service__out {
+  font-family: var(--serif);
+  font-size: var(--step-4);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+.service__out small {
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 500;
+  letter-spacing: .04em;
+  color: var(--ink-2);
+  margin-left: .375rem;
+}
+
+.service input[type="range"] {
+  appearance: none;
+  width: 100%;
+  height: 1.75rem;
+  margin: .5rem 0 0;
+  background: transparent;
+  cursor: pointer;
+}
+.service input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  background: var(--rule-2);
+}
+.service input[type="range"]::-moz-range-track {
+  height: 3px; background: var(--rule-2);
+}
+.service input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 1rem; height: 1rem;
+  background: var(--green);
+  border: 2px solid var(--paper);
+  margin-top: -.40625rem;
+  border-radius: 0;
+}
+.service input[type="range"]::-moz-range-thumb {
+  width: 1rem; height: 1rem;
+  background: var(--green);
+  border: 2px solid var(--paper);
+  border-radius: 0;
+}
+/* ---------------------------------------------------------------------
+   Escala do nível de serviço.
+
+   O trilho tem 10 posições (90..99). Os rótulos precisam cair na
+   posição REAL de cada valor, não distribuídos por space-between —
+   com 5 rótulos sobre 10 passos, o "94%" ficava a 17 px do lugar
+   certo e o "99%" a 3,7% da borda, então o dono parava o controle em
+   um nível diferente do que julgava estar escolhendo.
+
+   Cada span recebe `--pos` calculado no JS: (valor - 90) / 9 * 100%.
+   --------------------------------------------------------------------- */
+.service__scale {
+  position: relative;
+  height: 1.15em;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  letter-spacing: .02em;
+  margin-top: -.125rem;
+}
+.service__scale span {
+  position: absolute;
+  left: var(--pos, 0%);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* Extremos: encostam na borda sem transbordar. */
+.service__scale span:first-child { transform: none; }
+.service__scale span:last-child { transform: translateX(-100%); }
+.service__note {
+  font-size: var(--step-0);
+  line-height: 1.45;
+  color: var(--ink-2);
+  margin-top: .5rem;
+  max-width: 34ch;
+}
+
+/* ---- faixa de fornecedores (largura = valor) ---- */
+.band {
+  display: grid;
+  align-items: stretch;
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  min-height: 5.25rem;
+}
+/* Sem fornecedor nao ha barra para desenhar. A faixa volta a ser um
+   bloco e a mensagem ocupa a largura toda, em vez de ficar presa numa
+   fracao de coluna vazia. */
+.band[data-vazio="true"] {
+  display: block;
+  min-height: 0;
+}
+.band[data-vazio="true"] p {
+  padding: .875rem .75rem;
+  margin: 0;
+}
+.band__seg {
+  min-width: 0;
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: .375rem;
+  justify-content: space-between;
+  padding: .6875rem .75rem .625rem;
+  border: 0;
+  border-right: 1px solid var(--rule);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  transition: background-color 90ms steps(2, end), color 90ms steps(2, end);
+}
+.band__seg:last-child { border-right: 0; }
+
+/* Em colunas estreitas o valor precisa caber inteiro: dinheiro cortado
+   e pior que dinheiro pequeno. O tamanho do valor nao muda por coluna,
+   porque a faixa e uma comparacao e tipos desiguais atrapalham a leitura. */
+@container (max-width: 172px) {
+  .band__lead { display: none; }
+}
+@container (max-width: 126px) {
+  .band__name { -webkit-line-clamp: 3; }
+  .band__value { font-size: var(--step-0); letter-spacing: -.02em; }
+}
+.band__seg:hover { background: var(--paper-3); }
+.band__seg[aria-pressed="true"] {
+  background: var(--green);
+  color: var(--paper);
+}
+.band__name {
+  font-size: var(--step-0);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -.005em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.band__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .375rem;
+  min-width: 0;
+}
+.band__value {
+  font-family: var(--serif);
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: -.012em;
+  white-space: nowrap;
+}
+.band__lead {
+  font-size: var(--step--1);
+  letter-spacing: .04em;
+  /* ink-3 sobre o trilho de hover (paper-3) dava 4,05:1. ink-2 segura o
+     piso de 4,5:1 tambem no hover, e continua discreto. */
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.band__seg[aria-pressed="true"] .band__lead { color: #c8d3cb; }
+
+.band__legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: var(--step--1);
+  letter-spacing: .04em;
+  color: var(--ink-3);
+  padding: .4375rem 0 0;
+  flex-wrap: wrap;
+}
+/* Abaixo de 900px a faixa deixa de ter largura proporcional (vira 2 ou 1
+   coluna), entao a frase que explica a proporcao passa a ser falsa. A
+   legenda troca de texto junto com o layout, em vez de mentir. */
+.band__legend-narrow { display: none; }
+@media (max-width: 900px) {
+  .band__legend-wide { display: none; }
+  .band__legend-narrow { display: inline; }
+}
+
+/* O bloco de nivel de servico precisa de respiro no topo para alinhar
+   com o rotulo do poster, nao com a base do numero. */
+.order__top { align-items: flex-start; }
+.service { margin-top: .125rem; }
+
+/* ---- tabela de separacao ---- */
+.picking__wrap {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--ink);
+}
+.picking__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .75rem 0 .5rem;
+  flex-wrap: wrap;
+}
+.picking__title {
+  font-family: var(--serif);
+  font-size: var(--step-3);
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+.picking__title span { color: var(--ink-2); font-family: var(--sans); font-size: var(--step-1); font-weight: 500; }
+.picking__actions { display: flex; gap: .5rem; }
+
+.btn {
+  appearance: none;
+  background: transparent;
+  border: 1px solid var(--rule-2);
+  padding: .4375rem .75rem;
+  font-size: var(--step-0);
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  cursor: pointer;
+  color: var(--ink);
+  transition: background-color 90ms steps(2, end), border-color 90ms steps(2, end), color 90ms steps(2, end);
+}
+.btn:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn--primary { border-color: var(--green); color: var(--green-deep); }
+.btn--primary:hover { background: var(--green); color: var(--paper); border-color: var(--green); }
+.btn[data-done="true"] { background: var(--green); color: var(--paper); border-color: var(--green); }
+
+.table-scroll {
+  max-height: 30rem;
+  overflow: auto;
+  border-bottom: 1px solid var(--ink);
+  overscroll-behavior: contain;
+}
+
+table.picking {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--step-0);
+}
+table.picking thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--paper);
+  border-bottom: 1px solid var(--ink);
+  border-top: 1px solid var(--ink);
+  padding: .5rem .5rem;
+  text-align: left;
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+table.picking thead th + th { border-left: 1px solid var(--rule); }
+table.picking th.is-sortable { cursor: pointer; }
+table.picking th.is-sortable:hover { color: var(--ink); background: var(--paper-2); }
+table.picking th[aria-sort] { color: var(--ink); }
+table.picking th .sort {
+  display: inline-block;
+  margin-left: .25rem;
+  font-size: .8125rem;
+  color: var(--green);
+  width: .75rem;
+}
+table.picking tbody td {
+  padding: .375rem .5rem;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: baseline;
+  line-height: 1.35;
+}
+table.picking tbody td + td { border-left: 1px solid var(--rule); }
+table.picking tbody tr:hover td { background: var(--paper-2); }
+table.picking tbody tr:last-child td { border-bottom: 0; }
+
+/* Cabecalho de grupo por loja.
+   No escopo "todas as lojas" a mesma peca aparece uma vez por loja, com
+   estoque e quantidade diferentes. Sem este cabecalho a linha nao diz de
+   qual loja e, e a lista deixa de ser separavel na chegada. */
+.picking tbody tr.grp td {
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--rule);
+  padding: .4375rem .5rem .3125rem;
+  background: var(--paper-2);
+  font-size: var(--step--1);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.picking tbody tr.grp:first-child td { border-top: 0; }
+.picking tbody tr.grp td + td { border-left: 0; }
+.picking tbody tr.grp .grp__n { color: var(--ink); }
+.picking tbody tr.grp .grp__sum {
+  float: right;
+  letter-spacing: 0;
+  text-transform: none;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.c-num { text-align: right; white-space: nowrap; }
+.c-num .unidade {
+  font-size: 0.78em;
+  font-weight: 400;
+  color: var(--ink-3);
+  letter-spacing: 0.02em;
+}
+.c-sku { font-weight: 500; max-width: 22rem; }
+.c-dep { color: var(--ink-2); white-space: nowrap; }
+
+.sit {
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sit--ruptura { color: var(--red); }
+.sit--critico { color: var(--ochre); }
+.sit--repor { color: var(--ink-2); }
+.sit--ok { color: var(--ink-3); }
+/* Loja com selo abaixo de 85%: nao ha sugestao a dar. O rotulo tem de
+   ser diferente dos quatro de estoque - nao e um estado do produto, e um
+   bloqueio por qualidade do dado. */
+.sit--semconfianca {
+  color: var(--paper);
+  background: var(--ink-2);
+  padding: .1em .35em;
+}
+
+.bar {
+  display: inline-block;
+  vertical-align: middle;
+  height: 4px;
+  background: var(--rule-2);
+  margin-right: .4375rem;
+  min-width: 1px;
+}
+.bar--ruptura { background: var(--red); }
+.bar--critico { background: var(--ochre); }
+
+.picking__foot {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: .75rem 0 0;
+  flex-wrap: wrap;
+}
+.picking__total {
+  font-family: var(--serif);
+  font-size: var(--step-4);
+  font-weight: 600;
+  letter-spacing: -.015em;
+  color: var(--green-deep);
+}
+.picking__total small {
+  font-family: var(--sans);
+  font-size: var(--step-1);
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: 0;
+  margin-left: .5rem;
+}
+.picking__hint { font-size: var(--step-0); color: var(--ink-3); }
+
+/* =====================================================================
+   8. A perda
+   ===================================================================== */
+.loss__figures {
+  display: flex;
+  gap: 3.5rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding-bottom: 2rem;
+}
+/* A perda e o numero principal da secao: escala de poster, como o total
+   do pedido, para o dono comparar os dois de imediato. */
+.loss__lead { min-width: 0; }
+.loss__lead .poster__value { font-size: clamp(2.25rem, 3.65vw, 3.5rem); }
+.figure__label {
+  font-size: var(--step--1);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: .375rem;
+}
+.figure__value {
+  font-family: var(--serif);
+  font-weight: 500;
+  font-size: clamp(2rem, 3.1vw, 2.875rem);
+  line-height: 1;
+  letter-spacing: -.025em;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.figure__value--red { color: var(--red); }
+.figure__meta {
+  font-size: var(--step-0);
+  color: var(--ink-2);
+  margin-top: .4375rem;
+  max-width: 30ch;
+  line-height: 1.4;
+}
+
+.chart {
+  border-top: 1px solid var(--ink);
+  padding-top: 1rem;
+}
+/* Escala do grafico: sem ela a barra so mostra "mais ou menos", e no papel
+   (onde nao ha tooltip) o grafico nao informa magnitude nenhuma. */
+.chart__scale {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  padding-bottom: .4375rem;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: .25rem;
+  font-variant-numeric: tabular-nums;
+  flex-wrap: wrap;
+}
+.chart__scale b { color: var(--ink-2); font-weight: 600; }
+.chart__plot {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 11rem;
+  border-bottom: 1px solid var(--ink);
+}
+.bar-m {
+  flex: 1 1 0;
+  min-width: 0;
+  background: var(--rule);
+  position: relative;
+  cursor: default;
+  transition: background-color 90ms steps(2, end);
+  align-self: flex-end;
+}
+.bar-m[data-inwindow="true"] { background: var(--ink-2); }
+.bar-m[data-peak="true"] { background: var(--red); }
+.bar-m:hover { background: var(--green); }
+.bar-m[data-inwindow="true"]:hover { background: var(--green); }
+
+.chart__axis {
+  display: flex;
+  gap: 2px;
+  margin-top: .375rem;
+}
+.chart__axis span {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: var(--step--1);
+  letter-spacing: .02em;
+  color: var(--ink-3);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.chart__legend {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+  margin-top: .75rem;
+  letter-spacing: .03em;
+}
+.chart__legend i {
+  display: inline-block;
+  width: .625rem; height: .625rem;
+  margin-right: .4375rem;
+  vertical-align: -1px;
+}
+.chart__legend i[data-k="win"] { background: var(--ink-2); }
+.chart__legend i[data-k="out"] { background: var(--rule); }
+.chart__legend i[data-k="peak"] { background: var(--red); }
+
+.tip {
+  position: fixed;
+  z-index: 50;
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--paper);
+  padding: .3125rem .5rem;
+  font-size: var(--step--1);
+  line-height: 1.35;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -100%);
+  transition: opacity 90ms steps(2, end);
+}
+.tip[data-on="true"] { opacity: 1; }
+.tip b { font-family: var(--serif); font-size: var(--step-1); font-variant-numeric: tabular-nums; }
+
+.offenders { margin-top: 2.5rem; }
+.offenders__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--ink);
+  flex-wrap: wrap;
+}
+.offenders__head h3 {
+  font-family: var(--serif);
+  font-size: var(--step-3);
+  font-weight: 600;
+}
+.offenders__note { font-size: var(--step-0); color: var(--ink-2); }
+
+table.data { width: 100%; border-collapse: collapse; font-size: var(--step-0); }
+/* Toda tabela de dados pode rolar sozinha: no celular ela nao empurra
+   a pagina inteira para o lado. */
+.data-wrap { overflow-x: auto; overscroll-behavior-x: contain; }
+.data-wrap > table.data { min-width: 30rem; }
+table.data th {
+  padding: .4375rem .5rem;
+  text-align: left;
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+table.data th + th { border-left: 1px solid var(--rule); }
+table.data td {
+  padding: .4375rem .5rem;
+  border-bottom: 1px solid var(--rule);
+  line-height: 1.35;
+}
+table.data td + td { border-left: 1px solid var(--rule); }
+table.data tbody tr:hover td { background: var(--paper-2); }
+table.data tbody tr:last-child td { border-bottom: 1px solid var(--ink); }
+table.data caption {
+  caption-side: top;
+  text-align: left;
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  padding-bottom: .375rem;
+}
+
+/* =====================================================================
+   9. Capital
+   ===================================================================== */
+.capital__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 3.5rem;
+  align-items: start;
+}
+.panel__title {
+  font-family: var(--serif);
+  font-size: var(--step-3);
+  font-weight: 600;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid var(--ink);
+  margin-bottom: .875rem;
+}
+.panel__note {
+  font-size: var(--step-0);
+  color: var(--ink-2);
+  line-height: 1.45;
+  margin-top: .875rem;
+  max-width: 52ch;
+}
+
+.hbars { display: flex; flex-direction: column; gap: .375rem; }
+.hbar {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr) 6.5rem;
+  align-items: center;
+  gap: .75rem;
+  font-size: var(--step-0);
+}
+.hbar__label { color: var(--ink-2); white-space: nowrap; }
+.hbar__track { height: .875rem; background: var(--paper-3); position: relative; }
+.hbar__fill { position: absolute; inset: 0 auto 0 0; background: var(--ink-2); }
+.hbar__fill[data-tone="red"] { background: var(--red); }
+.hbar__fill[data-tone="ochre"] { background: var(--ochre); }
+.hbar__fill[data-tone="green"] { background: var(--green); }
+.hbar__value { text-align: right; white-space: nowrap; color: var(--ink); }
+
+/* =====================================================================
+   10. Confianca
+   ===================================================================== */
+.trust__figures {
+  display: flex;
+  gap: 3rem;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding-bottom: 2rem;
+}
+
+.seals { display: flex; flex-direction: column; border-top: 1px solid var(--ink); }
+.seal {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) 5rem 6rem minmax(0, 1fr);
+  align-items: baseline;
+  gap: 1rem;
+  padding: .6875rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: var(--step-1);
+}
+.seal:last-child { border-bottom: 1px solid var(--ink); }
+.seal__name { font-weight: 600; }
+.seal__score {
+  font-family: var(--serif);
+  font-size: var(--step-3);
+  font-weight: 600;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.seal__weak { font-size: var(--step-0); color: var(--ink-2); }
+.seal__tag {
+  justify-self: start;
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  padding: .125rem .4375rem;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+}
+.seal__tag[data-selo="CONFIAVEL"] { color: var(--green); }
+.seal__tag[data-selo="ATENCAO"] { color: var(--ochre); }
+.seal__tag[data-selo="NAO_CONFIAVEL"] { color: var(--red); }
+
+details.rules { margin-top: 2.5rem; border-top: 1px solid var(--ink); }
+details.rules > summary {
+  cursor: pointer;
+  padding: .75rem 0;
+  font-size: var(--step-1);
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+details.rules > summary::-webkit-details-marker { display: none; }
+details.rules > summary::before {
+  content: "+";
+  font-family: var(--serif);
+  font-size: 1.1rem;
+  color: var(--green);
+  width: 1rem;
+}
+details.rules[open] > summary::before { content: "\2013"; }
+details.rules > summary:hover { color: var(--green-deep); }
+
+/* =====================================================================
+   11. Rodape
+   ===================================================================== */
+.foot {
+  margin-top: 5rem;
+  border-top: 3px double var(--ink);
+  padding: 1.5rem 0 3rem;
+  display: flex;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: var(--step-0);
+  color: var(--ink-2);
+}
+.foot p { max-width: 46ch; line-height: 1.5; }
+.foot b { color: var(--ink); font-weight: 600; }
+.foot__right { margin-left: auto; text-align: right; }
+
+/* =====================================================================
+   12. Responsivo
+   ===================================================================== */
+@media (max-width: 1180px) {
+  :root { --pad: 2rem; }
+  .capital__grid { gap: 2.25rem; }
+  .lede b { font-size: 1.4em; }
+}
+
+@media (max-width: 900px) {
+  :root { --pad: 1.25rem; --step-2: 0.9375rem; }
+  .masthead__inner { gap: .75rem 1.25rem; padding-top: .75rem; padding-bottom: .75rem; }
+  .masthead__meta { margin-left: 0; gap: 1rem; width: 100%; }
+  .field { flex: 1 1 100%; min-width: 0; }
+  .field select { width: 100%; }
+  .brand__claim { display: none; }
+  .brand__rule { display: none; }
+  .lede { padding-top: 1.5rem; }
+  .lede p { font-size: 1.0625rem; }
+  .lede b { font-size: 1.3em; }
+  .section { padding-top: 2.75rem; }
+  .section__note { margin-left: 0; }
+  .order__top { gap: 1.5rem; }
+  .service { margin-left: 0; width: 100%; min-width: 0; }
+  .band {
+    display: grid;
+    grid-template-columns: 1fr 1fr !important;
+    min-height: 0;
+  }
+  .band__seg { border-bottom: 1px solid var(--rule); min-height: 4.5rem; }
+  .band__seg:nth-child(2n) { border-right: 0; }
+  .capital__grid { grid-template-columns: minmax(0, 1fr); }
+  .loss__figures, .trust__figures { gap: 1.75rem; }
+  .figure__value { font-size: 1.75rem; }
+  .chart__plot { height: 8rem; }
+  .seal { grid-template-columns: minmax(0, 1fr) 4rem; row-gap: .25rem; }
+  .seal__weak { grid-column: 1 / -1; }
+  .foot { gap: 1rem; }
+  .foot__right { margin-left: 0; text-align: left; }
+  .table-scroll { max-height: 24rem; }
+  table.picking thead th, table.picking tbody td { padding-left: .375rem; padding-right: .375rem; }
+  .c-sku { max-width: 12rem; }
+}
+
+@media (max-width: 640px) {
+  .dateline__inner { gap: 0 .875rem; }
+  .band { grid-template-columns: 1fr !important; }
+  .band__seg { border-right: 0; }
+  .poster__value { font-size: 2.5rem; }
+  .picking__actions { width: 100%; }
+  .btn { flex: 1 1 auto; }
+  .hbar { grid-template-columns: 5rem minmax(0, 1fr) 3.75rem; font-size: var(--step--1); }
+  .seal { grid-template-columns: minmax(0, 1fr) 3.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0ms !important; }
+}
+
+/* =====================================================================
+   12b. Notebook de 1366x768 e telas baixas
+   O PRODUCT.md nomeia o aparelho: 1366x768, cinco minutos entre o
+   fechamento do caixa e a saida do ultimo funcionario. Numa janela
+   maximizada sobram ~657 px de viewport, e o respiro generoso que faz a
+   pagina parecer impressa empurrava a primeira linha da lista para fora.
+   Aqui o ritmo aperta e nada de conteudo some: a primeira linha da
+   separacao passa a caber. Telas altas mantem o respiro original.
+   O limite e 860px porque com o ritmo cheio a primeira linha so cai
+   dentro do viewport a partir de ~810px.
+   ===================================================================== */
+@media (max-height: 860px) and (min-width: 901px) {
+  .masthead__inner { min-height: 3.5rem; }
+  /* A faixa de data fica: ela carrega a prova que a banca le (linhas de
+     venda, SKUs ativos, janela). O que encolhe e o respiro, nao a prova. */
+  .dateline__inner { padding-top: .25rem; padding-bottom: .25rem; }
+  .lede { padding-top: .75rem; }
+  .lede p { max-width: none; }
+  .section { padding-top: 1.5rem; }
+  .section__head { padding-bottom: .3125rem; margin-bottom: .625rem; }
+  .section__note { font-size: var(--step-0); line-height: 1.4; max-width: 76ch; }
+  .order__top { padding-bottom: .625rem; }
+  .poster__value { font-size: clamp(2.25rem, 3.3vw, 2.875rem); }
+  /* O bloco de nivel de servico e o mais alto da dobra: aqui a nota
+     encolhe para o degrau 12px e o trilho do slider encurta. Nada de
+     conteudo sai, so o respiro. */
+  .service { padding-top: .5rem; }
+  .service input[type="range"] { height: 1.25rem; margin-top: .25rem; }
+  .service__note { font-size: var(--step--1); line-height: 1.35; max-width: 52ch; margin-top: .25rem; }
+  .band { min-height: 4rem; }
+  .band__seg { padding: .5rem .625rem; }
+  .band__legend { display: none; }
+  .picking__wrap { margin-top: .5rem; }
+  .picking__head { padding: .375rem 0 .25rem; align-items: center; }
+  .picking__title { font-size: var(--step-2); }
+  .btn { padding: .3125rem .625rem; }
+  table.picking thead th { font-size: var(--step--1); letter-spacing: .02em; padding: .3125rem .375rem; }
+}
+
+/* =====================================================================
+   13. Impressao
+   O painel existe para ser lido na tela e para virar uma folha de pedido
+   assinavel. Na impressao: fundo branco, sem controles, a faixa de
+   fornecedores vira uma tabela de colunas iguais, e a lista de separacao
+   imprime so o essencial (SKU, situacao, quantidade), sem as 8 paginas
+   de colunas que ninguem le no papel.
+   ===================================================================== */
+@media print {
+  /* ------------------------------------------------------------------
+     CORES DE DADOS NO PAPEL.
+
+     O navegador nao imprime `background` por padrao: o Ulrich
+     "Graficos de plano de fundo" vem desmarcado. Sem esta regra, o
+     grafico de 24 meses sai VAZIO (so os rotulos de mes flutuando) e a
+     barra de proporcao da faixa de fornecedores nao pinta. Nelson
+     imprime a folha para levar ao fornecedor e recebe um documento
+     que parece quebrado - sem saber que existe um checkbox.
+
+     `print-color-adjust: exact` forca a pintura nos elementos que
+     carregam DADO (nao na decoracao).
+     ------------------------------------------------------------------ */
+  .bar-m,
+  .hbar__fill,
+  .bar,
+  .band__seg::after,
+  .band__seg[aria-pressed="true"],
+  .tag,
+  thead th {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  :root { --paper: #fff; --paper-2: #fff; --paper-3: #f2f2f2; --rule: #bbb; --rule-2: #999; }
+  body { font-size: 9.5pt; line-height: 1.4; }
+  .shell { max-width: none; padding: 0; }
+  .masthead { background: #fff; color: var(--ink); border-bottom: 2px solid var(--ink); }
+  .masthead__inner {
+    min-height: 0;
+    padding: 0 0 .5rem;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+  .masthead__meta { gap: 1.25rem; flex-wrap: nowrap; }
+  .brand__claim { color: var(--ink-2); font-size: 8pt; }
+  .brand__rule { background: var(--rule-2); }
+  .tag { color: var(--ink); border-color: var(--ink-2); }
+  .brand__claim { color: var(--ink-2); }
+
+  .field, .service, .picking__actions, .tag, .chart__legend,
+  .masthead__meta .field, .picking__hint, .band__legend { display: none; }
+
+  .dateline__inner { padding: .375rem 0; }
+
+  .lede { padding-top: 1rem; }
+  .lede p { font-size: 11pt; max-width: none; }
+  .lede b { font-size: 1.25em; }
+
+  .section { padding-top: 1.5rem; break-inside: auto; }
+  .section + .section { margin-top: .5rem; }
+  .section__head { margin-bottom: 1rem; break-after: avoid; }
+
+  /* O rodape e curto; sem isto ele sozinho vira uma nona pagina com
+     duas linhas de texto. */
+  .foot { break-inside: avoid; break-before: avoid; margin-top: 1rem; }
+  .foot__left, .foot__right { font-size: 7.5pt; line-height: 1.35; }
+  .section__head h2,
+.section__head h1 { font-size: 15pt; }
+  .section__note { max-width: 52ch; font-size: 9pt; }
+
+  /* A faixa de fornecedores precisa imprimir: ela e o argumento. No papel
+     ela vira uma lista, e a proporcao do valor passa para uma barra logo
+     abaixo do nome: largura continua sendo dado, nao enfeite. */
+  .band {
+    display: block !important;
+    min-height: 0;
+    border-color: var(--ink);
+  }
+  .band__seg {
+    display: block;
+    width: 100%;
+    padding: .3125rem .5rem .25rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .band__name { display: block; font-size: 9pt; margin-bottom: .125rem; color: var(--ink) !important; }
+  .band__foot { display: block; margin-bottom: .25rem; }
+  .band__value { font-size: 9pt; color: var(--ink) !important; }
+  .band__lead {
+    float: none;
+    color: var(--ink-2) !important;
+    font-size: 8.5pt;
+    margin-left: .5rem;
+  }
+  .band__foot { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: .25rem; }
+  .band__seg::after {
+    content: "";
+    display: block;
+    height: 0;
+    /* Borda em vez de background: borda imprime sempre, mesmo com
+       "graficos de plano de fundo" desmarcado. A largura continua
+       sendo o valor do fornecedor - a proporcao e dado, nao enfeite. */
+    border-top: 3px solid var(--ink-2);
+    background: none;
+    width: calc(var(--fatia, 0) * 100%);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .band__seg[aria-pressed="true"],
+  .band__seg[aria-pressed="true"] * { color: var(--ink) !important; }
+  .band__seg[aria-pressed="true"] { background: transparent !important; border-left: 3px solid var(--ink); padding-left: .375rem; }
+  .band__seg[aria-pressed="true"]::after { background: var(--ink); }
+
+  .table-scroll { max-height: none; overflow: visible; }
+  table.picking thead th { position: static; background: #fff; }
+  table.picking tbody td { padding: .1875rem .375rem; }
+  /* O cabecalho de loja precisa sair no papel: e ele que torna a
+     folha separavel na chegada de tres entregas diferentes. */
+  table.picking tbody tr.grp td {
+    background: #fff;
+    border-top: 1px solid var(--ink);
+    border-bottom: 1px solid var(--ink);
+    padding: .25rem .375rem;
+    font-size: 8pt;
+  }
+  table.picking tbody tr.grp { break-after: avoid; break-inside: avoid; }
+  .c-dep { white-space: normal; }
+  /* No papel, so o que a pessoa usa para separar a mercadoria. */
+  .c-sku { max-width: none; }
+  table.picking thead th:nth-child(4),
+  table.picking tbody td:nth-child(4),
+  table.picking thead th:nth-child(5),
+  table.picking tbody td:nth-child(5),
+  table.picking thead th:nth-child(6),
+  table.picking tbody td:nth-child(6),
+  table.picking thead th:nth-child(7),
+  table.picking tbody td:nth-child(7),
+  table.picking thead th:nth-child(10),
+  table.picking tbody td:nth-child(10) { display: none; }
+
+  .picking__wrap { margin-top: 1rem; }
+  .picking__total { font-size: 13pt; }
+
+  .loss__figures { gap: 2rem; padding-bottom: 1rem; break-inside: avoid; }
+  .figure__value, .loss__lead .poster__value { font-size: 18pt; }
+  .chart { break-inside: avoid; }
+  .chart__plot { height: 5.5rem; }
+  .offenders { break-inside: auto; }
+  .offenders__head { break-after: avoid; }
+
+  .capital__grid { grid-template-columns: 1fr 1fr; gap: 2rem; }
+  /* As barras do histograma precisam de largura no papel: com
+     grid-template-columns de 6.5rem + 6.5rem, a coluna do meio
+     colapsava para 0px em A4 e os fills nao geravam geometria - o
+     histograma saia sem barra nenhuma. */
+  .hbar { grid-template-columns: 5rem minmax(3rem, 1fr) 4.5rem; gap: .5rem; }
+  .hbar__fill { min-width: 2px; }
+  .seals, .seal { break-inside: avoid; }
+  details.rules { break-inside: avoid; }
+  details.rules > summary { display: none; }
+  details.rules .data-wrap { display: none; }
+
+  .foot { margin-top: 1.5rem; padding-bottom: 0; break-inside: avoid; }
+  .foot p { max-width: 40ch; }
+
+  a[href]::after { content: none; }
+}
+
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead__inner">
+    <div class="brand">
+      <svg class="brand__mark" viewBox="0 0 24 24" aria-hidden="true" fill="none">
+        <path d="M20.2 12a8.2 8.2 0 1 1-2.46-5.84" stroke="currentColor" stroke-width="1.7"/>
+        <path d="M20.4 3.8v4.8h-4.8" stroke="currentColor" stroke-width="1.7"/>
+      </svg>
+      <!-- A marca e um div, nao um h1: o titulo do documento e a
+           pergunta que organiza a pagina ("O pedido da semana"). Dois
+           h1 confundem a navegacao por leitor de tela. -->
+      <div class="brand__name">Giro</div>
+      <span class="brand__rule" aria-hidden="true"></span>
+      <span class="brand__claim">Previsão de estoque para mercadinho de bairro</span>
+    </div>
+    <div class="masthead__meta">
+      <label class="field" for="loja">
+        <span class="field__label">Loja</span>
+        <select id="loja"></select>
+      </label>
+      <div class="stamp">
+        <span class="stamp__label">Referência do dado</span>
+        <span class="stamp__value" id="ref-data">–</span>
+      </div>
+      <span class="tag">dados sintéticos</span>
+    </div>
+  </div>
+</header>
+
+<div class="dateline">
+  <div class="dateline__inner" id="dateline"></div>
+</div>
+
+<main class="shell">
+
+  <noscript>
+    <div class="nojs">
+      <strong>Este painel precisa de JavaScript para calcular o pedido.</strong>
+      Todo o conteúdo é montado no navegador a partir dos dados embutidos no
+      arquivo. Abra <code>docs/painel.html</code> no Edge ou no Chrome, ou
+      libere scripts para este arquivo.
+    </div>
+  </noscript>
+
+  <section class="lede" aria-label="Resumo">
+    <p id="lede"></p>
+  </section>
+
+  <!-- ================= O PEDIDO ================= -->
+  <section class="section" id="pedido" aria-labelledby="h-pedido">
+    <div class="section__head">
+      <!-- h1, nao h2: e a pergunta que traz o dono de volta toda
+           semana, e a unica coisa na pagina que merece o nivel
+           maximo de heading. Sem isto o documento comecava em h2 e
+           leitores de tela nao encontravam o titulo da pagina. -->
+      <h1 id="h-pedido">O pedido da semana</h1>
+      <p class="section__note">
+        Ponto de pedido = demanda prevista no lead time + estoque de segurança.
+        A compra é arredondada ao múltiplo do fornecedor, e a sugestão só aparece
+        quando o estoque cobre menos do que o fornecedor leva para entregar.
+      </p>
+    </div>
+
+    <div class="order__top">
+      <div class="poster">
+        <p class="poster__label">A comprar</p>
+        <p class="poster__value num" id="total-pedido">–</p>
+        <p class="poster__meta" id="total-meta"></p>
+        <p class="poster__delta" id="total-delta" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="service">
+        <div class="service__head">
+          <span class="service__label" id="nivel-label">Nível de serviço</span>
+          <output class="service__out num" id="nivel-out" for="nivel">95%<small id="nivel-z">z 1,65</small></output>
+        </div>
+        <input type="range" id="nivel" min="90" max="99" step="1" value="95"
+               aria-labelledby="nivel-label" aria-describedby="nivel-nota"
+               aria-valuetext="95% — nível de serviço">
+        <!-- Escala do nível de serviço.
+             O trilho tem 10 posições (90..99). Cada rótulo cai na
+             posição REAL do seu valor: (valor - 90) / 9 * 100%.
+             São 5 rótulos, não 6: com "98%" e "99%" a 11% de distância
+             em ~260px, os dois se sobrepõem (~26px cada, 28px de
+             espaço). O último valor continua acessível pelo controle. -->
+        <div class="service__scale" aria-hidden="true">
+          <span style="--pos:0%">90%</span>
+          <span style="--pos:22.222%">92%</span>
+          <span style="--pos:44.444%">94%</span>
+          <span style="--pos:66.667%">96%</span>
+          <span style="--pos:100%">99%</span>
+        </div>
+        <p class="service__note" id="nivel-nota">
+          Estoque de segurança = z × σ × √lead time. Subir o nível protege
+          contra falta e imobiliza mais capital: o mesmo trade-off da página.
+        </p>
+      </div>
+    </div>
+
+    <div class="band" id="band" role="toolbar" aria-label="Fornecedores do pedido"></div>
+    <div class="band__legend">
+      <span class="band__legend-wide">A largura de cada fornecedor é o valor do pedido dele.</span>
+      <span class="band__legend-narrow">Fornecedores ordenados por valor do pedido.</span>
+      <span id="band-legend-right"></span>
+    </div>
+
+    <div class="picking__wrap" id="painel-fornecedor" aria-labelledby="picking-title">
+      <div class="picking__head">
+        <h2 class="picking__title" id="picking-title">—</h2>
+        <div class="picking__actions">
+          <button class="btn btn--primary" id="copiar" type="button">Copiar pedido</button>
+          <button class="btn" id="copiar-todos" type="button">Copiar todos</button>
+          <button class="btn" id="imprimir" type="button">Imprimir</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table class="picking" id="tabela">
+          <caption class="vh" id="tabela-caption"></caption>
+          <thead id="tabela-head"></thead>
+          <tbody id="tabela-body"></tbody>
+        </table>
+      </div>
+      <div class="picking__foot">
+        <p class="picking__total" id="picking-total">–</p>
+        <p class="picking__hint" id="picking-hint"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Diálogo de último recurso quando o clipboard é bloqueado. -->
+  <dialog id="dlg-copia" aria-labelledby="dlg-copia-titulo">
+    <h2 id="dlg-copia-titulo">Copie o pedido manualmente</h2>
+    <p>
+      O navegador bloqueou a cópia automática. O texto está selecionado
+      abaixo: use <kbd>Ctrl</kbd>+<kbd>C</kbd> para copiar.
+    </p>
+    <textarea id="dlg-copia-texto" rows="12" readonly></textarea>
+    <form method="dialog">
+      <button class="btn btn--primary" type="submit">Fechar</button>
+    </form>
+  </dialog>
+
+  <!-- ================= A PERDA ================= -->
+  <section class="section" id="perda" aria-labelledby="h-perda">
+    <div class="section__head">
+      <h2 id="h-perda">A perda que não passa pelo caixa</h2>
+      <p class="section__note">
+        Quando o produto falta, a venda registrada é zero, mas a demanda não era
+        zero. O Giro reconstrói a venda perdida com a média do mesmo dia da semana
+        em dias sem ruptura, e marca cada valor como observado ou reconstruído.
+      </p>
+    </div>
+
+    <div class="loss__figures">
+      <div class="loss__lead">
+        <p class="figure__label">Receita perdida em 12 meses</p>
+        <p class="figure__value figure__value--red poster__value num" id="perda-receita">–</p>
+        <p class="figure__meta" id="perda-equiv"></p>
+      </div>
+      <div>
+        <p class="figure__label">Taxa de ruptura medida</p>
+        <p class="figure__value num" id="ruptura-taxa">–</p>
+        <p class="figure__meta" id="ruptura-meta"></p>
+      </div>
+      <div>
+        <p class="figure__label">Demanda reconstruída</p>
+        <p class="figure__value num" id="reconstruida-valor">–</p>
+        <p class="figure__meta" id="reconstruida-meta"></p>
+      </div>
+    </div>
+
+    <figure class="chart">
+      <div class="chart__scale" id="chart-scale" aria-hidden="true"></div>
+      <div class="chart__plot" id="chart" role="img" aria-labelledby="chart-desc"></div>
+      <p class="vh" id="chart-desc"></p>
+      <div class="chart__axis" id="chart-axis" aria-hidden="true"></div>
+      <div class="chart__legend">
+        <span><i data-k="win"></i>Os 12 meses do relatório</span>
+        <span><i data-k="out"></i>Histórico anterior</span>
+        <span><i data-k="peak"></i>Pior mês</span>
+      </div>
+    </figure>
+
+    <div class="offenders">
+      <div class="offenders__head">
+        <h3>Onde a perda se concentra</h3>
+        <p class="offenders__note" id="offenders-note"></p>
+      </div>
+      <div class="data-wrap">
+        <table class="data" id="offenders">
+          <thead>
+            <tr>
+              <th scope="col">Produto</th>
+              <th scope="col">Departamento</th>
+              <th scope="col" class="c-num">Rupturas</th>
+              <th scope="col" class="c-num">Unidades</th>
+              <th scope="col" class="c-num">Receita perdida</th>
+            </tr>
+          </thead>
+          <tbody id="offenders-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= O CAPITAL ================= -->
+  <section class="section" id="capital" aria-labelledby="h-capital">
+    <div class="section__head">
+      <h2 id="h-capital">O outro lado do trade-off</h2>
+      <p class="section__note">
+        Cobertura é quantos dias o estoque aguenta. Abaixo do lead time é risco de
+        falta; muito acima é capital imobilizado e, no perecível, perda seca.
+        Neste retrato o risco maior está na falta, não no excesso.
+      </p>
+    </div>
+
+    <div class="loss__figures">
+      <div>
+        <p class="figure__label">Estoque médio por dia</p>
+        <p class="figure__value num" id="estoque-valor">–</p>
+        <p class="figure__meta" id="estoque-meta"></p>
+      </div>
+      <div>
+        <p class="figure__label">Perecível em risco de vencimento</p>
+        <p class="figure__value figure__value--red num" id="vencimento-valor">–</p>
+        <p class="figure__meta" id="vencimento-meta"></p>
+      </div>
+    </div>
+
+    <div class="capital__grid">
+      <div>
+        <h3 class="panel__title">Cobertura do estoque</h3>
+        <div class="hbars" id="cobertura-bars"></div>
+        <p class="panel__note" id="cobertura-nota"></p>
+      </div>
+      <div>
+        <h3 class="panel__title">Receita e margem por departamento</h3>
+        <div class="data-wrap">
+          <table class="data" id="departamentos">
+            <thead>
+              <tr>
+                <th scope="col">Departamento</th>
+                <th scope="col" class="c-num">SKUs</th>
+                <th scope="col" class="c-num">Receita</th>
+                <th scope="col" class="c-num">Margem</th>
+              </tr>
+            </thead>
+            <tbody id="departamentos-body"></tbody>
+          </table>
+        </div>
+        <p class="panel__note" id="abc-note"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= A CONFIANCA ================= -->
+  <section class="section" id="confianca" aria-labelledby="h-confianca">
+    <div class="section__head">
+      <h2 id="h-confianca">Por que dá para confiar nesses números</h2>
+      <p class="section__note">
+        Previsão é tão boa quanto o estoque que a alimenta. O Giro mede a
+        qualidade do dado de cada loja e testa o próprio filtro contra defeitos
+        injetados de propósito, com gabarito.
+      </p>
+    </div>
+
+    <div class="trust__figures" id="trust-figures"></div>
+
+    <h3 class="panel__title">Selo de confiança por loja</h3>
+    <div class="seals" id="seals"></div>
+    <p class="panel__note" id="seals-note"></p>
+
+    <details class="rules">
+      <summary id="rules-summary">Ver as regras de qualidade e a detecção medida</summary>
+      <div class="data-wrap">
+        <table class="data" id="regras">
+          <caption id="regras-caption"></caption>
+          <thead>
+            <tr>
+              <th scope="col">Regra</th>
+              <th scope="col">Dimensão</th>
+              <th scope="col" class="c-num">Injetados</th>
+              <th scope="col" class="c-num">Detectados</th>
+              <th scope="col" class="c-num">Recall</th>
+              <th scope="col" class="c-num">Precisão</th>
+              <th scope="col" class="c-num">F1</th>
+            </tr>
+          </thead>
+          <tbody id="regras-body"></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <footer class="foot">
+    <p>
+      <b>Giro</b> · A3 Análise de Dados e Big Data.
+      Página gerada por <b>dashboard/gerar.py</b> a partir do PostgreSQL do projeto.
+      Todo número aqui sai de uma consulta versionada; nenhum foi digitado à mão.
+    </p>
+    <p>
+      O conjunto de dados é <b>sintético</b>, calibrado com os patamares publicados
+      do setor (8,3% de ruptura global, Nielsen; 10–12% no Brasil, Neogrid).
+      Não há cliente, loja ou fornecedor real nesta página.
+    </p>
+    <p class="foot__right" id="foot-meta"></p>
+  </footer>
+</main>
+
+<div class="tip" id="tip" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const DADOS = /*__DADOS__*/null;
+
+/* ---------------------------------------------------------------------
+   Formato brasileiro. Dinheiro e somado em centavos inteiros para que a
+   soma na tela bata com a do banco ate o ultimo centavo.
+   --------------------------------------------------------------------- */
+const fmtBRL = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtBRLcents = (c) => fmtBRL(c / 100);
+const fmtInt = (v) => Math.round(v).toLocaleString("pt-BR");
+const fmtDec = (v, d = 1) => v.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
+const fmtPct = (v, d = 1) => fmtDec(v, d) + "%";
+const fmtCompact = (v) => {
+  if (Math.abs(v) >= 1000000) return fmtDec(v / 1000000, 1) + " mi";
+  if (Math.abs(v) >= 1000) return fmtDec(v / 1000, 1) + " mil";
+  return fmtInt(v);
+};
+const fmtData = (iso) => {
+  if (!iso) return "–";
+  const [a, m, d] = String(iso).slice(0, 10).split("-");
+  return `${d}/${m}/${a}`;
+};
+const MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+const fmtMes = (ym) => {
+  const [a, m] = ym.split("-");
+  return MES[Number(m) - 1] + "/" + a.slice(2);
+};
+const fmtMesAno = (ym, primeiro) => {
+  const [a, m] = ym.split("-");
+  // Mostra o ano quando ele muda, para nao ter "nov/23" duas vezes
+  // em meses diferentes do eixo.
+  return primeiro ? MES[Number(m) - 1] + "/" + a.slice(2) : MES[Number(m) - 1];
+};
+
+/* ---------------------------------------------------------------------
+   z por nivel de servico (inversa da normal padrao).
+   --------------------------------------------------------------------- */
+const Z_POR_NIVEL = {
+  90: 1.2816, 91: 1.3408, 92: 1.4051, 93: 1.4758, 94: 1.5548,
+  // 95% usa 1,65 porque e o valor da migration 011. O total de referencia
+  // da tela tem que bater com o do banco ate o centavo.
+  95: 1.65, 96: 1.7507, 97: 1.8808, 98: 2.0537, 99: 2.3263,
+};
+
+const estado = { loja: 0, fornecedor: null, nivel: 95, ordem: "urgencia" };
+
+const el = (id) => document.getElementById(id);
+const lojaNome = (id) => (DADOS.lojas.find((l) => l.loja_id === id) || {}).nome || "–";
+
+/* ---------------------------------------------------------------------
+   O calculo. Repete exatamente a formula da migration 011:
+     ponto = demanda_no_lead_time + z x sigma x sqrt(lead)
+     compra = ceil(max(0, ponto - estoque) / multiplo) x multiplo
+
+   A demanda no horizonte vem PRONTA do banco (`demanda_lt`), em vez de ser
+   reconstruida aqui como `demanda x lead`. Motivo: quando a formula vivia
+   em dois lugares (SQL e JS), as duas copias divergiram em 726 dos 1.260
+   itens - o painel mostrava um pedido e o banco outro. Agora o banco e a
+   unica fonte; o front so aplica o nivel de servico que o dono escolhe.
+   --------------------------------------------------------------------- */
+function calcular() {
+  const z = Z_POR_NIVEL[estado.nivel];
+  const linhas = [];
+
+  // ------------------------------------------------------------------
+  // GATE DE CONFIANCA
+  //
+  // O relatorio promete que, abaixo de 85% na pior dimensao, a sugestao
+  // e ocultada. A primeira versao do painel apenas EXIBIA o selo: o
+  // texto prometia um comportamento que o codigo nao tinha, e o proprio
+  // painel admitia isso num comentario ("calcular() nao le o selo").
+  //
+  // A regra implementada aqui e a que a secao 4.1 descreve: com o dado
+  // ruim, o sistema nao finge precisao. Ele para de sugerir e pede
+  // correcao de inventario. Se o estoque do sistema esta errado, a
+  // sugestao esta errada por mais correto que seja o modelo.
+  // ------------------------------------------------------------------
+  const seloPorLoja = new Map(
+    (DADOS.selo || []).map((q) => [q.loja_id, q.pior_dimensao_pct])
+  );
+
+  for (const r of DADOS.pedido) {
+    if (estado.loja && r.loja_id !== estado.loja) continue;
+
+    const confianca = seloPorLoja.has(r.loja_id)
+      ? seloPorLoja.get(r.loja_id)
+      : r.pior_dimensao_pct;
+
+    // Loja sem selo calculado nao e bloqueada: ausencia de medicao nao e
+    // evidencia de dado ruim (seria bloquear por omissao, nao por fato).
+    const bloqueada = confianca != null && confianca < 85;
+
+    const lt = r.lead || 0;
+    // `demanda_lt` e o acumulado do horizonte. O fallback cobre um painel
+    // antigo, gerado antes desta coluna existir.
+    const demLt = r.demanda_lt != null ? r.demanda_lt : (r.demanda || 0) * lt;
+    // Demanda DIARIA (media do horizonte): usada so na cobertura, que e
+    // "quantos dias o estoque aguenta". Nao confundir com `demLt`, que e o
+    // acumulado de todo o lead time e e quem decide o pedido.
+    const demDia = lt > 0 ? demLt / lt : 0;
+    const sig = r.sigma || 0;
+    const est = r.estoque || 0;
+    const mult = r.multiplo || 1;
+
+    const ponto = demLt + z * sig * Math.sqrt(lt);
+    // Igual ao SQL: a quantidade usa o ponto sem arredondar e sobe ao
+    // multiplo de compra. O ponto exibido e arredondado, entao mostramos
+    // 1 casa para o dono ver de onde vem o arredondamento.
+    const falta = Math.max(0, ponto - est);
+    const qtdBruta = Math.ceil(falta / mult) * mult;
+    const qtd = bloqueada ? 0 : qtdBruta;
+    const valorCent = Math.round(qtd * (r.custo || 0) * 100);
+
+    let situacao = "OK";
+    if (est <= 0) situacao = "RUPTURA";
+    else if (est < demLt) situacao = "CRITICO";
+    else if (est < ponto) situacao = "REPOR";
+
+    linhas.push({
+      ...r, ponto, qtd, qtdBruta, valorCent, situacao, bloqueada, confianca,
+      cobertura: demDia > 0 ? est / demDia : Infinity,
+      receita: r.receita || 0,
+      margem: r.margem || 0,
+    });
+  }
+  return linhas;
+}
+
+function agregar(linhas) {
+  // Linhas de loja sem confianca ficam FORA do pedido: a quantidade ja e
+  // zero em calcular(), mas elas tambem nao devem entrar na contagem de
+  // SKUs nem na lista por fornecedor. Sao um aviso, nao uma linha de
+  // compra.
+  const bloqueadas = linhas.filter((l) => l.bloqueada);
+  const ativos = linhas.filter((l) => l.situacao !== "OK" && !l.bloqueada);
+  let cent = 0;
+  const porForn = new Map();
+  for (const l of ativos) {
+    cent += l.valorCent;
+    const f = porForn.get(l.fornecedor) ||
+      { nome: l.fornecedor, cent: 0, skus: 0, lead: 0, rupturas: 0 };
+    f.cent += l.valorCent;
+    f.skus += 1;
+    f.lead = Math.max(f.lead, l.lead);
+    if (l.situacao === "RUPTURA") f.rupturas += 1;
+    porForn.set(l.fornecedor, f);
+  }
+  const fornecedores = [...porForn.values()].sort((a, b) => b.cent - a.cent);
+  return {
+    cent, ativos, fornecedores,
+    skus: ativos.length,
+    bloqueadas,
+    rupturas: ativos.filter((l) => l.situacao === "RUPTURA").length,
+    criticos: ativos.filter((l) => l.situacao === "CRITICO").length,
+  };
+}
+
+/* ---------------------------------------------------------------------
+   Lede + cabecalho
+   --------------------------------------------------------------------- */
+function renderResumo(agg) {
+  const perda = DADOS.perda.find((p) => p.loja_id === estado.loja) || DADOS.perda[0];
+  el("lede").innerHTML =
+    `O Giro recomenda comprar <b>${fmtBRLcents(agg.cent)}</b> ` +
+    `em ${agg.fornecedores.length} ${agg.fornecedores.length === 1 ? "fornecedor" : "fornecedores"}` +
+    `${estado.loja ? " para " + lojaNome(estado.loja) : " nas " + DADOS.lojas.length + " lojas"}. ` +
+    `Nos últimos 12 meses, a falta de produto custou <b data-tone="red">${fmtBRL(perda.receita)}</b> ` +
+    `em receita que a prateleira vazia não registrou.`;
+
+  el("total-pedido").textContent = fmtBRLcents(agg.cent);
+  el("total-meta").innerHTML =
+    `<b>${fmtInt(agg.skus)}</b> SKUs · <b>${agg.rupturas}</b> em ruptura · ` +
+    `<b>${agg.criticos}</b> em estado crítico`;
+}
+
+function renderDelta(agg) {
+  const base = (() => {
+    const salvo = estado.nivel;
+    estado.nivel = 95;
+    const a = agregar(calcular());
+    estado.nivel = salvo;
+    return a.cent;
+  })();
+  const d = agg.cent - base;
+  if (estado.nivel === 95) {
+    // 1,65 e o valor que a migration 011 aplica. Dizer 1,645 aqui
+    // contradizia o proprio controle logo acima.
+    el("total-delta").textContent = "Referência: nível de serviço de 95% (z = 1,65).";
+    return;
+  }
+  const sinal = d >= 0 ? "+" : "−";
+  el("total-delta").textContent =
+    `${sinal}${fmtBRL(Math.abs(d) / 100)} em relação a 95% · ` +
+    `${d >= 0 ? "mais proteção contra falta, mais capital imobilizado" : "menos capital imobilizado, mais risco de falta"}`;
+}
+
+function renderNivel() {
+  el("nivel").value = String(estado.nivel);
+  const z = Z_POR_NIVEL[estado.nivel];
+  // 95% imprime "1,65" para bater com a migration 011; os outros niveis
+  // usam a inversa real da normal e precisam das tres casas.
+  el("nivel-out").innerHTML =
+    `${estado.nivel}%<small>z ${fmtDec(z, estado.nivel === 95 ? 2 : 3)}</small>`;
+  // O valor do slider precisa dizer o que representa: "95" sozinho nao
+  // informa que e o nivel de servico que recalcula o pedido inteiro.
+  el("nivel").setAttribute("aria-valuetext", `${estado.nivel}% — nível de serviço`);
+}
+
+/* ---------------------------------------------------------------------
+   Faixa de fornecedores
+   --------------------------------------------------------------------- */
+function renderBand(agg) {
+  const band = el("band");
+  band.textContent = "";
+  const total = agg.fornecedores.reduce((s, f) => s + f.cent, 0) || 1;
+
+  if (!agg.fornecedores.length) {
+    const vazio = document.createElement("p");
+    vazio.className = "picking__hint";
+    vazio.textContent = "Nenhum SKU precisa de compra neste nível de serviço. " +
+      "Baixe o nível de serviço para ver o que entraria com menos proteção.";
+    band.dataset.vazio = "true";
+    band.style.gridTemplateColumns = "";
+    // display precisa voltar a block: o render normal deixa "grid"
+    // inline, e inline vence a folha de estilo. Sem isto a mensagem
+    // de vazio ficava com 50% da largura entre 800px e 900px.
+    band.style.display = "block";
+    band.appendChild(vazio);
+    el("band-legend-right").textContent = "";
+    return;
+  }
+  delete band.dataset.vazio;
+
+  if (!agg.fornecedores.some((f) => f.nome === estado.fornecedor)) {
+    estado.fornecedor = agg.fornecedores[0].nome;
+  }
+
+  // A largura de cada fornecedor E o valor do pedido dele, em proporcao
+  // do total. Usa fr (nao %): com %, o conteudo minimo estoura a faixa e
+  // o ultimo fornecedor sai cortado. Com fr o item pode encolher.
+  band.style.display = "grid";
+  band.style.gridTemplateColumns = agg.fornecedores
+    .map((f) => `minmax(0, ${(f.cent / total).toFixed(5)}fr)`)
+    .join(" ");
+
+  for (const f of agg.fornecedores) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "band__seg";
+    // A faixa e um grafico de barras que tambem filtra a lista: os seis
+    // valores ficam visiveis ao mesmo tempo, entao o padrao de abas nao
+    // se aplica (abas escondem paineis). E uma barra de ferramentas de
+    // botoes de alternancia, e cada botao aponta para a regiao que muda.
+    b.setAttribute("aria-pressed", String(f.nome === estado.fornecedor));
+    b.setAttribute("aria-controls", "painel-fornecedor");
+    b.dataset.fornecedor = f.nome;
+    // Guarda a fatia no proprio elemento: na impressao a faixa nao cabe
+    // em 6 colunas proporcionais, mas a barra abaixo do nome preserva a
+    // leitura de proporcao no papel.
+    b.style.setProperty("--fatia", (f.cent / total).toFixed(5));
+    b.title = `${f.nome}: ${fmtBRLcents(f.cent)} · ${f.skus} SKUs · lead ${f.lead} dias`;
+
+    const nome = document.createElement("span");
+    nome.className = "band__name";
+    nome.textContent = f.nome;
+
+    const foot = document.createElement("span");
+    foot.className = "band__foot";
+    const valor = document.createElement("span");
+    valor.className = "band__value num";
+    valor.textContent = fmtBRLcents(f.cent);
+    const lead = document.createElement("span");
+    lead.className = "band__lead";
+    lead.textContent = f.lead + "d";
+    foot.append(valor, lead);
+
+    b.append(nome, foot);
+    band.appendChild(b);
+  }
+
+  el("band-legend-right").textContent =
+    `${agg.fornecedores.length} fornecedores · ${fmtInt(agg.skus)} SKUs · ${fmtInt(agg.rupturas)} em ruptura`;
+}
+
+/* ---------------------------------------------------------------------
+   Tabela de separacao
+   --------------------------------------------------------------------- */
+const COLUNAS = [
+  { k: "situacao", t: "Situação", ordenar: true, cls: "" },
+  { k: "nome", t: "Produto", ordenar: true, cls: "c-sku" },
+  { k: "dep", t: "Departamento", ordenar: true, cls: "c-dep" },
+  { k: "estoque", t: "Estoque", ordenar: true, cls: "c-num" },
+  { k: "demanda", t: "Demanda/dia", ordenar: true, cls: "c-num" },
+  { k: "cobertura", t: "Dias de estoque", ordenar: true, cls: "c-num" },
+  { k: "ponto", t: "Ponto de pedido", ordenar: true, cls: "c-num" },
+  { k: "qtd", t: "Comprar", ordenar: true, cls: "c-num" },
+  { k: "valorCent", t: "Valor", ordenar: true, cls: "c-num" },
+  { k: "lead", t: "Entrega (dias)", ordenar: true, cls: "c-num" },
+];
+
+const PESO = { RUPTURA: 0, CRITICO: 1, REPOR: 2, OK: 3 };
+
+function ordenar(linhas) {
+  const arr = [...linhas];
+  const chave = estado.ordem;
+  if (chave === "urgencia") {
+    arr.sort((a, b) => (PESO[a.situacao] - PESO[b.situacao]) || (b.valorCent - a.valorCent));
+  } else if (chave === "situacao") {
+    arr.sort((a, b) => (PESO[a.situacao] - PESO[b.situacao]) || (b.valorCent - a.valorCent));
+  } else if (chave === "nome" || chave === "dep") {
+    arr.sort((a, b) => String(a[chave]).localeCompare(String(b[chave]), "pt-BR"));
+  } else if (chave === "cobertura") {
+    arr.sort((a, b) => {
+      const ca = isFinite(a.cobertura) ? a.cobertura : 1e9;
+      const cb = isFinite(b.cobertura) ? b.cobertura : 1e9;
+      return ca - cb;
+    });
+  } else {
+    arr.sort((a, b) => (b[chave] || 0) - (a[chave] || 0));
+  }
+  return arr;
+}
+
+function renderTabela(agg) {
+  // Guarda o foco antes de recriar o thead: ao ordenar por uma coluna,
+  // o elemento focado deixa de existir e o navegador devolve o foco ao
+  // body. Quem usa teclado perdia a posicao a cada ordenacao e o Tab
+  // seguinte pulava a tabela inteira (WCAG 2.4.3).
+  const focoChave = document.activeElement?.dataset?.chave || null;
+
+  const head = el("tabela-head");
+  head.textContent = "";
+  const tr = document.createElement("tr");
+  for (const c of COLUNAS) {
+    const th = document.createElement("th");
+    th.scope = "col";
+    th.textContent = c.t;
+    if (c.cls) th.className = c.cls;
+    if (c.ordenar) {
+      th.classList.add("is-sortable");
+      th.tabIndex = 0;
+      th.dataset.chave = c.k;
+      if (estado.ordem === c.k) {
+        // Colunas numericas ordenam descendente (maior primeiro: o que
+        // comprar mais caro); texto e cobertura ordenam ascendente.
+        // Anunciar "descending" com seta para baixo numa lista A->Z
+        // engana quem usa leitor de tela.
+        const ascendente = c.k === "nome" || c.k === "dep" || c.k === "cobertura";
+        th.setAttribute("aria-sort", ascendente ? "ascending" : "descending");
+      }
+      const marca = document.createElement("span");
+      marca.className = "sort";
+      marca.textContent = estado.ordem === c.k
+        ? ((c.k === "nome" || c.k === "dep" || c.k === "cobertura") ? "↑" : "↓")
+        : "";
+      th.appendChild(marca);
+      th.addEventListener("click", () => {
+        estado.ordem = estado.ordem === c.k ? "urgencia" : c.k;
+        render();
+      });
+      th.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          estado.ordem = estado.ordem === c.k ? "urgencia" : c.k;
+          render();
+        }
+      });
+    }
+    tr.appendChild(th);
+  }
+  head.appendChild(tr);
+
+  // A tabela mostra o que precisa de acao MAIS as linhas bloqueadas por
+  // falta de confianca. Excluir as bloqueadas esconderia justamente o
+  // problema que o dono precisa resolver: "o estoque desta loja esta
+  // errado, corrija o inventario". Elas nao entram no total do pedido
+  // (calcular() ja zera a quantidade), mas precisam ser visiveis.
+  const doFornecedor = agg.ativos
+    .concat(agg.bloqueadas)
+    .filter((l) => l.fornecedor === estado.fornecedor);
+  const linhas = ordenar(doFornecedor);
+  const body = el("tabela-body");
+  body.textContent = "";
+
+  const maxCob = Math.max(1, ...linhas.map((l) => (isFinite(l.cobertura) ? l.cobertura : 0)));
+
+  // No escopo "todas as lojas" a mesma peca aparece uma vez por loja: a
+  // ordenacao vale dentro de cada grupo, e o grupo precisa ser nomeado.
+  const agrupar = estado.loja === 0;
+  const grupos = agrupar ? DADOS.lojas.map((l) => l.loja_id).filter((id) => linhas.some((l) => l.loja_id === id)) : [];
+
+  function linhaDeGrupo(id) {
+    const doGrupo = linhas.filter((l) => l.loja_id === id);
+    const cent = doGrupo.reduce((s, l) => s + l.valorCent, 0);
+    const un = doGrupo.reduce((s, l) => s + (l.qtd || 0), 0);
+    // Volume por unidade de medida: KG + DZ + CX nao formam um numero
+    // fisico. Somar tudo em "un" e dimensionalmente falso - o mesmo
+    // defeito corrigido no rodape tem de valer no cabecalho de grupo.
+    const volGrupo = resumirUnidades(doGrupo);
+    const tr = document.createElement("tr");
+    tr.className = "grp";
+    const td = document.createElement("td");
+    td.colSpan = COLUNAS.length;
+    const n = document.createElement("span");
+    n.className = "grp__n";
+    n.textContent = lojaNome(id);
+    const sum = document.createElement("span");
+    sum.className = "grp__sum";
+    sum.textContent = `${fmtInt(doGrupo.length)} SKUs · ${volGrupo} · ${fmtBRLcents(cent)}`;
+    td.append(n, sum);
+    tr.appendChild(td);
+    return tr;
+  }
+
+  function linhaDeItem(l) {
+    const tr = document.createElement("tr");
+
+    const tdSit = document.createElement("td");
+    const sit = document.createElement("span");
+    // Loja com selo abaixo de 85% nao recebe sugestao. A linha continua
+    // visivel - esconder o produto esconderia tambem o problema, que e o
+    // que o dono precisa ver: "nao da para decidir com este estoque".
+    if (l.bloqueada) {
+      sit.className = "sit sit--semconfianca";
+      sit.textContent = "SEM CONFIANÇA";
+      sit.title = `Pior dimensão da loja: ${fmtPct(l.confianca, 1)}. ` +
+        "Corrija o inventário antes de usar a sugestão.";
+    } else {
+      sit.className = "sit sit--" + l.situacao.toLowerCase();
+      sit.textContent = l.situacao;
+    }
+    tdSit.appendChild(sit);
+
+    const tdNome = document.createElement("td");
+    tdNome.className = "c-sku";
+    tdNome.textContent = l.nome;
+
+    const tdDep = document.createElement("td");
+    tdDep.className = "c-dep";
+    tdDep.textContent = l.dep;
+
+    const tdEst = document.createElement("td");
+    tdEst.className = "c-num num";
+    tdEst.textContent = fmtDec(l.estoque, 0);
+
+    const tdDem = document.createElement("td");
+    tdDem.className = "c-num num";
+    tdDem.textContent = fmtDec(l.demanda, 2);
+
+    const tdCob = document.createElement("td");
+    tdCob.className = "c-num num";
+    const barra = document.createElement("span");
+    barra.className = "bar" + (l.situacao === "RUPTURA" ? " bar--ruptura" : l.situacao === "CRITICO" ? " bar--critico" : "");
+    barra.style.width = Math.round(Math.min(1, (isFinite(l.cobertura) ? l.cobertura : maxCob) / maxCob) * 34) + "px";
+    const txtCob = document.createElement("span");
+    txtCob.textContent = l.situacao === "RUPTURA" ? "0d" : isFinite(l.cobertura) ? fmtDec(l.cobertura, 1) + "d" : "–";
+    tdCob.append(barra, txtCob);
+
+    const tdPp = document.createElement("td");
+    tdPp.className = "c-num num";
+    tdPp.textContent = fmtDec(l.ponto, 1);
+
+    const tdQtd = document.createElement("td");
+    tdQtd.className = "c-num num";
+    tdQtd.style.fontWeight = "600";
+    // Unidade ao lado do número: "405 UN" e "405 KG" sao pedidos
+    // diferentes. Sem isto o comprador nao sabe o que pedir, e um
+    // SKU medido em KG vendido em caixa muda o volume em 12x.
+    tdQtd.textContent = fmtInt(l.qtd);
+    if (l.unidade && l.unidade !== "UN") {
+      const suf = document.createElement("span");
+      suf.className = "unidade";
+      suf.textContent = " " + l.unidade;
+      tdQtd.appendChild(suf);
+    }
+
+    const tdVal = document.createElement("td");
+    tdVal.className = "c-num num";
+    tdVal.textContent = fmtBRLcents(l.valorCent);
+
+    const tdLead = document.createElement("td");
+    tdLead.className = "c-num num";
+    tdLead.textContent = l.lead + "d";
+
+    tr.append(tdSit, tdNome, tdDep, tdEst, tdDem, tdCob, tdPp, tdQtd, tdVal, tdLead);
+    return tr;
+  }
+
+  if (agrupar) {
+    for (const id of grupos) {
+      body.appendChild(linhaDeGrupo(id));
+      for (const l of linhas.filter((x) => x.loja_id === id)) body.appendChild(linhaDeItem(l));
+    }
+  } else {
+    for (const l of linhas) body.appendChild(linhaDeItem(l));
+  }
+
+  const titulo = el("picking-title");
+  titulo.textContent = estado.fornecedor || "–";
+  const sub = document.createElement("span");
+  const nomes = new Set(linhas.map((l) => l.nome)).size;
+  // Sob "todas as lojas" a linha e um par (loja, SKU): dizer "162 SKUs"
+  // seria contar a mesma peca tres vezes.
+  const contagem = agrupar
+    ? `${fmtInt(nomes)} SKUs em ${grupos.length} lojas`
+    : `${fmtInt(linhas.length)} SKUs`;
+  sub.textContent = `  ${contagem} · lead ${(agregarDoFornecedor(linhas) || {}).lead || 0} dias`;
+  titulo.appendChild(sub);
+
+  const cent = linhas.reduce((s, l) => s + l.valorCent, 0);
+  // Volume por unidade de medida (KG + UN + PCT nao formam um numero
+  // fisico). A funcao e compartilhada com o cabecalho de grupo.
+  const volume = resumirUnidades(linhas);
+
+  el("picking-total").innerHTML =
+    `${fmtBRLcents(cent)}<small>${volume} em ${fmtInt(nomes)} SKUs</small>`;
+
+  el("picking-hint").textContent =
+    !linhas.length
+      ? "Nenhum SKU deste fornecedor precisa de compra neste nível."
+      : agrupar
+        ? "Ordenado por urgência dentro de cada loja. Clique num título de coluna para reordenar."
+        : "Ordenado por urgência. Clique num título de coluna para reordenar.";
+
+  el("tabela-caption").textContent =
+    !linhas.length
+      ? "Lista de compra vazia: nenhum SKU deste fornecedor precisa de compra neste nível."
+      : `Lista de compra de ${estado.fornecedor || "fornecedor"}, ` +
+        (agrupar ? `${fmtInt(nomes)} SKUs em ${grupos.length} lojas, ` : `${fmtInt(linhas.length)} SKUs, `) +
+        `total ${fmtBRLcents(cent)}.`;
+
+  // ------------------------------------------------------------------
+  // Duas restauracoes no fim de toda renderizacao.
+  //
+  // 1. FOCO. O thead e recriado a cada render; sem devolver o foco, quem
+  //    ordena por teclado cai no body e o Tab seguinte pula a tabela.
+  // 2. SCROLL. Trocar de fornecedor mantinha a rolagem na posicao
+  //    anterior: a lista nova entrava começando no 18o item, com as 17
+  //    rupturas escondidas acima. O dono concluia que aquele fornecedor
+  //    nao tinha faltas - o oposto do que a tela deveria dizer.
+  // ------------------------------------------------------------------
+  if (focoChave) {
+    const th = head.querySelector(`th[data-chave="${focoChave}"]`);
+    if (th) th.focus();
+  }
+
+  const scroller = el("tabela")?.closest(".table-scroll");
+  if (scroller) scroller.scrollTop = 0;
+}
+
+function agregarDoFornecedor(linhas) {
+  if (!linhas.length) return null;
+  return { lead: Math.max(...linhas.map((l) => l.lead)) };
+}
+
+/* ---------------------------------------------------------------------
+   A perda
+   --------------------------------------------------------------------- */
+function renderPerda(agg) {
+  const p = DADOS.perda.find((x) => x.loja_id === estado.loja) || DADOS.perda[0];
+  el("perda-receita").textContent = fmtBRL(p.receita);
+
+  // Equivalencia honesta: nao comparamos 12 meses de perda com um pedido
+  // semanal como se fosse lucro. Dizemos quantos pedidos do tamanho deste
+  // a perda financiaria; o numero acompanha o filtro e o nivel.
+  const pedidos = agg.cent > 0 ? p.receita / (agg.cent / 100) : 0;
+  el("perda-equiv").innerHTML =
+    `<b>${fmtInt(p.eventos)}</b> eventos de ruptura, <b>${fmtInt(p.unidades)}</b> unidades ` +
+    `que ninguém comprou em <b>${fmtInt(p.skus)}</b> SKUs. ` +
+    (pedidos >= 1
+      ? `Em valor, equivale a <b>${fmtDec(pedidos, 1)}</b> pedidos como o desta semana.`
+      : "");
+
+  const rup = DADOS.ruptura.find((x) => x.loja_id === estado.loja) || DADOS.ruptura[0];
+  el("ruptura-taxa").textContent = fmtPct(rup.taxa_pct, 2);
+  el("ruptura-meta").innerHTML =
+    `<b>${fmtInt(rup.com_ruptura)}</b> de ${fmtInt(rup.sku_dia)} SKU-dia com estoque zerado. ` +
+    `O benchmark global do setor é 8,3% (Nielsen) e 10–12% no Brasil (Neogrid).`;
+
+  const rec = DADOS.reconstrucao.filter((x) => x.loja_id === estado.loja);
+  const recon = rec.find((x) => x.fonte_demanda === "reconstruida") || { linhas: 0, pct: 0 };
+  const obsRup = rec.find((x) => x.fonte_demanda === "observada_em_ruptura") || { linhas: 0, pct: 0 };
+  el("reconstruida-valor").textContent = fmtInt(recon.linhas);
+  el("reconstruida-meta").innerHTML =
+    `${fmtPct(recon.pct, 2)} das linhas de demanda foram reconstruídas, mais ` +
+    `${fmtInt(obsRup.linhas)} registradas em ruptura sem referência melhor. ` +
+    `Sem isso, o modelo aprenderia a pedir menos justamente do que mais falta.`;
+
+  renderChart();
+  renderOffenders();
+}
+function renderChart() {
+  const serie = DADOS.perda_mes
+    .filter((m) => m.loja_id === estado.loja)
+    .sort((a, b) => a.ano_mes.localeCompare(b.ano_mes));
+
+  // Limpa o grafico: sem isto, trocar para uma loja sem série deixava
+  // as 24 barras da loja anterior na tela, com o texto de apoio
+  // descrevendo outro conjunto.
+  const plot = el("chart");
+  if (!serie.length) {
+    plot.textContent = "";
+    const ax = el("chart-axis");
+    if (ax) ax.textContent = "";
+    return;
+  }
+
+  const max = Math.max(1, ...serie.map((m) => m.receita));
+  const pico = serie.reduce((a, b) => (b.receita > a.receita ? b : a), serie[0]);
+  const janela = new Set(serie.slice(-12).map((m) => m.ano_mes));
+
+  plot.textContent = "";
+  for (const m of serie) {    const b = document.createElement("div");
+    b.className = "bar-m";
+    b.style.height = Math.max(1.5, (m.receita / max) * 100) + "%";
+    b.dataset.inwindow = String(janela.has(m.ano_mes));
+    b.dataset.peak = String(m.ano_mes === pico.ano_mes);
+    b.dataset.mes = m.ano_mes;
+    b.dataset.receita = String(m.receita);
+    b.dataset.eventos = String(m.eventos);
+    b.addEventListener("mouseenter", mostrarTip);
+    b.addEventListener("mousemove", mostrarTip);
+    b.addEventListener("mouseleave", esconderTip);
+    plot.appendChild(b);
+  }
+
+  const axis = el("chart-axis");
+  axis.textContent = "";
+  for (let i = 0; i < serie.length; i++) {
+    const s = document.createElement("span");
+    const [ano, mes] = serie[i].ano_mes.split("-");
+    // Um rotulo a cada 3 meses, sempre com o ano: "nov" sozinho aparece
+    // duas vezes numa serie de 24 meses e o eixo fica ambiguo.
+    if (i % 3 === 0) {
+      s.textContent = `${MES[Number(mes) - 1]}/${ano.slice(2)}`;
+    }
+    axis.appendChild(s);
+  }
+
+  el("chart-desc").textContent =
+    `Receita perdida por mês, de ${fmtMes(serie[0].ano_mes)} a ${fmtMes(serie[serie.length - 1].ano_mes)}. ` +
+    `O pior mês foi ${fmtMes(pico.ano_mes)}, com ${fmtBRL(pico.receita)} em ${fmtInt(pico.eventos)} rupturas.`;
+
+  // Escala e extremos: no papel nao existe tooltip, entao a magnitude tem
+  // que estar escrita. O pior mes e o topo da escala, entao o segundo
+  // numero e a media mensal, nao o repeteco do pico.
+  const media = serie.reduce((s, m) => s + m.receita, 0) / serie.length;
+  el("chart-scale").innerHTML =
+    `<span>Pior mês <b>${fmtBRL(pico.receita)}</b> em ${fmtMes(pico.ano_mes)}</span>` +
+    `<span>Média mensal <b>${fmtBRL(media)}</b></span>`;
+}
+const tip = el("tip");
+function mostrarTip(ev) {
+  const t = ev.currentTarget;
+  tip.innerHTML = `${fmtMes(t.dataset.mes)}<br><b>${fmtBRL(Number(t.dataset.receita))}</b><br>` +
+    `${fmtInt(Number(t.dataset.eventos))} rupturas`;
+  const r = t.getBoundingClientRect();
+  tip.style.left = (r.left + r.width / 2) + "px";
+  tip.style.top = (r.top - 8) + "px";
+  tip.dataset.on = "true";
+}
+function esconderTip() { tip.dataset.on = "false"; }
+
+function renderOffenders() {
+  const linhas = DADOS.perda_sku
+    .filter((x) => x.loja_id === estado.loja)
+    .sort((a, b) => b.receita - a.receita)
+    .slice(0, 12);
+  if (!linhas.length) return;
+
+  const max = Math.max(1, ...linhas.map((l) => l.receita));
+  const body = el("offenders-body");
+  body.textContent = "";
+
+  for (const l of linhas) {
+    const tr = document.createElement("tr");
+    const t1 = document.createElement("td");
+    t1.textContent = l.produto;
+    t1.style.fontWeight = "500";
+    const t2 = document.createElement("td");
+    t2.className = "c-dep";
+    t2.textContent = l.departamento;
+    const t3 = document.createElement("td");
+    t3.className = "c-num num";
+    t3.textContent = fmtInt(l.eventos);
+    const t4 = document.createElement("td");
+    t4.className = "c-num num";
+    t4.textContent = fmtInt(l.unidades);
+    const t5 = document.createElement("td");
+    t5.className = "c-num num";
+    const barra = document.createElement("span");
+    barra.className = "bar";
+    barra.style.background = "var(--red)";
+    barra.style.width = Math.round((l.receita / max) * 60) + "px";
+    const txt = document.createElement("span");
+    txt.textContent = fmtBRL(l.receita);
+    t5.append(barra, txt);
+    tr.append(t1, t2, t3, t4, t5);
+    body.appendChild(tr);
+  }
+
+  const total = DADOS.perda.find((x) => x.loja_id === estado.loja) || DADOS.perda[0];
+  const soma12 = linhas.reduce((s, l) => s + l.receita, 0);
+  el("offenders-note").textContent =
+    linhas.length
+      ? `Estes ${linhas.length} SKUs concentram ${fmtPct(100 * soma12 / total.receita)} da receita perdida.`
+      : "";
+}
+
+/* ---------------------------------------------------------------------
+   O capital
+   --------------------------------------------------------------------- */
+const FAIXAS = [
+  { rotulo: "0–4 dias", min: 0, max: 5, tom: "red", nota: "abaixo do lead time" },
+  { rotulo: "5–9 dias", min: 5, max: 10, tom: "ochre", nota: "risco" },
+  { rotulo: "10–14 dias", min: 10, max: 15, tom: "green", nota: "saudável" },
+  { rotulo: "15–19 dias", min: 15, max: 20, tom: "green", nota: "saudável" },
+  { rotulo: "20–29 dias", min: 20, max: 30, tom: "", nota: "alto" },
+  { rotulo: "30–39 dias", min: 30, max: 40, tom: "", nota: "parado" },
+  { rotulo: "40+ dias", min: 40, max: Infinity, tom: "", nota: "parado" },
+];
+
+function renderCapital(linhas) {
+  const ev = DADOS.estoque_valor.find((x) => x.loja_id === estado.loja) || DADOS.estoque_valor[0];
+  el("estoque-valor").textContent = fmtBRL(ev.valor_medio_dia);
+  el("estoque-meta").innerHTML =
+    `Média dos ${fmtInt(ev.dias)} dias de histórico. Comprar errado para mais ` +
+    `imobiliza esse capital na prateleira.`;
+
+  const venc = DADOS.vencimento.filter((v) => v.loja_id === estado.loja);
+  const totalVenc = venc.reduce((s, v) => s + v.valor, 0);
+  const skusVenc = venc.reduce((s, v) => s + v.skus, 0);
+  el("vencimento-valor").textContent = fmtBRL(totalVenc);
+  el("vencimento-meta").innerHTML = skusVenc
+    ? `<b>${fmtInt(skusVenc)}</b> SKUs perecíveis com cobertura acima de 70% da validade. ` +
+      `No perecível, excesso não é capital parado: é perda seca.`
+    : "Nenhum perecível com cobertura acima de 70% da validade.";
+
+  // O histograma e uma barra de composicao: o comprimento de cada faixa e
+  // a fatia de SKUs naquela faixa, e a cor diz se a faixa e saudavel.
+  const total = linhas.length || 1;
+  const contagem = FAIXAS.map((f) => ({
+    ...f,
+    n: linhas.filter((l) => {
+      const c = isFinite(l.cobertura) ? l.cobertura : 999;
+      return c >= f.min && c < f.max;
+    }).length,
+  }));
+  const saudavel = contagem.filter((c) => c.tom === "green").reduce((s, c) => s + c.n, 0);
+  const abaixo = contagem.filter((c) => c.min < 10).reduce((s, c) => s + c.n, 0);
+  const acima = contagem.filter((c) => c.min >= 20).reduce((s, c) => s + c.n, 0);
+
+  el("cobertura-nota").innerHTML =
+    `Cada faixa é a fatia dos ${fmtInt(total)} SKUs-loja. ` +
+    `<b>${fmtPct(100 * abaixo / total, 0)}</b> está abaixo de 10 dias, ou seja, ` +
+    `abaixo do lead time típico de 9 a 14 dias: é onde a falta nasce. ` +
+    `<b>${fmtPct(100 * saudavel / total, 0)}</b> está na faixa de 10 a 19 dias. ` +
+    `Só <b>${fmtPct(100 * acima / total, 0)}</b> passa de 20 dias, então aqui o ` +
+    `excesso não é o problema principal: o risco está do outro lado.`;
+
+  const bars = el("cobertura-bars");
+  bars.textContent = "";
+  for (const c of contagem) {
+    const row = document.createElement("div");
+    row.className = "hbar";
+    const lab = document.createElement("span");
+    lab.className = "hbar__label";
+    lab.textContent = c.rotulo;
+    const track = document.createElement("span");
+    track.className = "hbar__track";
+    const fill = document.createElement("span");
+    fill.className = "hbar__fill";
+    if (c.tom) fill.dataset.tone = c.tom;
+    fill.style.width = (100 * c.n / total).toFixed(2) + "%";
+    track.appendChild(fill);
+    const val = document.createElement("span");
+    val.className = "hbar__value num";
+    val.textContent = fmtInt(c.n) + "  " + fmtPct(100 * c.n / total, 0);
+    row.append(lab, track, val);
+    bars.appendChild(row);
+  }
+
+  renderDepartamentos();
+}
+
+function renderDepartamentos() {
+  const deps = DADOS.departamentos
+    .filter((d) => d.loja_id === estado.loja)
+    .sort((a, b) => b.receita - a.receita);
+
+  const body = el("departamentos-body");
+  body.textContent = "";
+  for (const d of deps) {
+    const tr = document.createElement("tr");
+    const t1 = document.createElement("td");
+    t1.textContent = d.departamento;
+    t1.style.fontWeight = "500";
+    const t2 = document.createElement("td");
+    t2.className = "c-num num";
+    t2.textContent = fmtInt(d.skus);
+    const t3 = document.createElement("td");
+    t3.className = "c-num num";
+    t3.textContent = fmtBRL(d.receita);
+    const t4 = document.createElement("td");
+    t4.className = "c-num num";
+    t4.textContent = fmtPct(100 * d.margem / (d.receita || 1), 1);
+    tr.append(t1, t2, t3, t4);
+    body.appendChild(tr);
+  }
+
+  // Curva ABC: concentracao da receita no sortimento inteiro.
+  const abc = DADOS.abc.filter((a) => a.loja_id === estado.loja);
+  const totalSkus = abc.reduce((s, a) => s + a.skus, 0) || 1;
+  const totalRec = abc.reduce((s, a) => s + a.receita, 0) || 1;
+  const A = abc.find((a) => a.classe === "A") || { skus: 0, receita: 0 };
+  const unidade = estado.loja ? "SKUs" : "pares SKU-loja";
+  el("abc-note").innerHTML =
+    `Curva ABC na janela de 12 meses: <b>${fmtInt(A.skus)}</b> ${unidade} ` +
+    `(${fmtPct(100 * A.skus / totalSkus, 0)} do sortimento) fazem ` +
+    `<b>${fmtPct(100 * A.receita / totalRec, 0)}</b> da receita. ` +
+    `É onde o controle de estoque paga; a cauda longa pode ser comprada em lote maior.`;
+}
+
+/* ---------------------------------------------------------------------
+   A confianca
+   --------------------------------------------------------------------- */
+function renderConfianca() {
+  const m = DADOS.metricas;
+  const fig = el("trust-figures");
+  fig.textContent = "";
+
+  const dados = [
+    {
+      rotulo: "Recall de detecção",
+      valor: m ? fmtPct(m.resumo.recall_global_pct, 2) : "—",
+      meta: m ? `${fmtInt(m.resumo.registros_detectados)} de ${fmtInt(m.resumo.registros_injetados)} defeitos injetados foram encontrados.` : "",
+    },
+    {
+      rotulo: "Tipos de defeito testados",
+      valor: m ? fmtInt(m.resumo.tipos_de_defeito) : "—",
+      meta: m ? `${m.resumo.regras_com_recall_100} regras com recall de 100%. Gabarito com posição de cada defeito.` : "",
+    },
+    {
+      rotulo: "Linhas barradas na entrada",
+      valor: m ? fmtInt(m.resumo.registros_em_quarentena) : "—",
+      meta: "Um defeito de conjunto contamina todo o grupo, por isso a quarentena é maior que o número de defeitos.",
+    },
+  ];
+
+  for (const d of dados) {
+    const div = document.createElement("div");
+    const l = document.createElement("p");
+    l.className = "figure__label";
+    l.textContent = d.rotulo;
+    const v = document.createElement("p");
+    v.className = "figure__value num";
+    v.textContent = d.valor;
+    const mm = document.createElement("p");
+    mm.className = "figure__meta";
+    mm.textContent = d.meta;
+    div.append(l, v, mm);
+    fig.appendChild(div);
+  }
+
+  const selos = el("seals");
+  selos.textContent = "";
+  const ordenado = [...DADOS.selo].sort((a, b) => b.score_medio_pct - a.score_medio_pct);
+  for (const s of ordenado) {
+    const dims = DADOS.dimensoes.filter((d) => d.loja === s.loja);
+    const pior = dims.reduce((a, b) => (b.score < a.score ? b : a), dims[0] || { dimensao: "–", score: 0 });
+
+    const row = document.createElement("div");
+    row.className = "seal";
+    const nome = document.createElement("span");
+    nome.className = "seal__name";
+    nome.textContent = s.loja;
+    // O selo vem da PIOR dimensao (migration 011), nao da media. Mostrar
+    // a media ao lado de um selo que ela nao decidiu e um numero que
+    // contradiz o proprio semaforo.
+    const score = document.createElement("span");
+    score.className = "seal__score num";
+    score.textContent = fmtPct(s.pior_dimensao_pct, 2);
+    const tag = document.createElement("span");
+    tag.className = "seal__tag";
+    tag.dataset.selo = s.selo;
+    tag.textContent = s.selo.replace("_", " ");
+    const fraca = document.createElement("span");
+    fraca.className = "seal__weak";
+    fraca.textContent = `Pior dimensão: ${pior.dimensao} (${fmtPct(pior.score, 2)}) · média ${fmtPct(s.score_medio_pct, 2)}`;
+    row.append(nome, score, tag, fraca);
+    selos.appendChild(row);
+  }
+
+  const piorGeral = ordenado.reduce((a, b) => (b.pior_dimensao_pct < a.pior_dimensao_pct ? b : a), ordenado[0]);
+  // O selo controla o pedido: abaixo de 85% na pior dimensao, as linhas
+  // daquela loja saem como "SEM CONFIANCA" e nao entram no total. O
+  // mecanismo esta em calcular(), que le DADOS.selo.
+  el("seals-note").innerHTML =
+    `O selo vem da <b>pior</b> das ${piorGeral.dimensoes_medidas} dimensões medidas em cada loja, não da média: ` +
+    `confiança é o elo mais fraco. Acima de 95% a leitura é <b>confiável</b>; entre 85% e 95% sai com ` +
+    `<b>atenção</b>; <b>abaixo de 85% a sugestão é bloqueada</b> — o produto aparece como "sem confiança" e ` +
+    `não entra no pedido, porque com estoque errado a conta está errada por mais correto que seja o modelo. ` +
+    `Hoje a pior dimensão de todas as lojas é <b>${fmtPct(Math.min(...ordenado.map((s) => s.pior_dimensao_pct)), 2)}</b>.`;
+
+  if (m) {
+    el("rules-summary").textContent =
+      `Ver as ${m.por_regra.length} regras de qualidade e a detecção medida`;
+    el("regras-caption").textContent =
+      `Cada regra foi testada contra um dataset com defeitos conhecidos. ` +
+      `Recall é quanto do injetado foi pego; precisão é quanto do barrado era defeito de verdade.`;
+    const body = el("regras-body");
+    body.textContent = "";
+    const regras = [...m.por_regra].sort((a, b) => a.f1_pct - b.f1_pct);
+    for (const r of regras) {
+      const tr = document.createElement("tr");
+      const celulas = [
+        [r.regra, ""],
+        [r.dimensao, "c-dep"],
+        [fmtInt(r.injetados), "c-num num"],
+        [fmtInt(r.detectados), "c-num num"],
+        [fmtPct(r.recall_pct, 1), "c-num num"],
+        [fmtPct(r.precisao_pct, 1), "c-num num"],
+        [fmtPct(r.f1_pct, 1), "c-num num"],
+      ];      for (const [txt, cls] of celulas) {
+        const td = document.createElement("td");
+        if (cls) td.className = cls;
+        td.textContent = txt;
+        tr.appendChild(td);
+      }
+      body.appendChild(tr);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Dateline + rodape
+   --------------------------------------------------------------------- */
+function renderDateline() {
+  const r = DADOS.referencia;
+  const meses = DADOS.perda_mes.filter((m) => m.loja_id === 0).map((m) => m.ano_mes).sort();
+  el("dateline").innerHTML =
+    `<span><strong>${DADOS.lojas.length}</strong> lojas</span>` +
+    `<span><strong>${fmtInt(r.skus)}</strong> SKUs ativos</span>` +
+    `<span><strong>${fmtInt(r.linhas_venda)}</strong> linhas de venda</span>` +
+    `<span><strong>${fmtInt(DADOS.lotes.reduce((s, l) => s + l.lidas, 0))}</strong> linhas carregadas</span>` +
+    `<span>janela de <strong>${fmtMes(meses[0])}</strong> a <strong>${fmtMes(meses[meses.length - 1])}</strong></span>`;
+
+  el("ref-data").textContent = fmtData(r.fim);
+
+  const total = DADOS.lotes.reduce((s, l) => s + l.lidas, 0);
+  const rej = DADOS.lotes.reduce((s, l) => s + l.rejeitadas, 0);
+  el("foot-meta").innerHTML =
+    `Gerado em ${fmtData(DADOS.gerado_em)} às ${String(DADOS.gerado_em).slice(11, 16)} · ` +
+    `${fmtInt(total)} linhas carregadas · ${fmtInt(rej)} rejeitadas na carga limpa · ` +
+    `${DADOS.regras.ativas} regras de qualidade ativas`;
+}
+
+function renderLojas() {
+  const sel = el("loja");
+  sel.textContent = "";
+  const todas = document.createElement("option");
+  todas.value = "0";
+  todas.textContent = "Todas as lojas";
+  sel.appendChild(todas);
+  for (const l of DADOS.lojas) {
+    const o = document.createElement("option");
+    o.value = String(l.loja_id);
+    o.textContent = `${l.nome} – ${l.cidade}/${l.uf}`;
+    sel.appendChild(o);
+  }
+  sel.value = "0";
+}
+
+/* ---------------------------------------------------------------------
+   Copiar pedido
+   --------------------------------------------------------------------- */
+function textoDoPedido(escopo) {
+  // escopo: "atual" = fornecedor selecionado; "todos" = o pedido inteiro.
+  const agg = agregar(calcular());
+  const alvo = escopo === "todos"
+    ? agg.ativos
+    : agg.ativos.filter((l) => l.fornecedor === estado.fornecedor);
+  const linhas = ordenar(alvo);
+  if (!linhas.length) return "";
+
+  const cent = linhas.reduce((s, l) => s + l.valorCent, 0);
+  const lead = Math.max(...linhas.map((l) => l.lead));
+  const nomes = new Set(linhas.map((l) => l.nome)).size;
+
+  // Unidades nao sao somaveis entre si: KG + PCT + DZ + CX + UN nao e
+  // um numero fisico. O resumo agrupa por unidade de medida.
+  const volume = resumirUnidades(linhas);
+
+  const fornecedores = Array.from(new Set(linhas.map((l) => l.fornecedor))).sort();
+  const out = [];
+  out.push("*PEDIDO GIRO*");
+  out.push(`Referência ${fmtData(DADOS.referencia.fim)} · entrega em até ${lead} dias`);
+  out.push(`Loja: ${estado.loja ? lojaNome(estado.loja) : "todas as lojas"}`);
+  if (fornecedores.length > 1) out.push(`Fornecedores: ${fornecedores.length}`);
+  out.push("");
+
+  // Um bloco por fornecedor: ele nao separa pedido de outro fornecedor
+  // sozinho, e a mensagem precisa chegar divisivel.
+  const porFornecedor = new Map();
+  for (const l of linhas) {
+    if (!porFornecedor.has(l.fornecedor)) porFornecedor.set(l.fornecedor, []);
+    porFornecedor.get(l.fornecedor).push(l);
+  }
+
+  for (const [fornecedor, doFornecedor] of porFornecedor) {
+    const centF = doFornecedor.reduce((s, l) => s + l.valorCent, 0);
+    out.push(`*${fornecedor.toUpperCase()}*`);
+    out.push(
+      `${fmtInt(new Set(doFornecedor.map((l) => l.nome)).size)} SKUs · ` +
+      `${fmtBRLcents(centF)}`);
+    out.push("");
+
+    const blocos = estado.loja === 0
+      ? DADOS.lojas.map((l) => l.loja_id)
+          .filter((id) => doFornecedor.some((l) => l.loja_id === id))
+          .map((id) => ({
+            nome: lojaNome(id),
+            linhas: doFornecedor.filter((l) => l.loja_id === id),
+          }))
+      : [{ nome: null, linhas: doFornecedor }];
+
+    for (const bloco of blocos) {
+      if (bloco.nome) out.push(`  ${bloco.nome.toUpperCase()}`);
+      for (const sit of ["RUPTURA", "CRITICO", "REPOR"]) {
+        const grupo = bloco.linhas.filter((l) => l.situacao === sit);
+        if (!grupo.length) continue;
+        out.push(sit === "RUPTURA" ? "EM FALTA" : sit === "CRITICO" ? "CRITICO" : "REPOR");
+        for (const l of grupo) {
+          out.push(`  ${l.nome} - ${fmtDec(l.qtd, 0)} ${l.unidade || "un"}`);
+        }
+        out.push("");
+      }
+    }
+  }
+
+  out.push(`Total geral: ${nomes} SKUs · ${volume} · ${fmtBRLcents(cent)}`);
+  return out.join("\n");
+}
+
+async function copiar(escopo) {
+  const btn = el(escopo === "todos" ? "copiar-todos" : "copiar");
+  // Rotulo fixo, nao lido do DOM: ler textContent capturava o estado
+  // anterior ("Nao foi possivel copiar") numa segunda tentativa e o
+  // botao nunca voltava ao normal.
+  const rotulo = escopo === "todos" ? "Copiar todos" : "Copiar pedido";
+  const texto = textoDoPedido(escopo);
+  let copiou = false;
+
+  if (!texto) {
+    btn.dataset.done = "erro";
+    btn.textContent = "Nada a pedir";
+    setTimeout(() => { btn.dataset.done = "false"; btn.textContent = rotulo; }, 2000);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(texto);
+    copiou = true;
+  } catch (e) {
+    // Fallback para navegador sem permissao de clipboard (file:// com
+    // política restrita). execCommand esta obsoleto, mas e o unico
+    // caminho sincrono que funciona nesse contexto.
+    const ta = document.createElement("textarea");
+    ta.value = texto;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { copiou = document.execCommand("copy") === true; }
+    catch (_) { copiou = false; }
+    document.body.removeChild(ta);
+  }
+
+  // ------------------------------------------------------------------
+  // So confirma se copiou de fato.
+  //
+  // A versao anterior escrevia "Copiado" incondicionalmente, mesmo
+  // quando o clipboard rejeitava e o execCommand devolvia false. O
+  // usuario colava no WhatsApp do fornecedor e recebia vazio - sem
+  // sinal de erro, ele culpa o WhatsApp ou a si mesmo, e o pedido da
+  // semana nao sai. Falha silenciosa no unico passo que importa.
+  // ------------------------------------------------------------------
+  if (!copiou) {
+    btn.dataset.done = "erro";
+    btn.textContent = "Não foi possível copiar";
+    // Oferece o texto em um dialogo para copia manual: nunca deixa o
+    // usuario sem saida.
+    mostrarTextoParaCopiar(texto);
+    setTimeout(() => {
+      btn.dataset.done = "false";
+      btn.textContent = rotulo;
+    }, 2600);
+    return;
+  }
+
+  btn.dataset.done = "true";
+  btn.textContent = "Copiado";
+  setTimeout(() => { btn.dataset.done = "false"; btn.textContent = rotulo; }, 1800);
+}
+
+/* Dialogo de ultimo recurso quando o clipboard nao funciona: o texto
+   aparece selecionado para o usuario copiar com Ctrl+C. */
+function mostrarTextoParaCopiar(texto) {
+  const dlg = el("dlg-copia");
+  if (!dlg) return;
+  const area = dlg.querySelector("textarea");
+  if (area) {
+    area.value = texto;
+    area.focus();
+    area.select();
+  }
+  if (typeof dlg.showModal === "function") dlg.showModal();
+}
+
+/* ---------------------------------------------------------------------
+   Resumo de volume por unidade de medida.
+
+   Somar KG + PCT + DZ + CX + UN num unico "unidades" e dimensionalmente
+   falso: o dono le "1.824 unidades" e espera 1.824 itens conferiveis,
+   mas o numero mistura quilo com duzia. Devolve algo como
+   "874 UN · 407 KG · 200 DZ".
+   --------------------------------------------------------------------- */
+function resumirUnidades(linhas) {
+  const por = {};
+  for (const l of linhas) {
+    const u = l.unidade || "UN";
+    por[u] = (por[u] || 0) + (l.qtd || 0);
+  }
+  return Object.entries(por)
+    .sort((a, b) => b[1] - a[1])
+    .map(([u, q]) => `${fmtInt(q)} ${u}`)
+    .join(" · ");
+}
+
+/* ---------------------------------------------------------------------
+   Render
+   --------------------------------------------------------------------- */
+// render() recria os segmentos da faixa, entao o no que tinha o foco
+// deixa de existir e o navegador devolve o foco ao body. Quem seleciona
+// um fornecedor pelo teclado perdia o lugar a cada escolha. Guardamos o
+// foco antes e o devolvemos ao segmento equivalente depois.
+function render(de = null) {
+  const foco = de || (document.activeElement && document.activeElement.closest
+    ? document.activeElement.closest(".band__seg")
+    : null);
+  const focoFornecedor = foco ? foco.dataset.fornecedor : null;
+  const focoEraFaixa = !!focoFornecedor;
+
+  const linhas = calcular();
+  const agg = agregar(linhas);
+  renderResumo(agg);
+  renderNivel();
+  renderDelta(agg);
+  renderBand(agg);
+  renderTabela(agg);
+  renderPerda(agg);
+  renderCapital(linhas);
+
+  if (focoEraFaixa) {
+    const alvo = [...el("band").querySelectorAll(".band__seg")]
+      .find((b) => b.dataset.fornecedor === estado.fornecedor);
+    if (alvo) alvo.focus();
+  }
+}
+
+function iniciar() {
+  renderLojas();
+  renderDateline();
+  renderConfianca();
+
+  el("loja").addEventListener("change", (ev) => {
+    estado.loja = Number(ev.target.value);
+    estado.fornecedor = null;
+    render();
+  });
+
+  el("nivel").addEventListener("input", (ev) => {
+    estado.nivel = Number(ev.target.value);
+    render();
+  });
+
+  el("band").addEventListener("click", (ev) => {
+    const b = ev.target.closest(".band__seg");
+    if (!b) return;
+    estado.fornecedor = b.dataset.fornecedor;
+    render();
+    const head = el("picking-title");
+    if (head) head.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+
+  el("band").addEventListener("keydown", (ev) => {
+    const tabs = [...el("band").querySelectorAll(".band__seg")];
+    const i = tabs.findIndex((t) => t.getAttribute("aria-pressed") === "true");
+    if (i < 0) return;
+    let j = -1;
+    if (ev.key === "ArrowRight" || ev.key === "ArrowDown") j = (i + 1) % tabs.length;
+    if (ev.key === "ArrowLeft" || ev.key === "ArrowUp") j = (i - 1 + tabs.length) % tabs.length;
+    if (ev.key === "Home") j = 0;
+    if (ev.key === "End") j = tabs.length - 1;
+    if (j < 0) return;
+    ev.preventDefault();
+    estado.fornecedor = tabs[j].dataset.fornecedor;
+    render();
+  });
+
+  // O botao principal copia o fornecedor SELECIONADO; o segundo copia
+  // o pedido inteiro, com um bloco por fornecedor. Sem essa distincao,
+  // "Copiar pedido" mandava 1 de 6 fornecedores (26% do valor) com
+  // rotulo dizendo que era o pedido todo.
+  el("copiar").addEventListener("click", () => copiar("atual"));
+  el("copiar-todos").addEventListener("click", () => copiar("todos"));
+  el("imprimir").addEventListener("click", () => window.print());
+
+  render();
+}
+
+document.addEventListener("DOMContentLoaded", iniciar);
+</script>
+</body>
+</html>

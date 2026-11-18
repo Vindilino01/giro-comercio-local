@@ -1,0 +1,34 @@
+# Dependencias do projeto Giro.
+#
+# Versoes com faixa minima: permite atualizacao de patch sem quebrar a
+# reprodutibilidade dos numeros do relatorio.
+#
+# Instalacao:
+#     python -m pip install -r requirements.txt
+#
+# Verificado por AST contra os imports reais de src/, dashboard/,
+# scripts/, tests/ e run_all.py. O que estava aqui e nao era importado
+# (pandas, python-docx, psycopg-pool) saiu: dependencia que nao se usa
+# e risco de instalacao sem contrapartida.
+
+# ---- Banco de dados ------------------------------------------------
+psycopg[binary]>=3.1,<4     # driver PostgreSQL; usado por todo o pipeline
+
+# ---- Dados e calculo ----------------------------------------------
+numpy>=2.0,<3               # geracao vetorizada (6,3M de linhas em ~4 min)
+duckdb>=1.0,<3              # benchmark colunar (secao 4.7 e apendice)
+
+# ---- Relatorios ---------------------------------------------------
+pymupdf>=1.24,<2            # valida o PDF gerado (conta paginas, le texto)
+
+# ---- Testes -------------------------------------------------------
+pytest>=8.0,<9              # `python -m pytest` roda tests/test_suite.py
+
+# ---- Nao instalado por pip ----------------------------------------
+# Microsoft Edge ou Chromium: necessario apenas para REGERAR os PDFs de
+# relatorio e pitch (src/relatorio_pdf.py e src/pitch_pdf.py abrem o HTML
+# num browser headless). Os PDFs ja estao em docs/, entao a entrega nao
+# depende disso. O caminho e detectado por `shutil.which` e pelos dois
+# diretorios padrao do Windows.
+#
+# PostgreSQL 18: instalar o servidor (nao e pacote Python). Ver README.

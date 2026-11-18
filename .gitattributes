@@ -1,0 +1,17 @@
+# Normaliza fim de linha: o projeto roda em Windows, mas e lido em
+# qualquer lugar. Sem isto, um clone no Linux ve CRLF em todo arquivo.
+* text=auto eol=lf
+
+# Scripts do PowerShell precisam de CRLF para o Windows PowerShell 5.
+*.ps1 text eol=crlf
+
+# Binarios: nao tratar como texto.
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.dump binary
+*.parquet binary
+
+# Arquivos de dados: nao mostrar diff.
+*.csv text eol=lf

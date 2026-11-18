@@ -1,0 +1,124 @@
+[
+  {
+    "tabela": "loja",
+    "lidas": 3,
+    "aceitas": 3,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 0.02,
+    "linhas_por_segundo": 150.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "fornecedor",
+    "lidas": 6,
+    "aceitas": 6,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 0.01,
+    "linhas_por_segundo": 0.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "produto",
+    "lidas": 420,
+    "aceitas": 420,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 0.09,
+    "linhas_por_segundo": 4667.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "calendario",
+    "lidas": 731,
+    "aceitas": 731,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 0.09,
+    "linhas_por_segundo": 8122.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "promocao",
+    "lidas": 72,
+    "aceitas": 72,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 0.15,
+    "linhas_por_segundo": 480.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "promocao_produto",
+    "lidas": 5385,
+    "aceitas": 5385,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 0.15,
+    "linhas_por_segundo": 35900.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "venda",
+    "lidas": 545093,
+    "aceitas": 545093,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 21.48,
+    "linhas_por_segundo": 25377.0,
+    "por_regra": {
+      "DQ020": 3290
+    }
+  },
+  {
+    "tabela": "item_venda",
+    "lidas": 4159608,
+    "aceitas": 4159608,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 594.56,
+    "linhas_por_segundo": 6996.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "estoque_snapshot",
+    "lidas": 921060,
+    "aceitas": 921060,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 32.29,
+    "linhas_por_segundo": 28525.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "movimentacao_estoque",
+    "lidas": 654910,
+    "aceitas": 654910,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 26.97,
+    "linhas_por_segundo": 24283.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "pedido_compra",
+    "lidas": 37306,
+    "aceitas": 37306,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 2.18,
+    "linhas_por_segundo": 17113.0,
+    "por_regra": {}
+  },
+  {
+    "tabela": "item_pedido",
+    "lidas": 37306,
+    "aceitas": 37306,
+    "rejeitadas": 0,
+    "taxa_aceite_pct": 100.0,
+    "segundos": 5.67,
+    "linhas_por_segundo": 6580.0,
+    "por_regra": {}
+  }
+]

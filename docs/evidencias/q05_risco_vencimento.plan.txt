@@ -1,0 +1,88 @@
+Sort  (cost=45237.25..45237.26 rows=1 width=209) (actual time=670.572..670.717 rows=4.00 loops=1)
+  Sort Key: (sum(e.valor_estoque)) DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=30969
+  CTE estoque_atual
+    ->  Nested Loop  (cost=18996.00..22533.00 rows=19 width=32) (actual time=100.257..104.784 rows=1260.00 loops=1)
+          Buffers: shared hit=16260
+          ->  Finalize GroupAggregate  (cost=18995.57..19383.05 rows=1260 width=20) (actual time=100.227..101.698 rows=1260.00 loops=1)
+                Group Key: fato_estoque_diario.loja_id, fato_estoque_diario.produto_id
+                Buffers: shared hit=11220
+                ->  Gather Merge  (cost=18995.57..19347.77 rows=3024 width=20) (actual time=100.222..101.049 rows=3780.00 loops=1)
+                      Workers Planned: 2
+                      Workers Launched: 2
+                      Buffers: shared hit=11220
+                      ->  Sort  (cost=17995.55..17998.70 rows=1260 width=20) (actual time=80.888..80.944 rows=1260.00 loops=3)
+                            Sort Key: fato_estoque_diario.loja_id, fato_estoque_diario.produto_id
+                            Sort Method: quicksort  Memory: 98kB
+                            Buffers: shared hit=11220
+                            Worker 0:  Sort Method: quicksort  Memory: 98kB
+                            Worker 1:  Sort Method: quicksort  Memory: 98kB
+                            ->  Partial HashAggregate  (cost=17918.06..17930.66 rows=1260 width=20) (actual time=80.376..80.520 rows=1260.00 loops=3)
+                                  Group Key: fato_estoque_diario.loja_id, fato_estoque_diario.produto_id
+                                  Batches: 1  Memory Usage: 121kB
+                                  Buffers: shared hit=11202
+                                  Worker 0:  Batches: 1  Memory Usage: 121kB
+                                  Worker 1:  Batches: 1  Memory Usage: 121kB
+                                  ->  Parallel Seq Scan on fato_estoque_diario  (cost=0.00..15039.75 rows=383775 width=20) (actual time=0.010..18.497 rows=307020.00 loops=3)
+                                        Buffers: shared hit=11202
+          ->  Index Scan using fato_estoque_diario_pkey on fato_estoque_diario e_1  (cost=0.42..2.50 rows=1 width=32) (actual time=0.002..0.002 rows=1.00 loops=1260)
+                Index Cond: ((data_ref = (max(fato_estoque_diario.data_ref))) AND (loja_id = fato_estoque_diario.loja_id) AND (produto_id = fato_estoque_diario.produto_id))
+                Index Searches: 1260
+                Buffers: shared hit=5040
+  InitPlan 2
+    ->  Aggregate  (cost=0.43..0.44 rows=1 width=32) (actual time=0.225..0.225 rows=1.00 loops=1)
+          ->  CTE Scan on estoque_atual  (cost=0.00..0.38 rows=19 width=18) (actual time=0.002..0.079 rows=1260.00 loops=1)
+                Storage: Memory  Maximum Storage: 94kB
+  ->  GroupAggregate  (cost=22261.64..22703.81 rows=1 width=209) (actual time=651.725..670.606 rows=4.00 loops=1)
+        Group Key: p.departamento
+        Buffers: shared hit=24441
+        ->  Nested Loop  (cost=22261.64..22703.75 rows=1 width=79) (actual time=641.932..670.180 rows=308.00 loops=1)
+              Join Filter: ((e.produto_id = p.produto_id) AND ((e.qtd_fim / NULLIF((COALESCE(avg(mv_demanda_diaria.qtd_demanda), '0'::numeric)), '0'::numeric)) > ((COALESCE((p.dias_validade)::integer, 999))::numeric * 0.7)))
+              Rows Removed by Join Filter: 246364
+              Buffers: shared hit=24441
+              ->  Index Scan using ix_dim_produto_departamento on dim_produto p  (cost=0.15..18.55 rows=216 width=19) (actual time=0.013..0.268 rows=216.00 loops=1)
+                    Filter: (e_perecivel AND ativo)
+                    Rows Removed by Filter: 204
+                    Index Searches: 1
+                    Buffers: shared hit=227
+              ->  Materialize  (cost=22261.50..22678.72 rows=1 width=84) (actual time=2.968..3.015 rows=1142.00 loops=216)
+                    Storage: Memory  Maximum Storage: 97kB
+                    Buffers: shared hit=24214
+                    ->  Merge Join  (cost=22261.50..22678.72 rows=1 width=84) (actual time=641.040..643.423 rows=1142.00 loops=1)
+                          Merge Cond: ((e.loja_id = mv_demanda_diaria.loja_id) AND (e.produto_id = mv_demanda_diaria.produto_id))
+                          Buffers: shared hit=24214
+                          ->  Sort  (cost=0.77..0.82 rows=17 width=52) (actual time=105.613..105.663 rows=1142.00 loops=1)
+                                Sort Key: e.loja_id, e.produto_id
+                                Sort Method: quicksort  Memory: 102kB
+                                Buffers: shared hit=9732
+                                ->  CTE Scan on estoque_atual e  (cost=0.00..0.43 rows=17 width=52) (actual time=100.261..105.324 rows=1142.00 loops=1)
+                                      Filter: (qtd_fim > '0'::numeric)
+                                      Rows Removed by Filter: 118
+                                      Storage: Memory  Maximum Storage: 94kB
+                                      Buffers: shared hit=9732
+                          ->  Finalize GroupAggregate  (cost=22260.72..22658.91 rows=1260 width=48) (actual time=535.423..537.410 rows=1260.00 loops=1)
+                                Group Key: mv_demanda_diaria.loja_id, mv_demanda_diaria.produto_id
+                                Buffers: shared hit=14482
+                                ->  Gather Merge  (cost=22260.72..22612.92 rows=3024 width=48) (actual time=535.408..535.927 rows=2520.00 loops=1)
+                                      Workers Planned: 2
+                                      Workers Launched: 2
+                                      Buffers: shared hit=14482
+                                      ->  Sort  (cost=21260.70..21263.85 rows=1260 width=48) (actual time=118.804..118.881 rows=840.00 loops=3)
+                                            Sort Key: mv_demanda_diaria.loja_id, mv_demanda_diaria.produto_id
+                                            Sort Method: quicksort  Memory: 181kB
+                                            Buffers: shared hit=14482
+                                            Worker 0:  Sort Method: quicksort  Memory: 25kB
+                                            Worker 1:  Sort Method: quicksort  Memory: 181kB
+                                            ->  Partial HashAggregate  (cost=21180.06..21195.81 rows=1260 width=48) (actual time=118.282..118.531 rows=840.00 loops=3)
+                                                  Group Key: mv_demanda_diaria.loja_id, mv_demanda_diaria.produto_id
+                                                  Batches: 1  Memory Usage: 625kB
+                                                  Buffers: shared hit=14464
+                                                  Worker 0:  Batches: 1  Memory Usage: 65kB
+                                                  Worker 1:  Batches: 1  Memory Usage: 625kB
+                                                  ->  Parallel Seq Scan on mv_demanda_diaria  (cost=0.00..18301.75 rows=383775 width=21) (actual time=0.010..20.510 rows=307020.00 loops=3)
+                                                        Buffers: shared hit=14464
+Planning:
+  Buffers: shared hit=105
+Planning Time: 2.075 ms
+Execution Time: 670.991 ms

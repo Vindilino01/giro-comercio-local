@@ -1,0 +1,40 @@
+{
+  "colunas": [
+    "loja",
+    "contagens",
+    "divergencia_media_pct",
+    "divergencia_p95_pct",
+    "acuracidade_pct",
+    "contagens_divergentes",
+    "classificacao"
+  ],
+  "linhas": [
+    [
+      "Mercadinho da Familia",
+      6168,
+      0.14,
+      0.0,
+      98.77,
+      76,
+      "CONFIAVEL"
+    ],
+    [
+      "Mercado Bom Preco",
+      5946,
+      0.14,
+      0.0,
+      98.71,
+      77,
+      "CONFIAVEL"
+    ],
+    [
+      "Mercado Sao Jorge",
+      6117,
+      0.14,
+      0.0,
+      98.66,
+      82,
+      "CONFIAVEL"
+    ]
+  ]
+}

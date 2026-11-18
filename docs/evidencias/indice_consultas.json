@@ -1,0 +1,191 @@
+{
+  "consultas": [
+    {
+      "numero": "Q01",
+      "nome": "ruptura_demanda_perdida",
+      "pergunta": "Quanto deixei de vender por falta de produto?",
+      "linhas": 1,
+      "duracao_ms": 68.6,
+      "colunas": [
+        "taxa_ruptura_pct",
+        "sku_dia_ruptura",
+        "sku_dia_total",
+        "unidades_perdidas",
+        "receita_perdida",
+        "perda_media_por_evento"
+      ]
+    },
+    {
+      "numero": "Q02",
+      "nome": "sugestao_compra",
+      "pergunta": "O que comprar hoje e quanto custa?",
+      "linhas": 4,
+      "duracao_ms": 1.5,
+      "colunas": [
+        "situacao",
+        "skus",
+        "unidades_em_estoque",
+        "unidades_a_comprar",
+        "valor_total",
+        "cobertura_media_dias"
+      ]
+    },
+    {
+      "numero": "Q02b",
+      "nome": "lista_compra",
+      "pergunta": "Quais SKUs priorizar na compra?",
+      "linhas": 25,
+      "duracao_ms": 1.6,
+      "colunas": [
+        "loja_id",
+        "produto",
+        "departamento",
+        "situacao",
+        "estoque_atual",
+        "demanda_dia_prevista",
+        "cobertura_dias",
+        "ponto_pedido",
+        "quantidade_sugerida",
+        "valor",
+        "fornecedor",
+        "lead_time_dias",
+        "score_qualidade_loja"
+      ]
+    },
+    {
+      "numero": "Q03",
+      "nome": "curva_abc",
+      "pergunta": "Quais 20% dos produtos fazem 80% da receita?",
+      "linhas": 3,
+      "duracao_ms": 1273.8,
+      "colunas": [
+        "classe",
+        "skus",
+        "pct_skus",
+        "receita",
+        "pct_receita",
+        "unidades_media",
+        "dias_com_venda_media",
+        "pct_receita_perecivel"
+      ]
+    },
+    {
+      "numero": "Q04",
+      "nome": "giro_cobertura",
+      "pergunta": "Onde meu dinheiro esta parado?",
+      "linhas": 8,
+      "duracao_ms": 1859.9,
+      "colunas": [
+        "departamento",
+        "skus",
+        "receita_12m",
+        "estoque_medio_valor",
+        "giro_anual",
+        "cobertura_dias",
+        "estoque_atual_valor",
+        "skus_em_ruptura"
+      ]
+    },
+    {
+      "numero": "Q05",
+      "nome": "risco_vencimento",
+      "pergunta": "O que vai vencer e virar prejuizo?",
+      "linhas": 4,
+      "duracao_ms": 250.4,
+      "colunas": [
+        "departamento",
+        "skus_em_risco",
+        "unidades_em_risco",
+        "valor_em_risco",
+        "validade_media_dias",
+        "cobertura_media_dias",
+        "pct_do_estoque_total"
+      ]
+    },
+    {
+      "numero": "Q06",
+      "nome": "acuracidade_inventario",
+      "pergunta": "Posso confiar no estoque do sistema?",
+      "linhas": 3,
+      "duracao_ms": 559.0,
+      "colunas": [
+        "loja",
+        "contagens",
+        "divergencia_media_pct",
+        "divergencia_p95_pct",
+        "acuracidade_pct",
+        "contagens_divergentes",
+        "classificacao"
+      ]
+    },
+    {
+      "numero": "Q07",
+      "nome": "sazonalidade",
+      "pergunta": "Quando eu vendo mais?",
+      "linhas": 7,
+      "duracao_ms": 760.1,
+      "colunas": [
+        "dia_semana_iso",
+        "nome_dia_semana",
+        "receita_media",
+        "fator_dia_semana",
+        "classificacao",
+        "dias_observados"
+      ]
+    },
+    {
+      "numero": "Q08",
+      "nome": "otif_fornecedores",
+      "pergunta": "Qual fornecedor me deixa na mao?",
+      "linhas": 6,
+      "duracao_ms": 27.3,
+      "colunas": [
+        "fornecedor",
+        "entregas",
+        "no_prazo_pct",
+        "completo_pct",
+        "otif_pct",
+        "atraso_medio_dias",
+        "atraso_maximo_dias",
+        "desvio_atraso",
+        "valor_total_comprado",
+        "classificacao"
+      ]
+    },
+    {
+      "numero": "Q09",
+      "nome": "lift_promocao",
+      "pergunta": "A promocao valeu a pena?",
+      "linhas": 8,
+      "duracao_ms": 3649.4,
+      "colunas": [
+        "departamento",
+        "skus_promovidos",
+        "lift_volume",
+        "lift_receita",
+        "lift_margem",
+        "skus_com_ganho_receita",
+        "skus_com_ganho_margem",
+        "pct_promocoes_rentaveis"
+      ]
+    },
+    {
+      "numero": "Q10",
+      "nome": "painel_qualidade",
+      "pergunta": "Posso confiar nos numeros que estou vendo?",
+      "linhas": 21,
+      "duracao_ms": 188.2,
+      "colunas": [
+        "bloco",
+        "item",
+        "categoria",
+        "ocorrencias",
+        "pct_do_total",
+        "score_medio",
+        "ultima_carga",
+        "idade_dias"
+      ]
+    }
+  ],
+  "gerado_em": "2026-11-18 15:19:59"
+}

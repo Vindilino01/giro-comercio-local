@@ -1,0 +1,66 @@
+# ---------------------------------------------------------------------
+# Dados gerados
+# ---------------------------------------------------------------------
+# Os CSVs de bronze são o resultado do gerador. Reproduzíveis em ~4 min
+# com `python src/gerador.py`, e 6,3 milhões de linhas não pertencem ao
+# repositório.
+data/bronze/
+data/bronze_sujo/
+data/bronze_teste/
+data/*_teste/
+
+# Backup do banco: é evidência, mas pesa 180 MB. Fica fora do git e é
+# entregue à parte (ou regenerado com `python src/backup.py`).
+data/backup_giro.dump
+data/*.dump
+
+# Evidências: versionadas. São a prova do trabalho — resultados das
+# consultas e os planos de execução que o relatório cita. Os planos
+# somam 50 KB e são a única prova de que o índice é realmente usado.
+
+# ---------------------------------------------------------------------
+# Estado de execução
+# ---------------------------------------------------------------------
+logs/
+*.log
+
+# Cluster PostgreSQL: nunca dentro do repositório. O local canônico é
+# %USERPROFILE%\.giro-pg (ver scripts/pg.ps1).
+pgdata/
+logs/pgdata/
+
+# ---------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+.env
+
+# ---------------------------------------------------------------------
+# Node (usado só pelos verificadores de layout do painel)
+# ---------------------------------------------------------------------
+node_modules/
+package-lock.json
+
+# ---------------------------------------------------------------------
+# Sistema e editores
+# ---------------------------------------------------------------------
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~
+
+# ---------------------------------------------------------------------
+# Temporários de trabalho
+# ---------------------------------------------------------------------
+scripts/_*.py
+scripts/_*.js
+*.tmp
+*.bak

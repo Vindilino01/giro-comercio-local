@@ -1,0 +1,33 @@
+Sort  (cost=237958.39..237958.41 rows=8 width=161) (actual time=3886.844..3886.846 rows=8.00 loops=1)
+  Sort Key: (round(avg(((a.rec_promo / (NULLIF(a.dias_promo, 0))::numeric) / NULLIF((a.rec_normal / (NULLIF(a.dias_normal, 0))::numeric), '0'::numeric))), 2)) DESC NULLS LAST
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=2849179
+  ->  GroupAggregate  (cost=0.58..237958.27 rows=8 width=161) (actual time=3871.239..3886.830 rows=8.00 loops=1)
+        Group Key: p.departamento
+        Buffers: shared hit=2849179
+        ->  Nested Loop  (cost=0.58..237955.47 rows=22 width=217) (actual time=3717.040..3885.664 rows=420.00 loops=1)
+              Join Filter: (a.produto_id = p.produto_id)
+              Rows Removed by Join Filter: 87990
+              Buffers: shared hit=2849179
+              ->  Index Scan using ix_dim_produto_departamento on dim_produto p  (cost=0.15..18.55 rows=420 width=17) (actual time=0.011..0.147 rows=420.00 loops=1)
+                    Index Searches: 1
+                    Buffers: shared hit=227
+              ->  Materialize  (cost=0.43..237798.69 rows=22 width=216) (actual time=0.138..9.232 rows=210.50 loops=420)
+                    Storage: Memory  Maximum Storage: 57kB
+                    Buffers: shared hit=2848952
+                    ->  Subquery Scan on a  (cost=0.43..237798.58 rows=22 width=216) (actual time=57.811..3874.566 rows=420.00 loops=1)
+                          Buffers: shared hit=2848952
+                          ->  GroupAggregate  (cost=0.43..237798.36 rows=22 width=216) (actual time=57.810..3874.391 rows=420.00 loops=1)
+                                Group Key: f.produto_id
+                                Filter: ((count(*) FILTER (WHERE (bool_or(f.em_promocao))) >= 5) AND (count(*) FILTER (WHERE (NOT (bool_or(f.em_promocao)))) >= 30))
+                                Buffers: shared hit=2848952
+                                ->  GroupAggregate  (cost=0.43..227814.21 rows=307020 width=109) (actual time=0.066..3809.018 rows=278375.00 loops=1)
+                                      Group Key: f.produto_id, f.data_venda
+                                      Buffers: shared hit=2848952
+                                      ->  Index Scan using ix_fato_vendas_produto on fato_vendas f  (cost=0.43..160426.50 rows=4134324 width=30) (actual time=0.008..2326.113 rows=4134291.00 loops=1)
+                                            Index Searches: 1
+                                            Buffers: shared hit=2848952
+Planning:
+  Buffers: shared hit=9
+Planning Time: 0.432 ms
+Execution Time: 3886.933 ms

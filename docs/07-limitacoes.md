@@ -1,0 +1,372 @@
+# 4.7 — Limitações e próximos passos
+
+## Onde a escolha atual pode falhar
+
+Nenhuma arquitetura é universal. Esta seção lista os cenários em que o PostgreSQL
+monolítico **deixaria de ser a escolha correta**, com o gatilho concreto de
+mudança.
+
+### Limitação 1 — Varredura analítica acima de ~500M de linhas
+
+**O sintoma:** o dashboard passa de 3 segundos para carregar, e `EXPLAIN ANALYZE`
+mostra `Seq Scan` em `fato_vendas` dominando o tempo.
+
+**Por que acontece:** o PostgreSQL armazena linha a linha. Uma agregação que lê 3
+colunas de 500M de linhas paga o custo de ler todas as colunas dessas linhas.
+
+**O que muda:** camada colunar para o caminho analítico. O benchmark medido
+(`docs/evidencias/benchmark_duckdb.md`) mostra a magnitude:
+
+<!-- BENCHMARK_INICIO -->
+
+Benchmark medido com `4,134,291`
+linhas em `fato_vendas` (896 MB no PostgreSQL).
+Parquet exportado com compressão ZSTD: `fato_vendas` 34.8 MB, `dim_tempo` 0.01 MB, `dim_produto` 0.01 MB.
+
+| Consulta | PostgreSQL | DuckDB | Razão | Vencedor |
+|---|---|---|---|---|
+| Receita por mes em 24 meses | 668 ms | 63 ms | 10.53× | **DUCKDB** |
+| Curva ABC completa (420 SKUs) | 436 ms | 21 ms | 20.53× | **DUCKDB** |
+| Vendas de um SKU em um mes | 1 ms | 10 ms | 0.09× | **POSTGRES** |
+
+**Leitura do resultado:** PostgreSQL venceu 1 de 3
+consultas e DuckDB venceu 2. O padrão não é acidente:
+
+- **Varredura ampla** (agregação de 24 meses) favorece o colunar, que lê
+  só as colunas usadas e comprime por coluna.
+- **Filtro seletivo** (um SKU em um mês) favorece o row store, que usa o
+  índice B-tree e toca poucas páginas.
+
+É por isso que a conclusão da seção 4.7 não é "trocar de banco", e sim **separar as duas cargas**. Um benchmark que só mostrasse o caso favorável seria propaganda, não evidência — e o cenário real tem os dois padrões convivendo.
+
+<!-- BENCHMARK_FIM -->
+
+**Decisão:** a camada colunar **complementa**, não substitui. O transacional
+continua no PostgreSQL porque estoque exige ACID.
+
+### Limitação 2 — Ingestão em tempo real
+
+**O sintoma:** o cliente quer "ver a venda aparecer no painel em segundos".
+
+**Por que não está no MVP:** a decisão de compra é semanal. Processar em tempo
+real resolveria um problema que ninguém tem — e adicionaria Kafka, schema
+registry, consumer, monitoramento de lag e mais um ponto de falha.
+
+**O que muda se for realmente necessário:** `LISTEN/NOTIFY` do PostgreSQL resolve
+até ~100 eventos/s sem nenhum componente novo. Acima disso, CDC com Debezium +
+Kafka. O modelo já suporta: `venda` tem PK ordenável e não há update destrutivo.
+
+### Limitação 3 — Multi-tenant com isolamento forte (>50 lojas)
+
+**O sintoma:** uma rede com 300 lojas exige que o dado de uma loja não seja
+visível para outra em nível de *processo*, não só de permissão.
+
+**Por que não está no MVP:** RLS resolve isolamento lógico, não físico. Para
+isolamento físico (compliance), cada cliente precisaria de schema ou banco
+próprio — e o `pg_dump` por cliente fica inviável em 300.
+
+**O que muda:** Citus com sharding por `loja_id`, ou banco por tenant com
+provisionamento automatizado. O modelo já tem `loja_id` em todas as tabelas de
+fato, o que torna o sharding possível sem redesenho.
+
+### Limitação 4 — Previsão em SKUs com histórico curto
+
+**O sintoma:** produto novo entra na loja e a previsão é ruído — porque há 5 dias
+de histórico, não 28. Pior: produto que **nunca vendeu** no período ficaria sem
+previsão nenhuma, e portanto sem sugestão de compra.
+
+**O que o sistema faz hoje:** a view `mv_previsao_demanda` cobre o **universo
+completo** de pares SKU-loja ativos (1.260 neste dataset), via `CROSS JOIN` entre
+loja e produto. Para um par sem histórico próprio, usa a **mediana do
+departamento** naquela loja (e, se o departamento inteiro for novo, a mediana da
+loja). A coluna `origem_previsao` marca a procedência:
+
+| Origem | Significado |
+|---|---|
+| `proprio` | o SKU tem série própria; a EWMA foi calculada sobre ela |
+| `departamento` | cold start: mediana do departamento na loja |
+| `loja` | fallback: mediana da loja |
+| `sem_referencia` | nenhum histórico disponível; usa 0,10 un/dia |
+
+**Honestidade sobre a cobertura:** neste dataset, todos os 1.260 pares têm
+histórico (`origem_previsao = 'proprio'`), porque o gerador garante que todo SKU
+seja sorteado ao menos uma vez em 24 meses. O caminho de cold start é **código
+defensivo**, não caminho exercitado — e está declarado como tal. Um dataset real
+com SKU recém-cadastrado é a forma de testá-lo.
+
+**O que falta:** um modelo hierárquico que "empreste" força de séries densas para
+séries esparsas. É a técnica correta (hierarchical forecasting), mas exige mais
+dados do que o MVP tem.
+
+### Limitação 5 — Sazonalidade não capturada por EWMA
+
+**O sintoma:** feriado móvel (Carnaval, Páscoa) muda de data todo ano. A EWMA
+reage, mas com atraso — ela não "sabe" que o Carnaval vem.
+
+**O que o sistema faz:** `mv_previsao_demanda` calcula um `fator_feriado` médio
+por SKU. Isso captura o efeito médio de feriado, não a data específica.
+
+**O que muda:** calendário de eventos com data projetada + modelo que usa o
+`fator_feriado` na data correta, não na média. É extensão do que já existe.
+
+### Limitação 6 — Dados sintéticos
+
+**A limitação mais honesta do projeto.**
+
+O dataset é gerado, não observado. Os parâmetros são calibrados com benchmarks
+públicos (ruptura de 8,3%, curva ABC de 20/80, ticket médio de mercadinho), mas
+**nenhum gerador captura a realidade inteira**.
+
+O que o gerador **não** reproduz:
+
+| Fenômeno real | Consequência |
+|---|---|
+| Cliente que compra sempre o mesmo dia da semana | Subestima a previsibilidade |
+| Canibalização entre marcas (preço sobe, troca de marca) | Ignora elasticidade cruzada |
+| Efeito de vizinhança (concorrente abre ao lado) | Não há variável externa |
+| Sazonalidade local (praia no verão, interior no inverno) | Sazonalidade única para as 3 lojas |
+| Mudança de mix ao longo do tempo | Demanda base constante por SKU |
+
+**Por que isso não invalida o projeto:** a rubrica avalia **arquitetura de dados**,
+não acurácia preditiva. O que se demonstra é que o modelo sustenta a análise, que
+as constraints protegem a integridade e que o pipeline detecta defeitos. Essas
+três coisas são independentes da origem do dado.
+
+**Como resolver:** rodar o mesmo pipeline sobre o dataset público **Corporación
+Favorita** (Kaggle, varejo equatoriano, 125M de linhas) ou o **TEVEC** (varejista
+brasileiro). O modelo já é compatível — é trocar o `Ingestor` de fonte.
+
+#### Defeito do gerador: `quantidade_entregue` era sempre zero — **corrigido**
+
+Encontrado ao construir o painel e registrado aqui em vez de escondido. Fica
+nesta seção como registro do processo, com o desfecho.
+
+**O defeito.** `src/gerador.py` gravava `"quantidade_entregue": "0.000"`
+literalmente, no momento em que o pedido era criado — antes de a entrega
+acontecer — e nunca voltava para atualizar. Consequências medidas na época:
+as 37.306 linhas de `prata.item_pedido` tinham entrega zero,
+`ouro.fato_compras.entrega_completa` era `false` em todas, e a **Q08 (OTIF)**
+devolvia **0,0% para os seis fornecedores**.
+
+Isso não era um achado sobre os fornecedores: era um artefato do gerador. Por
+isso o painel nunca exibiu OTIF. Mostrar "OTIF 0%" ao lado de um pedido
+transformaria um bug em conclusão de negócio, e o dono trocaria de fornecedor
+por causa disso.
+
+**A correção.** O gerador passou a decidir o desfecho de cada pedido quando
+ele chega: 18% atrasam, 12% chegam parciais (55–92% da quantidade), o resto
+chega completo. `sangria` guarda o desfecho e `item_pedido` é reescrito com a
+quantidade efetivamente entregue.
+
+**Resultado medido hoje:**
+
+| Métrica | Valor |
+|---|---|
+| Linhas de pedido | 37.306 |
+| Com entrega > 0 | 36.858 (98,8%) |
+| Entrega completa | 32.513 (87,2%) |
+| Entrega parcial | 4.793 (12,8%) |
+| **OTIF por fornecedor** | **71,3% – 73,1%** |
+| Atraso médio | 3,6 dias |
+
+**Limitação que permanece, e é honesta:** a calibração do gerador dá aos seis
+fornecedores desempenho praticamente igual (71–73%). Com os cortes de
+classificação em 90% e 75%, **todos** caem em "C – CRÍTICO", e a consulta não
+discrimina entre eles. A pergunta "qual fornecedor me deixa na mão?" não tem
+resposta diferenciada neste dataset — é limitação da simulação, não da
+consulta. Num dataset real, a dispersão entre fornecedores é o que faz a Q08
+valer.
+
+## O que mudaria se a startup crescesse 100 vezes
+
+Cenário: de 3 lojas para **300 lojas**.
+
+### Volumetria projetada
+
+| Métrica | Hoje (3 lojas) | 100× (300 lojas) | Fator |
+|---|---|---|---|
+| Linhas de item/ano | 2,08M | 208M | 100× |
+| Linhas totais (24 meses) | 6,36M | 636M | 100× |
+| Tamanho em disco | 3,1 GB | ~150 GB (estimado) | ~48× |
+| Cupons/dia | 630 | 63.000 | 100× |
+| Escritas/s (pico) | ~0,3 | ~30 | 100× |
+| Consultas/dia | ~10 | ~1.000 | 100× |
+
+### O que quebra primeiro — em ordem
+
+| # | Componente | Por que quebra | Quando |
+|---|---|---|---|
+| 1 | **Dashboard (varredura analítica)** | `Seq Scan` de 300× mais linhas | ~30 lojas |
+| 2 | Backup (`pg_dump`) | Janela de backup cresce linearmente | ~100 lojas |
+| 3 | `REFRESH MATERIALIZED VIEW` | Recalcula tudo, toda vez | ~100 lojas |
+| 4 | `work_mem` por conexão | 1.000 consultas × 32 MB > RAM | ~200 lojas |
+| 5 | Escrita concorrente | ~30 inserts/s ainda é trivial | >1.000 lojas |
+
+**Observação importante:** a escrita **não** é o gargalo, nem a 100×. 30
+inserções por segundo é carga leve para PostgreSQL. Isso confirma a análise da
+seção 4.2: o problema é leitura analítica, não transação.
+
+### Arquitetura alvo (100×)
+
+```
+                    ┌─────────────────────────────────┐
+   PDV (300 lojas)  │  PostgreSQL primário            │
+        │           │  - prata (3FN, particionada)    │
+        └──────────►│  - ACID no caminho de estoque   │
+                    └────────────┬────────────────────┘
+                                 │
+                    réplica assíncrona (leitura)
+                                 │
+                    ┌────────────▼────────────────────┐
+                    │  Réplica de leitura             │
+                    │  - dashboard                    │
+                    │  - consultas ad-hoc             │
+                    └────────────┬────────────────────┘
+                                 │
+                    export incremental (partições
+                    antigas, Parquet)
+                                 │
+                    ┌────────────▼────────────────────┐
+                    │  Parquet + DuckDB / ClickHouse  │
+                    │  - histórico > 6 meses          │
+                    │  - benchmark medido: ver acima  │
+                    └─────────────────────────────────┘
+```
+
+**Mudanças concretas, por ordem de implementação:**
+
+1. **Réplica de leitura** — isolamento imediato da carga analítica. Zero mudança
+   de modelo. Resolve o gargalo #1 e #4.
+2. **Retenção por partição** — `DETACH` de partições > 6 meses para Parquet.
+   Reduz o volume ativo em 75%. Resolve #2 e #3.
+3. **`REFRESH` incremental** — recalcular só o último mês em vez de tudo.
+   PostgreSQL 15+ não tem `REFRESH` incremental nativo; a solução é manter
+   tabelas de agregado incrementais ou usar `pg_ivm`.
+4. **Particionamento por loja (Citus)** — só se o isolamento físico for exigido.
+   O modelo já tem `loja_id` em todas as tabelas de fato.
+5. **Camada colunar** — quando a varredura histórica dominar. O benchmark acima
+   mede o ganho real.
+
+### O que **não** mudaria
+
+| Componente | Por quê |
+|---|---|
+| **Modelo 3FN da prata** | Normalização é correta em qualquer escala |
+| **Star schema da ouro** | É o padrão para análise dimensional |
+| **Constraints e domínios** | Integridade é requisito, não otimização |
+| **Catálogo de regras DQ** | A necessidade de medir qualidade cresce com o volume |
+| **Quarentena com payload completo** | O payload guarda a linha inteira: permite reprocessar quando a regra for corrigida |
+| **Chave surrogate + natural** | Multi-tenant exige ainda mais deduplicação |
+| **Idempotência da carga** | Com 300 lojas, reprocessar é rotina |
+
+**A conclusão que importa:** a arquitetura de **dados** sobrevive intacta ao
+crescimento de 100×. O que muda é a **infraestrutura** (réplica, retenção,
+colunar). Isso é o sinal de que a modelagem foi feita com critério — o modelo não
+foi desenhado para o tamanho de hoje.
+
+## Comparação honesta com o que foi prometido
+
+| Prometido na proposta | Entregue | Status |
+|---|---|---|
+| Banco criado com amostra | 6,36M linhas, 90 tabelas | ✅ |
+| ≥5 consultas de negócio | 11 consultas | ✅ |
+| Justificativa de banco com alternativas | 8 alternativas, matriz ponderada | ✅ |
+| Modelo, dicionário, chaves, índices | Tudo implementado e gerado do catálogo | ✅ |
+| Regras de qualidade | 21 regras + medição de recall | ✅ (além do pedido) |
+| LGPD | Minimização na modelagem + DQ019 | ✅ |
+| Backup e controle de acesso | Roles, RLS, restore test | ✅ |
+| Previsão de demanda | SQL (EWMA + sazonalidade) | ✅ (escopo reduzido de propósito) |
+| Painel de decisão | HTML estático gerado do banco | ✅ fora do escopo, mas funcional |
+| Machine learning | **Não feito** | ⚠️ decisão consciente |
+
+## Aprendizados do grupo
+
+Esta seção é exigida pelo edital e é onde normalmente se escreve "aprendemos a
+trabalhar em equipe". Aqui vão os aprendizados **técnicos** que mudaram o projeto.
+
+### 1. Testar constraints revelou dois bugs que a inspeção visual não pegaria
+
+O caso **C11** (cupom duplicado com série NULL) só apareceu porque o teste
+verificava o SQLSTATE esperado. Um teste que apenas chamasse `INSERT` e olhasse
+"não deu erro" teria passado — e o banco teria duplicado receita em produção.
+
+**Lição:** constraint sem teste é decoração. O valor está em provar que ela
+**rejeita**, não em declará-la.
+
+### 2. Float não serve para dinheiro — e o erro é silencioso
+
+A constraint `valor_total = round(quantidade × preço, 2) − desconto` falhava em
+~1 a cada 200 linhas. Causa: `0,82 × 8,25 = 6,765`; Python arredondava para 6,76
+(representação binária) e PostgreSQL para 6,77 (decimal half-up).
+
+**Lição:** dinheiro é `NUMERIC`/`Decimal` em toda a stack, não só no banco. O erro
+não aparece em teste pequeno — aparece em 4 milhões de linhas.
+
+### 3. Subquery correlacionada com `ctid` é O(n²)
+
+A deduplicação de itens usava `WHERE ctid <> (SELECT min(ctid) ...)`. Com 110 mil
+linhas, passou de 90 segundos sem terminar. Reescrita com `ROW_NUMBER() OVER
+(PARTITION BY ...)` rodou em menos de 1 segundo.
+
+**Lição:** em SQL, a forma importa mais que a lógica. A janela transforma O(n²) em
+O(n log n).
+
+### 4. Cascata de rejeição distorce métrica de qualidade
+
+4 itens sem produto injetados apareciam como dezenas de milhares de rejeições,
+porque cada EAN inválido derruba todos os itens dependentes. Medido hoje:
+**171.603** linhas em cascata contra 166 defeitos reais de cadastro — fator de
+mais de mil. O recall ficava ininterpretável.
+
+**Lição:** quando um registro ruim contamina os dependentes, é preciso **separar
+o defeito da consequência**. Daí nasceu a regra DQ021.
+
+### 5. Ruptura não é distribuição uniforme
+
+A primeira tentativa de calibrar ruptura em 2% fez a taxa crescer com o horizonte
+de simulação: 4% em 6 meses, 8% em 24. A causa era estrutural: SKUs negligenciados
+drenavam para sempre.
+
+**Lição:** modelo que não está em equilíbrio produz artefato, não fenômeno. A
+solução foi tornar a negligência **episódica** — e a taxa estabilizou.
+
+### 6. O número certo não é o número que impressiona
+
+A primeira meta era "ruptura de 2%". A pesquisa mostrou que a realidade brasileira
+é **10–12%** e a média global **8,3%**. Manter os 2% seria irrealista; ajustar
+para 8,3% é calibrado e defensável.
+
+**Lição:** benchmark público vale mais que alvo intuitivo. E o relatório fica mais
+forte quando cita a fonte.
+
+### 7. A decisão de não usar ML foi a mais difícil — e a mais acertada
+
+A proposta inicial tinha LightGBM. A leitura da rubrica mostrou que ML vale
+**zero ponto** e os eixos de banco e modelagem valem **6,0**. Trocar 5 dias de
+modelagem por 5 dias de ML teria custado pontos nos dois eixos avaliados.
+
+**Lição:** ler o edital com atenção é uma habilidade técnica. Otimizar o que não é
+avaliado é desperdício — mesmo que seja tecnicamente mais interessante.
+
+### 8. O que não medimos, não sabemos
+
+Antes do laboratório de dados sujos, a afirmação era "temos regras de qualidade".
+Depois, é "detectamos 100% dos defeitos de linha, com precisão de 95%". A segunda
+frase é verificável; a primeira não é.
+
+**Lição:** toda afirmação sobre qualidade de dados precisa de um número atrelado.
+Sem medição, é opinião.
+
+## Próximos passos concretos
+
+| Prioridade | Item | Esforço |
+|---|---|---|
+| **Alta** | Rodar o pipeline sobre o dataset público Favorita/TEVEC | 2 dias |
+| **Alta** | Integração real com um PDV (CSV → API) | 3 dias |
+| **Média** | Previsão hierárquica para SKUs novos (cold start) | 4 dias |
+| **Média** | `REFRESH` incremental das views materializadas | 2 dias |
+| **Média** | Publicar o painel como app interno (FastAPI + o mesmo HTML) | 2 dias |
+| **Baixa** | Alertas por e-mail/WhatsApp quando ruptura passa do limiar | 1 dia |
+| **Baixa** | Teste de restore automatizado no CI | 1 dia |
+| **Futuro** | Sharding por loja com Citus | 1 semana |
+| **Futuro** | Camada colunar para histórico (Parquet/DuckDB) | 1 semana |

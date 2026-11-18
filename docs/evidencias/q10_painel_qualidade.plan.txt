@@ -1,0 +1,186 @@
+Sort  (cost=10137.78..10140.08 rows=920 width=176) (actual time=61.511..68.216 rows=21.00 loops=1)
+  Sort Key: ('REJEICOES_POR_REGRA'::text), (NULL::numeric) NULLS FIRST, (count(q.quarentena_id)) DESC
+  Sort Method: quicksort  Memory: 26kB
+  Buffers: shared hit=944
+  CTE referencia
+    ->  Finalize Aggregate  (cost=9672.11..9672.12 rows=1 width=4) (actual time=59.084..65.776 rows=1.00 loops=1)
+          Buffers: shared hit=740
+          ->  Gather  (cost=9671.89..9672.10 rows=2 width=4) (actual time=58.684..65.771 rows=3.00 loops=1)
+                Workers Planned: 2
+                Workers Launched: 2
+                Buffers: shared hit=740
+                ->  Partial Aggregate  (cost=8671.89..8671.90 rows=1 width=4) (actual time=35.857..35.864 rows=1.00 loops=3)
+                      Buffers: shared hit=740
+                      ->  Parallel Append  (cost=0.29..8099.33 rows=229023 width=4) (actual time=0.176..27.249 rows=181697.67 loops=3)
+                            Buffers: shared hit=740
+                            ->  Parallel Index Only Scan using venda_2023_12_loja_id_data_venda_idx on venda_2023_12 venda_2  (cost=0.29..343.29 rows=16400 width=4) (actual time=0.206..2.570 rows=27880.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=37
+                            ->  Parallel Index Only Scan using venda_2024_12_loja_id_data_venda_idx on venda_2024_12 venda_14  (cost=0.29..338.26 rows=16069 width=4) (actual time=0.166..2.486 rows=27317.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=38
+                            ->  Parallel Index Only Scan using venda_2025_07_loja_id_data_venda_idx on venda_2025_07 venda_21  (cost=0.29..296.45 rows=14106 width=4) (actual time=0.218..2.379 rows=23980.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=33
+                            ->  Parallel Index Only Scan using venda_2024_07_loja_id_data_venda_idx on venda_2024_07 venda_9  (cost=0.29..295.92 rows=14018 width=4) (actual time=0.183..2.189 rows=23831.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=34
+                            ->  Parallel Index Only Scan using venda_2024_08_loja_id_data_venda_idx on venda_2024_08 venda_10  (cost=0.29..291.76 rows=13912 width=4) (actual time=0.166..2.245 rows=23650.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=32
+                            ->  Parallel Index Only Scan using venda_2025_10_loja_id_data_venda_idx on venda_2025_10 venda_24  (cost=0.29..291.56 rows=13842 width=4) (actual time=0.152..2.273 rows=23531.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=33
+                            ->  Parallel Index Only Scan using venda_2025_08_loja_id_data_venda_idx on venda_2025_08 venda_22  (cost=0.29..291.20 rows=13941 width=4) (actual time=0.162..2.169 rows=23700.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=31
+                            ->  Parallel Index Only Scan using venda_2025_05_loja_id_data_venda_idx on venda_2025_05 venda_19  (cost=0.29..290.00 rows=13758 width=4) (actual time=0.138..2.119 rows=23388.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=33
+                            ->  Parallel Index Only Scan using venda_2024_11_loja_id_data_venda_idx on venda_2024_11 venda_13  (cost=0.29..287.69 rows=13692 width=4) (actual time=0.108..2.076 rows=23276.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=32
+                            ->  Parallel Index Only Scan using venda_2024_05_loja_id_data_venda_idx on venda_2024_05 venda_7  (cost=0.29..286.40 rows=13563 width=4) (actual time=0.125..2.073 rows=23057.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=33
+                            ->  Parallel Index Only Scan using venda_2024_10_loja_id_data_venda_idx on venda_2024_10 venda_12  (cost=0.29..284.76 rows=13534 width=4) (actual time=0.115..0.771 rows=7669.00 loops=3)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=34
+                            ->  Parallel Index Only Scan using venda_2023_11_loja_id_data_venda_idx on venda_2023_11 venda_1  (cost=0.29..280.59 rows=13368 width=4) (actual time=0.110..1.938 rows=22725.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=30
+                            ->  Parallel Index Only Scan using venda_2025_03_loja_id_data_venda_idx on venda_2025_03 venda_17  (cost=0.29..275.06 rows=13069 width=4) (actual time=0.151..1.974 rows=22217.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=30
+                            ->  Parallel Index Only Scan using venda_2024_03_loja_id_data_venda_idx on venda_2024_03 venda_5  (cost=0.29..274.77 rows=13053 width=4) (actual time=0.172..2.401 rows=22190.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=30
+                            ->  Parallel Index Only Scan using venda_2024_06_loja_id_data_venda_idx on venda_2024_06 venda_8  (cost=0.29..273.12 rows=12964 width=4) (actual time=0.101..2.049 rows=22039.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=30
+                            ->  Parallel Index Only Scan using venda_2025_04_loja_id_data_venda_idx on venda_2025_04 venda_18  (cost=0.29..269.58 rows=12832 width=4) (actual time=0.133..1.910 rows=21814.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=29
+                            ->  Parallel Index Only Scan using venda_2024_04_loja_id_data_venda_idx on venda_2024_04 venda_6  (cost=0.29..269.57 rows=12891 width=4) (actual time=0.146..1.940 rows=21915.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=28
+                            ->  Parallel Index Only Scan using venda_2024_09_loja_id_data_venda_idx on venda_2024_09 venda_11  (cost=0.29..268.63 rows=12781 width=4) (actual time=0.193..2.188 rows=21727.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=29
+                            ->  Parallel Index Only Scan using venda_2025_09_loja_id_data_venda_idx on venda_2025_09 venda_23  (cost=0.29..268.19 rows=12757 width=4) (actual time=0.180..2.156 rows=21687.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=29
+                            ->  Parallel Index Only Scan using venda_2025_06_loja_id_data_venda_idx on venda_2025_06 venda_20  (cost=0.29..268.17 rows=12875 width=4) (actual time=0.117..2.045 rows=21887.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=27
+                            ->  Parallel Index Only Scan using venda_2025_01_loja_id_data_venda_idx on venda_2025_01 venda_15  (cost=0.29..252.91 rows=12050 width=4) (actual time=0.184..1.926 rows=20485.00 loops=1)
+                                  Heap Fetches: 26
+                                  Index Searches: 1
+                                  Buffers: shared hit=28
+                            ->  Parallel Index Only Scan using venda_2024_01_loja_id_data_venda_idx on venda_2024_01 venda_3  (cost=0.29..250.25 rows=11906 width=4) (actual time=0.273..2.712 rows=20240.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=27
+                            ->  Parallel Index Only Scan using venda_2024_02_loja_id_data_venda_idx on venda_2024_02 venda_4  (cost=0.29..246.56 rows=11766 width=4) (actual time=0.128..2.229 rows=20002.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=26
+                            ->  Parallel Index Only Scan using venda_2025_02_loja_id_data_venda_idx on venda_2025_02 venda_16  (cost=0.29..242.72 rows=11499 width=4) (actual time=0.147..1.881 rows=19548.00 loops=1)
+                                  Heap Fetches: 0
+                                  Index Searches: 1
+                                  Buffers: shared hit=27
+                            ->  Parallel Seq Scan on venda_2025_11 venda_25  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2025_12 venda_26  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_01 venda_27  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_02 venda_28  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_03 venda_29  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_04 venda_30  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_05 venda_31  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_06 venda_32  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_07 venda_33  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_08 venda_34  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_09 venda_35  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_10 venda_36  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_11 venda_37  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2026_12 venda_38  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2027_01 venda_39  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2027_02 venda_40  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2027_03 venda_41  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2027_04 venda_42  (cost=0.00..11.41 rows=141 width=4) (actual time=0.000..0.000 rows=0.00 loops=1)
+                            ->  Parallel Seq Scan on venda_2027_05 venda_43  (cost=0.00..11.41 rows=141 width=4) (actual time=0.001..0.001 rows=0.00 loops=1)
+  ->  Append  (cost=333.55..420.37 rows=920 width=176) (actual time=2.299..61.500 rows=21.00 loops=1)
+        Buffers: shared hit=944
+        ->  HashAggregate  (cost=333.55..339.85 rows=120 width=176) (actual time=2.298..2.307 rows=1.00 loops=1)
+              Group Key: rq.codigo
+              Filter: (count(q.quarentena_id) > 0)
+              Batches: 1  Memory Usage: 48kB
+              Rows Removed by Filter: 20
+              Buffers: shared hit=200
+              InitPlan 2
+                ->  Aggregate  (cost=63.35..63.36 rows=1 width=8) (actual time=0.487..0.488 rows=1.00 loops=1)
+                      Buffers: shared hit=5
+                      ->  Index Only Scan using ix_quarentena_regra on quarentena  (cost=0.28..55.13 rows=3290 width=0) (actual time=0.113..0.352 rows=3290.00 loops=1)
+                            Heap Fetches: 0
+                            Index Searches: 1
+                            Buffers: shared hit=5
+              ->  Hash Right Join  (cost=18.10..253.74 rows=3290 width=72) (actual time=0.032..1.257 rows=3310.00 loops=1)
+                    Hash Cond: (q.regra_id = rq.regra_id)
+                    Buffers: shared hit=195
+                    ->  Seq Scan on quarentena q  (cost=0.00..226.90 rows=3290 width=12) (actual time=0.006..0.384 rows=3290.00 loops=1)
+                          Buffers: shared hit=194
+                    ->  Hash  (cost=13.60..13.60 rows=360 width=68) (actual time=0.019..0.022 rows=21.00 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                          Buffers: shared hit=1
+                          ->  Seq Scan on regra_qualidade rq  (cost=0.00..13.60 rows=360 width=68) (actual time=0.012..0.015 rows=21.00 loops=1)
+                                Buffers: shared hit=1
+        ->  HashAggregate  (cost=20.50..23.50 rows=200 width=176) (actual time=0.020..0.022 rows=4.00 loops=1)
+              Group Key: metrica_qualidade.dimensao
+              Batches: 1  Memory Usage: 32kB
+              Buffers: shared hit=1
+              ->  Seq Scan on metrica_qualidade  (cost=0.00..16.00 rows=600 width=46) (actual time=0.010..0.011 rows=12.00 loops=1)
+                    Buffers: shared hit=1
+        ->  HashAggregate  (cost=34.92..38.42 rows=200 width=176) (actual time=59.137..59.153 rows=13.00 loops=1)
+              Group Key: lote_carga.origem
+              Batches: 1  Memory Usage: 32kB
+              Buffers: shared hit=742
+              InitPlan 3
+                ->  CTE Scan on referencia  (cost=0.00..0.02 rows=1 width=4) (actual time=59.087..59.088 rows=1.00 loops=1)
+                      Storage: Memory  Maximum Storage: 17kB
+                      Buffers: shared hit=740
+              InitPlan 4
+                ->  CTE Scan on referencia referencia_1  (cost=0.00..0.02 rows=1 width=4) (actual time=0.001..0.001 rows=1.00 loops=1)
+                      Storage: Memory  Maximum Storage: 17kB
+              InitPlan 5
+                ->  Aggregate  (cost=14.37..14.38 rows=1 width=4) (actual time=0.025..0.026 rows=1.00 loops=1)
+                      Buffers: shared hit=1
+                      ->  Seq Scan on lote_carga lote_carga_1  (cost=0.00..13.50 rows=348 width=4) (actual time=0.019..0.023 rows=13.00 loops=1)
+                            Filter: (data_referencia IS NOT NULL)
+                            Buffers: shared hit=1
+              ->  Seq Scan on lote_carga  (cost=0.00..13.50 rows=350 width=40) (actual time=0.008..0.008 rows=13.00 loops=1)
+                    Buffers: shared hit=1
+        ->  Seq Scan on mv_qualidade_loja  (cost=0.00..14.00 rows=400 width=176) (actual time=0.013..0.014 rows=3.00 loops=1)
+              Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=6191 dirtied=23
+Planning Time: 110.157 ms
+Execution Time: 68.665 ms

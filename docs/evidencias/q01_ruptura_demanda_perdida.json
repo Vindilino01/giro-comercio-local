@@ -1,0 +1,20 @@
+{
+  "colunas": [
+    "taxa_ruptura_pct",
+    "sku_dia_ruptura",
+    "sku_dia_total",
+    "unidades_perdidas",
+    "receita_perdida",
+    "perda_media_por_evento"
+  ],
+  "linhas": [
+    [
+      8.77,
+      40312,
+      459900,
+      152273.0,
+      2298078.12,
+      57.01
+    ]
+  ]
+}

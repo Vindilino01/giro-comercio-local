@@ -1,0 +1,95 @@
+{
+  "gerado_em": "2026-11-18 10:57:04",
+  "consultas": {
+    "A_varredura_ampla": {
+      "titulo": "Receita por mes em 24 meses",
+      "descricao": "Varredura de toda a tabela de fatos, agregando por mes. Cenario classico de dashboard anual.",
+      "postgres": {
+        "tempos_ms": [
+          674.39,
+          667.68,
+          651.08
+        ],
+        "mediana_ms": 667.68,
+        "minimo_ms": 651.08,
+        "linhas": 24
+      },
+      "duckdb": {
+        "tempos_ms": [
+          103.88,
+          63.41,
+          60.85
+        ],
+        "mediana_ms": 63.41,
+        "minimo_ms": 60.85,
+        "linhas": 24
+      },
+      "razao_pg_sobre_duck": 10.53,
+      "vencedor": "duckdb"
+    },
+    "B_agregacao_por_sku": {
+      "titulo": "Curva ABC completa (420 SKUs)",
+      "descricao": "Agregacao por SKU com window function para acumulado. Cenario de analise de sortimento.",
+      "postgres": {
+        "tempos_ms": [
+          435.67,
+          450.32,
+          427.53
+        ],
+        "mediana_ms": 435.67,
+        "minimo_ms": 427.53,
+        "linhas": 420
+      },
+      "duckdb": {
+        "tempos_ms": [
+          35.56,
+          21.22,
+          20.82
+        ],
+        "mediana_ms": 21.22,
+        "minimo_ms": 20.82,
+        "linhas": 420
+      },
+      "razao_pg_sobre_duck": 20.53,
+      "vencedor": "duckdb"
+    },
+    "C_filtro_seletivo": {
+      "titulo": "Vendas de um SKU em um mes",
+      "descricao": "Filtro altamente seletivo (~1/4200 da tabela). Cenario onde o indice do row store deveria vencer.",
+      "postgres": {
+        "tempos_ms": [
+          2.92,
+          0.85,
+          0.83
+        ],
+        "mediana_ms": 0.85,
+        "minimo_ms": 0.83,
+        "linhas": 30
+      },
+      "duckdb": {
+        "tempos_ms": [
+          12.94,
+          9.74,
+          9.35
+        ],
+        "mediana_ms": 9.74,
+        "minimo_ms": 9.35,
+        "linhas": 30
+      },
+      "razao_pg_sobre_duck": 0.09,
+      "vencedor": "postgres"
+    }
+  },
+  "tamanhos_parquet_mb": {
+    "fato_vendas": 34.8,
+    "dim_tempo": 0.01,
+    "dim_produto": 0.01
+  },
+  "config": {
+    "postgres": "PostgreSQL 18.3 on x86_64-windows, compiled by msvc-19.44.35225, 64-bit",
+    "fato_vendas_pg": "896 MB",
+    "fato_vendas_bytes": 939130880,
+    "fato_vendas_linhas": 4134291,
+    "duckdb": "2.0.0"
+  }
+}

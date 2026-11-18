@@ -1,0 +1,90 @@
+Sort  (cost=179116.31..179116.81 rows=200 width=217) (actual time=2237.584..2237.592 rows=8.00 loops=1)
+  Sort Key: (sum(v.receita)) DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=953913
+  CTE parametros
+    ->  Result  (cost=0.46..0.47 rows=1 width=8) (actual time=0.016..0.018 rows=1.00 loops=1)
+          Buffers: shared hit=4
+          InitPlan 2
+            ->  Result  (cost=0.45..0.46 rows=1 width=4) (actual time=0.013..0.014 rows=1.00 loops=1)
+                  Buffers: shared hit=4
+                  InitPlan 1
+                    ->  Limit  (cost=0.43..0.45 rows=1 width=4) (actual time=0.012..0.013 rows=1.00 loops=1)
+                          Buffers: shared hit=4
+                          ->  Index Only Scan Backward using fato_vendas_pkey on fato_vendas  (cost=0.43..84556.49 rows=4134324 width=4) (actual time=0.012..0.012 rows=1.00 loops=1)
+                                Heap Fetches: 0
+                                Index Searches: 1
+                                Buffers: shared hit=4
+  ->  GroupAggregate  (cost=179031.99..179108.19 rows=200 width=217) (actual time=2237.437..2237.582 rows=8.00 loops=1)
+        Group Key: v.departamento
+        Buffers: shared hit=953913
+        ->  Sort  (cost=179031.99..179040.39 rows=3360 width=85) (actual time=2237.402..2237.420 rows=420.00 loops=1)
+              Sort Key: v.departamento
+              Sort Method: quicksort  Memory: 51kB
+              Buffers: shared hit=953913
+              ->  Hash Join  (cost=83710.49..178835.19 rows=3360 width=85) (actual time=1453.601..2237.153 rows=420.00 loops=1)
+                    Hash Cond: (v.produto_id = e.produto_id)
+                    Buffers: shared hit=953913
+                    ->  Merge Join  (cost=63618.71..158734.50 rows=3360 width=69) (actual time=1228.875..2012.083 rows=420.00 loops=1)
+                          Merge Cond: (v.produto_id = fato_estoque_diario.produto_id)
+                          Buffers: shared hit=944183
+                          ->  Sort  (cost=63424.40..63432.80 rows=3360 width=49) (actual time=1224.708..1224.809 rows=420.00 loops=1)
+                                Sort Key: v.produto_id
+                                Sort Method: quicksort  Memory: 44kB
+                                Buffers: shared hit=19376
+                                ->  Subquery Scan on v  (cost=63152.00..63227.60 rows=3360 width=49) (actual time=1224.439..1224.607 rows=420.00 loops=1)
+                                      Buffers: shared hit=19376
+                                      ->  HashAggregate  (cost=63152.00..63194.00 rows=3360 width=81) (actual time=1224.438..1224.576 rows=420.00 loops=1)
+                                            Group Key: f.produto_id, p.departamento
+                                            Batches: 1  Memory Usage: 369kB
+                                            Buffers: shared hit=19376
+                                            ->  Hash Join  (cost=18.88..52816.19 rows=1378108 width=23) (actual time=0.188..707.948 rows=2069323.00 loops=1)
+                                                  Hash Cond: (f.produto_id = p.produto_id)
+                                                  Buffers: shared hit=19376
+                                                  ->  Nested Loop  (cost=0.43..49143.71 rows=1378108 width=14) (actual time=0.037..374.166 rows=2069323.00 loops=1)
+                                                        Buffers: shared hit=19367
+                                                        ->  CTE Scan on parametros pr  (cost=0.00..0.02 rows=1 width=8) (actual time=0.001..0.002 rows=1.00 loops=1)
+                                                              Storage: Memory  Maximum Storage: 17kB
+                                                        ->  Index Only Scan using ix_fato_vendas_produto on fato_vendas f  (cost=0.43..35362.61 rows=1378108 width=18) (actual time=0.033..234.377 rows=2069323.00 loops=1)
+                                                              Index Cond: (data_venda > (pr.inicio)::date)
+                                                              Heap Fetches: 0
+                                                              Index Searches: 421
+                                                              Buffers: shared hit=19367
+                                                  ->  Hash  (cost=13.20..13.20 rows=420 width=17) (actual time=0.142..0.142 rows=420.00 loops=1)
+                                                        Buckets: 1024  Batches: 1  Memory Usage: 30kB
+                                                        Buffers: shared hit=9
+                                                        ->  Seq Scan on dim_produto p  (cost=0.00..13.20 rows=420 width=17) (actual time=0.030..0.088 rows=420.00 loops=1)
+                                                              Buffers: shared hit=9
+                          ->  Unique  (cost=194.31..95254.45 rows=420 width=24) (actual time=4.163..786.981 rows=420.00 loops=1)
+                                Buffers: shared hit=924807
+                                ->  Incremental Sort  (cost=194.31..92951.80 rows=921060 width=24) (actual time=4.162..732.750 rows=918868.00 loops=1)
+                                      Sort Key: fato_estoque_diario.produto_id, fato_estoque_diario.data_ref DESC
+                                      Presorted Key: fato_estoque_diario.produto_id
+                                      Full-sort Groups: 420  Sort Method: quicksort  Average Memory: 28kB  Peak Memory: 28kB
+                                      Pre-sorted Groups: 420  Sort Method: quicksort  Average Memory: 198kB  Peak Memory: 199kB
+                                      Buffers: shared hit=924807
+                                      ->  Index Scan using ix_fato_estoque_produto on fato_estoque_diario  (cost=0.42..30317.35 rows=921060 width=24) (actual time=0.020..518.867 rows=921060.00 loops=1)
+                                            Index Searches: 1
+                                            Buffers: shared hit=924804
+                    ->  Hash  (cost=20086.53..20086.53 rows=420 width=40) (actual time=224.717..224.719 rows=420.00 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 31kB
+                          Buffers: shared hit=9730
+                          ->  Subquery Scan on e  (cost=20077.08..20086.53 rows=420 width=40) (actual time=224.449..224.640 rows=420.00 loops=1)
+                                Buffers: shared hit=9730
+                                ->  HashAggregate  (cost=20077.08..20082.33 rows=420 width=104) (actual time=224.447..224.611 rows=420.00 loops=1)
+                                      Group Key: e_1.produto_id
+                                      Batches: 1  Memory Usage: 320kB
+                                      Buffers: shared hit=9730
+                                      ->  Nested Loop  (cost=0.43..18541.98 rows=307020 width=14) (actual time=0.033..134.753 rows=459900.00 loops=1)
+                                            Buffers: shared hit=9730
+                                            ->  CTE Scan on parametros pr_1  (cost=0.00..0.02 rows=1 width=8) (actual time=0.018..0.020 rows=1.00 loops=1)
+                                                  Storage: Memory  Maximum Storage: 17kB
+                                                  Buffers: shared hit=4
+                                            ->  Index Scan using fato_estoque_diario_pkey on fato_estoque_diario e_1  (cost=0.43..15471.76 rows=307020 width=18) (actual time=0.013..71.371 rows=459900.00 loops=1)
+                                                  Index Cond: (data_ref > (pr_1.inicio)::date)
+                                                  Index Searches: 1
+                                                  Buffers: shared hit=9726
+Planning:
+  Buffers: shared hit=20
+Planning Time: 0.612 ms
+Execution Time: 2237.904 ms

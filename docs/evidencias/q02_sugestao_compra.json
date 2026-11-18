@@ -1,0 +1,44 @@
+{
+  "colunas": [
+    "situacao",
+    "skus",
+    "unidades_em_estoque",
+    "unidades_a_comprar",
+    "valor_total",
+    "cobertura_media_dias"
+  ],
+  "linhas": [
+    [
+      "RUPTURA",
+      118,
+      0.0,
+      7356.0,
+      87854.9,
+      0.0
+    ],
+    [
+      "CRITICO",
+      446,
+      13972.0,
+      15944.0,
+      161352.1,
+      6.7
+    ],
+    [
+      "REPOR",
+      217,
+      7330.0,
+      962.0,
+      10370.64,
+      15.4
+    ],
+    [
+      "OK",
+      479,
+      69423.0,
+      0.0,
+      0.0,
+      26.2
+    ]
+  ]
+}

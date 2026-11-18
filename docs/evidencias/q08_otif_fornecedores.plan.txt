@@ -1,0 +1,24 @@
+Sort  (cost=1930.75..1931.25 rows=200 width=268) (actual time=30.257..30.258 rows=6.00 loops=1)
+  Sort Key: (round((avg(CASE WHEN (fc.no_prazo AND fc.entrega_completa) THEN 1.0 ELSE 0.0 END) * '100'::numeric), 1)) DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=499
+  ->  HashAggregate  (cost=1912.60..1923.10 rows=200 width=268) (actual time=30.228..30.247 rows=6.00 loops=1)
+        Group Key: f.razao_social
+        Batches: 1  Memory Usage: 40kB
+        Buffers: shared hit=499
+        ->  Hash Join  (cost=22.38..990.95 rows=36866 width=45) (actual time=0.028..13.180 rows=36858.00 loops=1)
+              Hash Cond: (fc.fornecedor_id = f.fornecedor_id)
+              Buffers: shared hit=499
+              ->  Seq Scan on fato_compras fc  (cost=0.00..871.06 rows=36866 width=21) (actual time=0.012..4.568 rows=36858.00 loops=1)
+                    Filter: (data_entrega IS NOT NULL)
+                    Rows Removed by Filter: 448
+                    Buffers: shared hit=498
+              ->  Hash  (cost=15.50..15.50 rows=550 width=40) (actual time=0.012..0.012 rows=6.00 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                    Buffers: shared hit=1
+                    ->  Seq Scan on dim_fornecedor f  (cost=0.00..15.50 rows=550 width=40) (actual time=0.006..0.007 rows=6.00 loops=1)
+                          Buffers: shared hit=1
+Planning:
+  Buffers: shared hit=104
+Planning Time: 2.455 ms
+Execution Time: 30.308 ms

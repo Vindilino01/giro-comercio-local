@@ -1,0 +1,40 @@
+GroupAggregate  (cost=192849.83..192872.78 rows=200 width=232) (actual time=1652.209..1652.365 rows=3.00 loops=1)
+  Group Key: (CASE WHEN ((acumulado.receita_acumulada / acumulado.receita_total) <= 0.80) THEN 'A'::text WHEN ((acumulado.receita_acumulada / acumulado.receita_total) <= 0.95) THEN 'B'::text ELSE 'C'::text END)
+  Buffers: shared hit=35312
+  ->  Sort  (cost=192849.83..192850.88 rows=420 width=145) (actual time=1652.157..1652.172 rows=420.00 loops=1)
+        Sort Key: (CASE WHEN ((acumulado.receita_acumulada / acumulado.receita_total) <= 0.80) THEN 'A'::text WHEN ((acumulado.receita_acumulada / acumulado.receita_total) <= 0.95) THEN 'B'::text ELSE 'C'::text END)
+        Sort Method: quicksort  Memory: 57kB
+        Buffers: shared hit=35312
+        ->  Subquery Scan on acumulado  (cost=192823.10..192831.53 rows=420 width=145) (actual time=1651.744..1652.013 rows=420.00 loops=1)
+              Buffers: shared hit=35309
+              ->  WindowAgg  (cost=192823.10..192823.13 rows=420 width=225) (actual time=1651.741..1651.831 rows=420.00 loops=1)
+                    Window: w2 AS ()
+                    Storage: Memory  Maximum Storage: 45kB
+                    Buffers: shared hit=35309
+                    ->  WindowAgg  (cost=192809.50..192816.83 rows=420 width=105) (actual time=1651.279..1651.578 rows=420.00 loops=1)
+                          Window: w1 AS (ORDER BY r.receita ROWS UNBOUNDED PRECEDING)
+                          Storage: Memory  Maximum Storage: 17kB
+                          Buffers: shared hit=35309
+                          ->  Sort  (cost=192809.48..192810.53 rows=420 width=73) (actual time=1651.259..1651.297 rows=420.00 loops=1)
+                                Sort Key: r.receita DESC
+                                Sort Method: quicksort  Memory: 44kB
+                                Buffers: shared hit=35309
+                                ->  Subquery Scan on r  (cost=0.70..192791.18 rows=420 width=73) (actual time=19.798..1651.029 rows=420.00 loops=1)
+                                      Buffers: shared hit=35309
+                                      ->  GroupAggregate  (cost=0.70..192786.98 rows=420 width=112) (actual time=19.797..1650.953 rows=420.00 loops=1)
+                                            Group Key: p.produto_id
+                                            Buffers: shared hit=35309
+                                            ->  Merge Join  (cost=0.70..151437.44 rows=4134324 width=55) (actual time=0.017..962.155 rows=4134291.00 loops=1)
+                                                  Merge Cond: (f.produto_id = p.produto_id)
+                                                  Buffers: shared hit=35309
+                                                  ->  Index Only Scan using ix_fato_vendas_produto on fato_vendas f  (cost=0.43..99736.49 rows=4134324 width=23) (actual time=0.007..487.990 rows=4134291.00 loops=1)
+                                                        Heap Fetches: 0
+                                                        Index Searches: 1
+                                                        Buffers: shared hit=34947
+                                                  ->  Index Scan using dim_produto_pkey on dim_produto p  (cost=0.27..20.85 rows=420 width=40) (actual time=0.008..0.366 rows=420.00 loops=1)
+                                                        Index Searches: 1
+                                                        Buffers: shared hit=362
+Planning:
+  Buffers: shared hit=136
+Planning Time: 2.383 ms
+Execution Time: 1652.550 ms

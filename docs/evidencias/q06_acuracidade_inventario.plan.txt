@@ -1,0 +1,33 @@
+Sort  (cost=20056.83..20057.33 rows=200 width=176) (actual time=77.305..83.346 rows=3.00 loops=1)
+  Sort Key: (round((avg(CASE WHEN (CASE WHEN ((e.qtd_fim = '0'::numeric) AND (e.qtd_contada = '0'::numeric)) THEN '0'::numeric WHEN ((e.qtd_fim = '0'::numeric) AND (e.qtd_contada > '0'::numeric)) THEN '100'::numeric ELSE abs(e.divergencia_pct) END <= '5'::numeric) THEN 1.0 ELSE 0.0 END) * '100'::numeric), 2)) DESC
+  Sort Method: quicksort  Memory: 25kB
+  Buffers: shared hit=11232
+  ->  GroupAggregate  (cost=16572.76..20049.19 rows=200 width=176) (actual time=62.277..83.336 rows=3.00 loops=1)
+        Group Key: l.nome
+        Buffers: shared hit=11232
+        ->  Gather Merge  (cost=16572.76..18711.09 rows=18360 width=47) (actual time=54.521..63.956 rows=18231.00 loops=1)
+              Workers Planned: 2
+              Workers Launched: 2
+              Buffers: shared hit=11223
+              ->  Sort  (cost=15572.74..15591.87 rows=7650 width=47) (actual time=35.535..35.864 rows=6077.00 loops=3)
+                    Sort Key: l.nome
+                    Sort Method: quicksort  Memory: 961kB
+                    Buffers: shared hit=11223
+                    Worker 0:  Sort Method: quicksort  Memory: 286kB
+                    Worker 1:  Sort Method: quicksort  Memory: 308kB
+                    ->  Hash Join  (cost=19.23..15079.27 rows=7650 width=47) (actual time=0.449..33.735 rows=6077.00 loops=3)
+                          Hash Cond: (e.loja_id = l.loja_id)
+                          Buffers: shared hit=11205
+                          ->  Parallel Seq Scan on fato_estoque_diario e  (cost=0.00..15039.75 rows=7650 width=23) (actual time=0.031..31.998 rows=6077.00 loops=3)
+                                Filter: (qtd_contada IS NOT NULL)
+                                Rows Removed by Filter: 300943
+                                Buffers: shared hit=11202
+                          ->  Hash  (cost=14.10..14.10 rows=410 width=40) (actual time=0.411..0.412 rows=3.00 loops=3)
+                                Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                Buffers: shared hit=3
+                                ->  Seq Scan on dim_loja l  (cost=0.00..14.10 rows=410 width=40) (actual time=0.406..0.407 rows=3.00 loops=3)
+                                      Buffers: shared hit=3
+Planning:
+  Buffers: shared hit=51
+Planning Time: 1.423 ms
+Execution Time: 83.554 ms
