@@ -18,7 +18,7 @@ banco, a definição dos KPIs, a validação de cada resultado e a defesa no pit
 | Etapa | Uso | Nível de revisão do grupo |
 |---|---|---|
 | Redação das seções do relatório | Estrutura e texto inicial | **Revisão integral** — cada afirmação técnica foi conferida contra o código |
-| DDL (migrations SQL) | Geração inicial do schema | **Revisão linha a linha** + 22 testes de constraint executados |
+| DDL (migrations SQL) | Geração inicial do schema | **Revisão linha a linha** + 23 testes de constraint executados |
 | Gerador de dados sintéticos | Estrutura do código | **Validado por testes de invariante** (`tests/test_gerador.py`) |
 | Pipeline de ingestão | SQL de validação | **Cada regra testada contra o gabarito** de defeitos |
 | Consultas de negócio | SQL inicial | **Resultado conferido manualmente** contra o CSV de origem |

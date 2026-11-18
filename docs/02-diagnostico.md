@@ -41,14 +41,28 @@ Com 24 meses de histórico:
 
 | Entidade | Linhas | Cálculo |
 |---|---|---|
-| `item_venda` | 4.159.608 | 731 dias × 3 lojas × 210 × 8,4 |
-| `venda` | 545.093 | 731 × 3 × 210 |
+| `item_venda` | 4.159.608 | 731 dias × 3 lojas × 210 cupons × 9,03 itens |
+| `venda` | 545.093 | 731 dias × 3 lojas × 248 cupons |
 | `estoque_snapshot` | 921.060 | 731 × 3 × 420 SKUs |
 | `movimentacao_estoque` | 654.910 | eventos de venda, compra e perda |
-| `pedido_compra` + `item_pedido` | 74.612 | ~50 pedidos/dia (37.306 em cada) |
+| `pedido_compra` + `item_pedido` | 74.612 | 37.306 em cada |
 | `promocao_produto` | 5.385 | 72 promoções × ~75 SKUs |
 | Cadastros e calendário | 1.652 | 420 produtos, 731 dias, 72 promoções, 3 lojas, 6 fornecedores, 420 preços |
-| **Total** | **6.362.320** | **3,1 GB em disco** (706 MB de tabelas + 721 MB de índices + 603 MB de staging + 180 MB de views) |
+| **Total** | **6.362.320** | **3.116 MB em disco** |
+
+**De onde vêm os 3.116 MB** (medido por schema, `pg_total_relation_size`):
+
+| Schema | Tabelas (heap) | Índices | Total |
+|---|---|---|---|
+| `prata` | 625 MB | 613 MB | **1.241 MB** |
+| `ouro` | 648 MB | 606 MB | **1.255 MB** |
+| `stg` (staging da carga) | 603 MB | 13 MB | **616 MB** |
+| `gov` | 1,9 MB | 2,2 MB | **4 MB** |
+
+Os índices ocupam quase metade do banco — é o custo de ter 38 definições de
+índice, entre elas um covering de 247 MB que carrega `quantidade` e
+`valor_total` para a Q03 sair do próprio índice. O `stg` com 603 MB é
+temporário: existe durante a carga e pode ser truncado depois.
 
 **Ritmo de crescimento: ~265 mil linhas/mês** (3 lojas), dos quais ~174 mil são
 itens de venda.

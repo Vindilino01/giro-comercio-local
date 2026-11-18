@@ -71,9 +71,11 @@ métrica de qualidade é calculada a partir delas.
 Quando um produto é rejeitado por EAN inválido, todos os itens de venda que
 apontam para ele ficam órfãos. Eles são rejeitados também.
 
-**Na primeira versão, isso contaminou as métricas.** Os 4 itens "sem produto"
-injetados propositalmente apareciam como ~9.400 rejeições — porque cada EAN
-inválido derruba ~29 itens. O recall ficava ininterpretável.
+**Na primeira versão, isso contaminou as métricas.** Os 166 itens "sem produto"
+injetados propositalmente apareciam misturados a **171.603** linhas em cascata —
+porque cada EAN inválido no cadastro derruba em média mais de dez mil itens de
+venda que apontam para ele. O recall ficava ininterpretável: 166 defeitos reais
+diluídos em 171.603 rejeições.
 
 **Solução:** regra própria (DQ021) para registros rejeitados por **dependência**,
 separada dos defeitos do próprio registro. Isso permite afirmar com precisão:
@@ -327,8 +329,37 @@ Três papéis com privilégio mínimo (`db/migrations/008_roles_rls.sql`):
 **`DELETE` não é concedido a nenhum papel de aplicação.** Exclusão de dado é
 operação administrativa, não operação de rotina.
 
-**Row-Level Security (RLS)** por `loja_id`: um gerente da loja 1 não vê dados da
-loja 2, mesmo usando a mesma credencial de banco. Implementado em `db/migrations/008_roles_rls.sql`.
+**Row-Level Security (RLS) por `loja_id`** — com um limite que precisa ser dito
+sem rodeio.
+
+O RLS está ativo e testado nas quatro tabelas transacionais da prata:
+`venda`, `item_venda`, `estoque_snapshot` e `movimentacao_estoque`. Com
+`SET ROLE giro_bi` e `app.loja_id = '1'`, o gerente vê 1.189.273 itens; com
+`'2'`, 1.390.282; sem `app.loja_id`, **zero** (fail-closed, não fail-open).
+Provado por `python scripts/test_rls.py` e pelo caso C23 da suíte de
+constraints.
+
+**O que o RLS não cobre, e por quê:** a camada ouro. `fato_vendas`,
+`fato_estoque_diario` e as cinco views materializadas não têm policy —
+materialized view não aceita `ROW LEVEL SECURITY` no PostgreSQL (o comando
+falha com "not supported for materialized views"), e `fato_vendas` é o nível
+agregado onde o painel do **dono da rede** lê as três lojas de propósito.
+
+São dois públicos com necessidades opostas:
+
+| Quem | Papel | O que vê |
+|---|---|---|
+| Gerente de uma loja | `giro_bi` | só a própria loja (RLS na prata) |
+| Dono da rede / painel gerencial | `giro_admin` | as três lojas (ouro) |
+
+A afirmação correta é: **o RLS isola o dado transacional por loja para o papel
+de gerente; o painel gerencial usa um papel administrativo e vê a rede
+inteira.** Dizer que "a mesma credencial não vê outra loja" seria falso na
+camada ouro — e é por isso que o texto diz o que diz.
+
+Se o produto evoluir para um painel por loja, o caminho é view comum com
+`WHERE loja_id = gov.loja_da_sessao()` em vez de materializada, aceitando o
+custo de recalcular por consulta.
 
 ### Auditoria
 
@@ -340,12 +371,25 @@ permite investigar "quem mudou esse preço?".
 
 | Aspecto | Implementação | Medido |
 |---|---|---|
-| Backup lógico | `pg_dump -Fc` diário | — |
-| Retenção | 7 diários + 4 semanais + 3 mensais | — |
-| Teste de restore | `pg_restore` em banco novo + consulta funcional | **RTO medido**, ver `06-prova-conceito.md` |
+| Backup lógico | `scripts/backup.ps1` — `pg_dump -Fc` + retenção | **35,4 s**, dump de 179 MB |
+| Retenção | 7 diários + 4 semanais + 3 mensais, por script | aplicada pelo próprio `backup.ps1` |
+| Agendamento | tarefa do Windows, instruções no README | não configurado no repositório |
+| Teste de restore | `pg_restore` em banco novo + consulta funcional | **RTO 7,5 min**, ver `06-prova-conceito.md` |
 | WAL | `fsync` ativo (padrão) | garante durabilidade |
 | RPO | até 24h (backup diário) | aceitável: perda de 1 dia de venda é recuperável do PDV |
 | RTO | < 15 min para 3,1 GB | **7,5 min medido** no restore test |
+
+**O que existe de fato:** `scripts/backup.ps1` executa o dump, aplica a política
+de retenção e verifica que o arquivo abre com `pg_restore -l`. Rodá-lo é um
+comando.
+
+**O que não existe:** o agendamento. O script não se registra sozinho no
+Agendador de Tarefas — isso exige uma decisão de infraestrutura (conta de
+serviço, janela de execução, onde guardar a cópia fora da máquina) que não cabe
+num projeto de disciplina. O README traz o comando `schtasks` pronto para quem
+for operar. Dizer que o backup é "diário" sem essa tarefa configurada seria
+descrever uma intenção, não um fato — e é a diferença que este projeto tentou
+eliminar do resto do texto.
 
 **Por que RPO de 24h é aceitável:** o PDV é a fonte original. Se o banco se
 perder, o dado pode ser reimportado do PDV. O backup é conveniência, não única

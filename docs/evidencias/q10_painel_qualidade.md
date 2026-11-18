@@ -2,8 +2,8 @@
 
 **Pergunta de negocio:** Posso confiar nos numeros que estou vendo?
 
-**Linhas retornadas:** 21  
-**Tempo de execucao:** 188.2 ms
+**Linhas retornadas:** 24  
+**Tempo de execucao:** 52.8 ms
 
 ## Consulta
 
@@ -127,24 +127,27 @@ SELECT bloco, item, categoria, ocorrencias, pct_do_total,
 
 | bloco               | item                  | categoria    | ocorrencias | pct_do_total | score_medio | ultima_carga | idade_dias |
 |---------------------|-----------------------|--------------|-------------|--------------|-------------|--------------|------------|
-| ATUALIDADE          | CSV_CALENDARIO        | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
+| ATUALIDADE          | CSV_PROMOCAO_PRODUTO  | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_FORNECEDOR        | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_ITEM_VENDA        | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_LOJA              | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_ESTOQUE           | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
+| ATUALIDADE          | CSV_CALENDARIO        | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
+| ATUALIDADE          | CSV_VENDA             | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
+| ATUALIDADE          | CSV_PRODUTO_PRECO     | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_PROMOCAO          | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_PRODUTO           | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_MOVIMENTACAO      | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_ITEM_PEDIDO       | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | ATUALIDADE          | CSV_PEDIDO            | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
-| ATUALIDADE          | CSV_PROMOCAO_PRODUTO  | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
-| ATUALIDADE          | CSV_PRODUTO_PRECO     | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
-| ATUALIDADE          | CSV_VENDA             | carga        | 1           | 100.00       | —           | 2025-10-31   | 0          |
 | REJEICOES_POR_REGRA | DQ020                 | consistencia | 3 290       | 100.00       | —           | —            | —          |
 | SCORE_POR_DIMENSAO  | acuracidade           | acuracidade  | 3           | —            | 98.71       | —            | —          |
 | SCORE_POR_DIMENSAO  | consistencia          | consistencia | 3           | —            | 99.93       | —            | —          |
-| SCORE_POR_DIMENSAO  | atualidade            | atualidade   | 3           | —            | 100.00      | —            | —          |
+| SCORE_POR_DIMENSAO  | validade              | validade     | 3           | —            | 100.00      | —            | —          |
 | SCORE_POR_DIMENSAO  | completude            | completude   | 3           | —            | 100.00      | —            | —          |
-| SELO_LOJA           | Mercado Sao Jorge     | CONFIAVEL    | 4           | —            | 99.65       | —            | —          |
-| SELO_LOJA           | Mercado Bom Preco     | CONFIAVEL    | 4           | —            | 99.66       | —            | —          |
-| SELO_LOJA           | Mercadinho da Familia | CONFIAVEL    | 4           | —            | 99.67       | —            | —          |
+| SCORE_POR_DIMENSAO  | unicidade             | unicidade    | 3           | —            | 100.00      | —            | —          |
+| SCORE_POR_DIMENSAO  | atualidade            | atualidade   | 3           | —            | 100.00      | —            | —          |
+| SCORE_POR_DIMENSAO  | conformidade          | conformidade | 3           | —            | 100.00      | —            | —          |
+| SELO_LOJA           | Mercado Sao Jorge     | CONFIAVEL    | 7           | —            | 99.80       | —            | —          |
+| SELO_LOJA           | Mercado Bom Preco     | CONFIAVEL    | 7           | —            | 99.81       | —            | —          |
+| SELO_LOJA           | Mercadinho da Familia | CONFIAVEL    | 7           | —            | 99.81       | —            | —          |

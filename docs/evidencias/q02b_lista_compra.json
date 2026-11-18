@@ -12,7 +12,7 @@
     "valor",
     "fornecedor",
     "lead_time_dias",
-    "score_qualidade_loja"
+    "confianca_pior_dimensao"
   ],
   "linhas": [
     [
@@ -28,7 +28,7 @@
       15561.0,
       "Atacarejo Uniao LTDA",
       14,
-      99.7
+      98.7
     ],
     [
       2,
@@ -43,7 +43,7 @@
       14231.07,
       "Logistica Vale Verde LTDA",
       12,
-      99.7
+      98.7
     ],
     [
       3,
@@ -58,7 +58,7 @@
       11384.1,
       "Logistica Vale Verde LTDA",
       12,
-      99.7
+      98.8
     ],
     [
       3,
@@ -73,7 +73,7 @@
       4260.22,
       "Atacadao Sul LTDA",
       11,
-      99.7
+      98.8
     ],
     [
       1,
@@ -88,7 +88,7 @@
       3276.34,
       "Logistica Vale Verde LTDA",
       12,
-      99.6
+      98.7
     ],
     [
       1,
@@ -103,7 +103,7 @@
       2266.88,
       "Distribuidora Central LTDA",
       12,
-      99.6
+      98.7
     ],
     [
       1,
@@ -118,7 +118,7 @@
       1790.31,
       "Logistica Vale Verde LTDA",
       12,
-      99.6
+      98.7
     ],
     [
       2,
@@ -133,7 +133,7 @@
       1423.92,
       "Logistica Vale Verde LTDA",
       12,
-      99.7
+      98.7
     ],
     [
       3,
@@ -148,7 +148,7 @@
       1406.2,
       "Distribuidora Central LTDA",
       12,
-      99.7
+      98.8
     ],
     [
       3,
@@ -163,7 +163,7 @@
       1155.77,
       "Distribuidora Central LTDA",
       12,
-      99.7
+      98.8
     ],
     [
       3,
@@ -178,7 +178,7 @@
       1140.02,
       "Logistica Vale Verde LTDA",
       12,
-      99.7
+      98.8
     ],
     [
       3,
@@ -193,7 +193,7 @@
       1074.2,
       "Alimentos Horizonte LTDA",
       9,
-      99.7
+      98.8
     ],
     [
       3,
@@ -208,7 +208,7 @@
       1068.55,
       "Alimentos Horizonte LTDA",
       9,
-      99.7
+      98.8
     ],
     [
       3,
@@ -223,7 +223,7 @@
       994.5,
       "Atacadao Sul LTDA",
       11,
-      99.7
+      98.8
     ],
     [
       2,
@@ -238,7 +238,7 @@
       988.32,
       "Distribuidora Central LTDA",
       12,
-      99.7
+      98.7
     ],
     [
       2,
@@ -253,7 +253,7 @@
       969.15,
       "Alimentos Horizonte LTDA",
       9,
-      99.7
+      98.7
     ],
     [
       2,
@@ -268,7 +268,7 @@
       883.75,
       "Alimentos Horizonte LTDA",
       9,
-      99.7
+      98.7
     ],
     [
       1,
@@ -283,7 +283,7 @@
       846.8,
       "Distribuidora Central LTDA",
       12,
-      99.6
+      98.7
     ],
     [
       1,
@@ -298,7 +298,7 @@
       843.64,
       "Alimentos Horizonte LTDA",
       9,
-      99.6
+      98.7
     ],
     [
       2,
@@ -313,7 +313,7 @@
       814.67,
       "Distribuidora Central LTDA",
       12,
-      99.7
+      98.7
     ],
     [
       3,
@@ -328,7 +328,7 @@
       813.75,
       "Atacarejo Uniao LTDA",
       14,
-      99.7
+      98.8
     ],
     [
       3,
@@ -343,7 +343,7 @@
       784.7,
       "Alimentos Horizonte LTDA",
       9,
-      99.7
+      98.8
     ],
     [
       3,
@@ -358,7 +358,7 @@
       738.15,
       "Comercial Bom Dia LTDA",
       13,
-      99.7
+      98.8
     ],
     [
       3,
@@ -373,7 +373,7 @@
       716.04,
       "Distribuidora Central LTDA",
       12,
-      99.7
+      98.8
     ],
     [
       3,
@@ -388,7 +388,7 @@
       695.3,
       "Atacadao Sul LTDA",
       11,
-      99.7
+      98.8
     ]
   ]
 }

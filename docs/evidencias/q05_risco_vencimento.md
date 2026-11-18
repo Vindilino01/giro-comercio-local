@@ -3,7 +3,7 @@
 **Pergunta de negocio:** O que vai vencer e virar prejuizo?
 
 **Linhas retornadas:** 4  
-**Tempo de execucao:** 250.4 ms
+**Tempo de execucao:** 272.4 ms
 
 ## Consulta
 

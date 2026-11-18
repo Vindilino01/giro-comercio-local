@@ -12,7 +12,7 @@
   "linhas": [
     [
       "ATUALIDADE",
-      "CSV_CALENDARIO",
+      "CSV_PROMOCAO_PRODUTO",
       "carga",
       1,
       100.0,
@@ -53,6 +53,36 @@
     [
       "ATUALIDADE",
       "CSV_ESTOQUE",
+      "carga",
+      1,
+      100.0,
+      null,
+      "2025-10-31",
+      0
+    ],
+    [
+      "ATUALIDADE",
+      "CSV_CALENDARIO",
+      "carga",
+      1,
+      100.0,
+      null,
+      "2025-10-31",
+      0
+    ],
+    [
+      "ATUALIDADE",
+      "CSV_VENDA",
+      "carga",
+      1,
+      100.0,
+      null,
+      "2025-10-31",
+      0
+    ],
+    [
+      "ATUALIDADE",
+      "CSV_PRODUTO_PRECO",
       "carga",
       1,
       100.0,
@@ -111,36 +141,6 @@
       0
     ],
     [
-      "ATUALIDADE",
-      "CSV_PROMOCAO_PRODUTO",
-      "carga",
-      1,
-      100.0,
-      null,
-      "2025-10-31",
-      0
-    ],
-    [
-      "ATUALIDADE",
-      "CSV_PRODUTO_PRECO",
-      "carga",
-      1,
-      100.0,
-      null,
-      "2025-10-31",
-      0
-    ],
-    [
-      "ATUALIDADE",
-      "CSV_VENDA",
-      "carga",
-      1,
-      100.0,
-      null,
-      "2025-10-31",
-      0
-    ],
-    [
       "REJEICOES_POR_REGRA",
       "DQ020",
       "consistencia",
@@ -172,8 +172,8 @@
     ],
     [
       "SCORE_POR_DIMENSAO",
-      "atualidade",
-      "atualidade",
+      "validade",
+      "validade",
       3,
       null,
       100.0,
@@ -191,12 +191,42 @@
       null
     ],
     [
+      "SCORE_POR_DIMENSAO",
+      "unicidade",
+      "unicidade",
+      3,
+      null,
+      100.0,
+      null,
+      null
+    ],
+    [
+      "SCORE_POR_DIMENSAO",
+      "atualidade",
+      "atualidade",
+      3,
+      null,
+      100.0,
+      null,
+      null
+    ],
+    [
+      "SCORE_POR_DIMENSAO",
+      "conformidade",
+      "conformidade",
+      3,
+      null,
+      100.0,
+      null,
+      null
+    ],
+    [
       "SELO_LOJA",
       "Mercado Sao Jorge",
       "CONFIAVEL",
-      4,
+      7,
       null,
-      99.65,
+      99.8,
       null,
       null
     ],
@@ -204,9 +234,9 @@
       "SELO_LOJA",
       "Mercado Bom Preco",
       "CONFIAVEL",
-      4,
+      7,
       null,
-      99.66,
+      99.81,
       null,
       null
     ],
@@ -214,9 +244,9 @@
       "SELO_LOJA",
       "Mercadinho da Familia",
       "CONFIAVEL",
-      4,
+      7,
       null,
-      99.67,
+      99.81,
       null,
       null
     ]

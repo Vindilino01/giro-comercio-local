@@ -5,7 +5,7 @@
       "nome": "ruptura_demanda_perdida",
       "pergunta": "Quanto deixei de vender por falta de produto?",
       "linhas": 1,
-      "duracao_ms": 68.6,
+      "duracao_ms": 76.4,
       "colunas": [
         "taxa_ruptura_pct",
         "sku_dia_ruptura",
@@ -20,7 +20,7 @@
       "nome": "sugestao_compra",
       "pergunta": "O que comprar hoje e quanto custa?",
       "linhas": 4,
-      "duracao_ms": 1.5,
+      "duracao_ms": 1.1,
       "colunas": [
         "situacao",
         "skus",
@@ -35,7 +35,7 @@
       "nome": "lista_compra",
       "pergunta": "Quais SKUs priorizar na compra?",
       "linhas": 25,
-      "duracao_ms": 1.6,
+      "duracao_ms": 1.7,
       "colunas": [
         "loja_id",
         "produto",
@@ -49,7 +49,7 @@
         "valor",
         "fornecedor",
         "lead_time_dias",
-        "score_qualidade_loja"
+        "confianca_pior_dimensao"
       ]
     },
     {
@@ -57,7 +57,7 @@
       "nome": "curva_abc",
       "pergunta": "Quais 20% dos produtos fazem 80% da receita?",
       "linhas": 3,
-      "duracao_ms": 1273.8,
+      "duracao_ms": 1273.6,
       "colunas": [
         "classe",
         "skus",
@@ -74,7 +74,7 @@
       "nome": "giro_cobertura",
       "pergunta": "Onde meu dinheiro esta parado?",
       "linhas": 8,
-      "duracao_ms": 1859.9,
+      "duracao_ms": 1843.4,
       "colunas": [
         "departamento",
         "skus",
@@ -91,7 +91,7 @@
       "nome": "risco_vencimento",
       "pergunta": "O que vai vencer e virar prejuizo?",
       "linhas": 4,
-      "duracao_ms": 250.4,
+      "duracao_ms": 272.4,
       "colunas": [
         "departamento",
         "skus_em_risco",
@@ -107,7 +107,7 @@
       "nome": "acuracidade_inventario",
       "pergunta": "Posso confiar no estoque do sistema?",
       "linhas": 3,
-      "duracao_ms": 559.0,
+      "duracao_ms": 80.8,
       "colunas": [
         "loja",
         "contagens",
@@ -123,7 +123,7 @@
       "nome": "sazonalidade",
       "pergunta": "Quando eu vendo mais?",
       "linhas": 7,
-      "duracao_ms": 760.1,
+      "duracao_ms": 760.4,
       "colunas": [
         "dia_semana_iso",
         "nome_dia_semana",
@@ -138,7 +138,7 @@
       "nome": "otif_fornecedores",
       "pergunta": "Qual fornecedor me deixa na mao?",
       "linhas": 6,
-      "duracao_ms": 27.3,
+      "duracao_ms": 27.1,
       "colunas": [
         "fornecedor",
         "entregas",
@@ -157,7 +157,7 @@
       "nome": "lift_promocao",
       "pergunta": "A promocao valeu a pena?",
       "linhas": 8,
-      "duracao_ms": 3649.4,
+      "duracao_ms": 3558.7,
       "colunas": [
         "departamento",
         "skus_promovidos",
@@ -173,8 +173,8 @@
       "numero": "Q10",
       "nome": "painel_qualidade",
       "pergunta": "Posso confiar nos numeros que estou vendo?",
-      "linhas": 21,
-      "duracao_ms": 188.2,
+      "linhas": 24,
+      "duracao_ms": 52.8,
       "colunas": [
         "bloco",
         "item",
@@ -187,5 +187,5 @@
       ]
     }
   ],
-  "gerado_em": "2026-11-18 15:19:59"
+  "gerado_em": "2026-11-18 17:39:00"
 }

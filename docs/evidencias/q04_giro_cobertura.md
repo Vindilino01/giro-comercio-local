@@ -3,7 +3,7 @@
 **Pergunta de negocio:** Onde meu dinheiro esta parado?
 
 **Linhas retornadas:** 8  
-**Tempo de execucao:** 1859.9 ms
+**Tempo de execucao:** 1843.4 ms
 
 ## Consulta
 

@@ -665,7 +665,7 @@ def sumario() -> str:
         ("Diagnóstico dos dados",
          "Fontes, tipos, os 5 Vs, volumetria e padrão de acesso"),
         ("Escolha do banco de dados",
-         "Justificativa, 7 alternativas descartadas, Teorema CAP"),
+         "Justificativa, 8 alternativas descartadas, Teorema CAP"),
         ("Organização e modelagem",
          "Modelo conceitual, lógico e físico; chaves, índices, normalização"),
         ("Qualidade e governança",

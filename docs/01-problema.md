@@ -126,9 +126,19 @@ Perguntas secundárias, também implementadas: qual a concentração da receita
 | Acurácia de inventário | 1 − \|contado − sistema\| / sistema | Q06 | ≥ 95% |
 | OTIF de fornecedor | % de entregas no prazo e completas | Q08 | monitorar |
 
-O baseline de 8,62% **não é arbitrário**: é a média global de ruptura medida pela
-Nielsen. O dataset foi calibrado para reproduzir esse patamar, e o valor está
-abaixo da realidade brasileira (10–12%), o que torna a simulação conservadora.
+O baseline de 8,62% **não é arbitrário**: a Nielsen mede 8,3% de ruptura no
+varejo alimentar brasileiro, e o dataset foi calibrado para reproduzir esse
+patamar — a taxa medida em 24 meses ficou em 8,62%, ligeiramente acima. É um
+valor conservador: a Neogrid reporta 10–12% no Brasil, e o dataset está abaixo
+disso.
+
+Três números que aparecem no trabalho e não são o mesmo:
+
+| Número | O que é | Janela |
+|---|---|---|
+| **8,3%** | benchmark de mercado (Nielsen) | referência externa |
+| **8,62%** | ruptura medida no dataset | 24 meses |
+| **8,77%** | ruptura medida no dataset | 12 meses (a janela da Q01) |
 
 ### KPIs do produto (o que prova que o Giro funciona)
 

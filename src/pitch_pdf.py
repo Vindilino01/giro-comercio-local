@@ -160,12 +160,15 @@ SLIDES: list[dict] = [
         "titulo": "Três números que não são 100% — e por que isso é bom",
         "blocos": [
             ("casos", [
-                ("DQ006", "50%", "Defeito afeta 2 registros; a dedupe mantém 1. "
-                                  "**Rejeitar os dois seria errado.**"),
-                ("DQ008", "67%", "Alguns itens já tinham sido rejeitados antes. "
-                                  "Zero incoerentes entraram na tabela."),
-                ("DQ020", "1,3%", "Precisão baixa porque cancelamento é "
-                                  "**evento legítimo**, não corrupção."),
+                ("DQ006", "50%", "O defeito afeta 2 registros (par de EANs "
+                                 "iguais) e a dedupe mantém 1. **Rejeitar os dois "
+                                 "seria pior**: descartaria o produto."),
+                ("DQ020", "0,8%", "Precisão baixa porque cancelamento é "
+                                  "**evento legítimo**, não corrupção: 27 cupons "
+                                  "cancelados sem data geram 3.312 correções."),
+                ("DQ005", "52%", "O injetor duplica em pares e a dedupe remove "
+                                 "N−1 cópias. Precisão de 52% com **recall de "
+                                 "100%** é o comportamento correto."),
             ]),
         ],
         "fecho": "Saber interpretar o próprio número separa medir de fingir que mediu.",
@@ -192,7 +195,7 @@ SLIDES: list[dict] = [
             ("benchmark", [
                 ("Varredura ampla", "**DuckDB 10,5× mais rápido**",
                  "lê só as colunas usadas"),
-                ("Filtro seletivo", "**PostgreSQL 12× mais rápido**",
+                ("Filtro seletivo", "**PostgreSQL 11,5× mais rápido**",
                  "usa índice B-tree"),
             ]),
             ("quebra", [
@@ -226,12 +229,12 @@ SLIDES: list[dict] = [
         "tempo": "8:50",
         "titulo": "O que o Giro entrega",
         "itens": [
-            ("Um banco que **recusa** dado ruim", "22 testes provam — evidência executável"),
+            ("Um banco que **recusa** dado ruim", "23 testes provam — evidência executável"),
             ("Um pipeline que **mede** a própria eficácia", "96.61% de recall em 17 tipos de defeito"),
             ("Uma decisão de banco **defensável**", "8 alternativas, matriz ponderada, CAP preciso"),
             ("Uma resposta de **negócio**", "quanto perco, o que comprar, posso confiar"),
         ],
-        "rodape": "`python run_all.py` recria tudo em 10 minutos. Toda afirmação tem teste por trás.",
+        "rodape": "`python run_all.py` recria tudo em cerca de 30 minutos. Toda afirmação tem teste por trás.",
     },
 ]
 

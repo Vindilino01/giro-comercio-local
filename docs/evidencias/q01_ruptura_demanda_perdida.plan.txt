@@ -1,56 +1,52 @@
-Subquery Scan on total  (cost=6857.44..6857.48 rows=1 width=144) (actual time=120.225..120.231 rows=1.00 loops=1)
-  Buffers: shared hit=4971
+Subquery Scan on total  (cost=6046.08..6046.12 rows=1 width=144) (actual time=126.620..126.626 rows=1.00 loops=1)
+  Buffers: shared hit=43211
   CTE parametros
-    ->  Result  (cost=0.92..0.93 rows=1 width=12) (actual time=0.145..0.148 rows=1.00 loops=1)
+    ->  Result  (cost=0.92..0.93 rows=1 width=12) (actual time=0.158..0.161 rows=1.00 loops=1)
           Buffers: shared hit=8
           InitPlan 2
-            ->  Result  (cost=0.45..0.46 rows=1 width=4) (actual time=0.128..0.129 rows=1.00 loops=1)
+            ->  Result  (cost=0.45..0.46 rows=1 width=4) (actual time=0.133..0.134 rows=1.00 loops=1)
                   Buffers: shared hit=4
                   InitPlan 1
-                    ->  Limit  (cost=0.43..0.45 rows=1 width=4) (actual time=0.127..0.128 rows=1.00 loops=1)
+                    ->  Limit  (cost=0.43..0.45 rows=1 width=4) (actual time=0.132..0.133 rows=1.00 loops=1)
                           Buffers: shared hit=4
-                          ->  Index Only Scan Backward using fato_vendas_pkey on fato_vendas  (cost=0.43..84556.49 rows=4134324 width=4) (actual time=0.126..0.126 rows=1.00 loops=1)
+                          ->  Index Only Scan Backward using fato_vendas_pkey on fato_vendas  (cost=0.43..84556.49 rows=4134324 width=4) (actual time=0.130..0.130 rows=1.00 loops=1)
                                 Heap Fetches: 0
                                 Index Searches: 1
                                 Buffers: shared hit=4
           InitPlan 4
-            ->  Result  (cost=0.45..0.46 rows=1 width=4) (actual time=0.013..0.014 rows=1.00 loops=1)
+            ->  Result  (cost=0.45..0.46 rows=1 width=4) (actual time=0.012..0.012 rows=1.00 loops=1)
                   Buffers: shared hit=4
                   InitPlan 3
-                    ->  Limit  (cost=0.43..0.45 rows=1 width=4) (actual time=0.013..0.013 rows=1.00 loops=1)
+                    ->  Limit  (cost=0.43..0.45 rows=1 width=4) (actual time=0.011..0.012 rows=1.00 loops=1)
                           Buffers: shared hit=4
-                          ->  Index Only Scan Backward using fato_vendas_pkey on fato_vendas fato_vendas_1  (cost=0.43..84556.49 rows=4134324 width=4) (actual time=0.012..0.013 rows=1.00 loops=1)
+                          ->  Index Only Scan Backward using fato_vendas_pkey on fato_vendas fato_vendas_1  (cost=0.43..84556.49 rows=4134324 width=4) (actual time=0.011..0.011 rows=1.00 loops=1)
                                 Heap Fetches: 0
                                 Index Searches: 1
                                 Buffers: shared hit=4
-  ->  Aggregate  (cost=6856.51..6856.52 rows=1 width=80) (actual time=120.218..120.220 rows=1.00 loops=1)
-        Buffers: shared hit=4971
+  ->  Aggregate  (cost=6045.15..6045.16 rows=1 width=80) (actual time=126.607..126.609 rows=1.00 loops=1)
+        Buffers: shared hit=43211
         InitPlan 6
-          ->  Aggregate  (cost=4195.50..4195.51 rows=1 width=8) (actual time=97.537..97.537 rows=1.00 loops=1)
+          ->  Aggregate  (cost=4195.50..4195.51 rows=1 width=8) (actual time=97.192..97.193 rows=1.00 loops=1)
                 Buffers: shared hit=3450
-                ->  Nested Loop  (cost=0.43..3939.65 rows=102340 width=0) (actual time=0.232..79.060 rows=459900.00 loops=1)
+                ->  Nested Loop  (cost=0.43..3939.65 rows=102340 width=0) (actual time=0.245..78.924 rows=459900.00 loops=1)
                       Buffers: shared hit=3450
                       ->  CTE Scan on parametros p_1  (cost=0.00..0.02 rows=1 width=12) (actual time=0.001..0.003 rows=1.00 loops=1)
                             Storage: Memory  Maximum Storage: 17kB
-                      ->  Index Only Scan using fato_estoque_diario_pkey on fato_estoque_diario e  (cost=0.43..2916.23 rows=102340 width=4) (actual time=0.227..49.493 rows=459900.00 loops=1)
+                      ->  Index Only Scan using fato_estoque_diario_pkey on fato_estoque_diario e  (cost=0.43..2916.23 rows=102340 width=4) (actual time=0.239..49.369 rows=459900.00 loops=1)
                             Index Cond: ((data_ref > (p_1.inicio)::date) AND (data_ref <= p_1.fim))
                             Heap Fetches: 0
                             Index Searches: 1
                             Buffers: shared hit=3450
-        ->  Nested Loop  (cost=880.17..2594.82 rows=8823 width=64) (actual time=1.765..16.729 rows=40312.00 loops=1)
-              Buffers: shared hit=1521
-              ->  CTE Scan on parametros p  (cost=0.00..0.02 rows=1 width=12) (actual time=0.147..0.148 rows=1.00 loops=1)
+        ->  Nested Loop  (cost=0.29..1783.46 rows=8823 width=11) (actual time=0.225..22.989 rows=40312.00 loops=1)
+              Buffers: shared hit=39761
+              ->  CTE Scan on parametros p  (cost=0.00..0.02 rows=1 width=12) (actual time=0.159..0.161 rows=1.00 loops=1)
                     Storage: Memory  Maximum Storage: 17kB
                     Buffers: shared hit=8
-              ->  Bitmap Heap Scan on mv_rupturas r  (cost=880.17..2506.57 rows=8823 width=68) (actual time=1.617..10.611 rows=40312.00 loops=1)
-                    Recheck Cond: ((data_venda > (p.inicio)::date) AND (data_venda <= p.fim))
-                    Heap Blocks: exact=1460
-                    Buffers: shared hit=1513
-                    ->  Bitmap Index Scan on ix_mv_rupturas_loja_data  (cost=0.00..877.97 rows=8823 width=0) (actual time=1.475..1.475 rows=40312.00 loops=1)
-                          Index Cond: ((data_venda > (p.inicio)::date) AND (data_venda <= p.fim))
-                          Index Searches: 4
-                          Buffers: shared hit=53
+              ->  Index Scan using ix_mv_rupturas_loja_data on mv_rupturas r  (cost=0.29..1695.21 rows=8823 width=15) (actual time=0.062..17.620 rows=40312.00 loops=1)
+                    Index Cond: ((data_venda > (p.inicio)::date) AND (data_venda <= p.fim))
+                    Index Searches: 4
+                    Buffers: shared hit=39753
 Planning:
-  Buffers: shared hit=325
-Planning Time: 5.514 ms
-Execution Time: 120.353 ms
+  Buffers: shared hit=329
+Planning Time: 6.440 ms
+Execution Time: 126.751 ms

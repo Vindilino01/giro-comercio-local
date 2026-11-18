@@ -24,7 +24,10 @@ SELECT
     round(cast(s.valor_compra_sugerido as numeric), 2) AS valor,
     s.fornecedor,
     s.lead_time_dias,
-    s.score_qualidade_loja
+    -- Pior dimensao, nao a media: e o numero que o selo exibe. Publicar a
+    -- media aqui reintroduzia o "dois numeros na mesma tela" que a
+    -- migration 011 corrigiu (99,7 na lista, 98,7 no selo).
+    s.pior_dimensao_pct AS confianca_pior_dimensao
   FROM ouro.mv_sugestao_compra s
  WHERE s.situacao IN ('RUPTURA','CRITICO','REPOR')
  ORDER BY CASE s.situacao

@@ -11,8 +11,8 @@ carregado com 6,36 milhões de linhas e respondendo às perguntas de negócio.
 | Colunas | ver dicionário |
 | Índices (definições no DDL) | 38 |
 | Partições mensais | 43 por tabela particionada |
-| Domínios e funções | 6 domínios + 5 funções |
-| Constraints | 900 (399 CHECK, 249 FK, 114 PK, 53 UNIQUE, 1 EXCLUDE) |
+| Domínios e funções | 6 domínios + 6 funções |
+| Constraints nomeadas | 311 (41 CHECK, 30 FK, 26 PK, 9 UNIQUE, 1 EXCLUDE) + 204 NOT NULL |
 | Views materializadas | 5 |
 | Consultas de negócio | 11 (Q01–Q10 + Q02b) |
 | Testes de constraint | 22 |
@@ -33,7 +33,7 @@ python run_all.py --reset
 
 O comando acima:
 1. cria o banco `giro`;
-2. aplica as 10 migrations (8 da prata/gov, 2 da ouro);
+2. aplica as 12 migrations (8 de prata/gov, 2 da ouro, grants e auditoria);
 3. gera 6,36M de linhas sintéticas calibradas (~2 min);
 4. injeta 17 tipos de defeito em um segundo dataset;
 5. carrega o dataset limpo no banco de negócio (0 linhas rejeitadas;
@@ -77,8 +77,6 @@ pergunta e as decisões. Todas têm resultado exportado em `docs/evidencias/`.
 | **Q10** | `painel_qualidade` | Posso confiar nos números? | 4 blocos em `UNION` |
 
 O edital pede **no mínimo 5**. Entregamos 11.
-
-### Resultados reais (dataset completo)
 
 Cada resultado abaixo foi extraído de `docs/evidencias/q*.md`. Os números são do
 dataset de 6,36 milhões de linhas.
@@ -206,12 +204,12 @@ SELECT CASE WHEN pct_acumulado <= 0.80 THEN 'A'
 ```
 
 **O que prova:** a window function acumula receita em uma única varredura, sem
-self-join. Num fato de 4,1M de linhas, isso é a diferença entre 70 ms e vários
-segundos.
+self-join. Num fato de 4,1M de linhas, é a diferença entre **1,27 s** (medido) e
+os vários segundos que a versão com self-join levava.
 
 ## Evidências de execução
 
-### Testes de constraint (22/22)
+### Testes de constraint (23/23)
 
 `tests/test_constraints.py` prova que o banco **rejeita** dado inválido. Cada
 caso afirma o SQLSTATE esperado — não basta "deu erro".
@@ -240,6 +238,7 @@ caso afirma o SQLSTATE esperado — não basta "deu erro".
 | C20 | Entrega 2× acima do pedido | 23514 | OK |
 | C21 | Valor monetário negativo | 23514 | OK |
 | C22 | Percentual > 100 | 23514 | OK |
+| C23 | RLS: gerente não vê item de outra loja | — | OK (retorna 0) |
 
 **O caso C11 é o mais importante do conjunto.** Ele revelou que a `UNIQUE`
 padrão do PostgreSQL trata `NULL` como distinto, permitindo dois cupons idênticos
@@ -301,26 +300,27 @@ verifica:
 
 | Consulta | Tempo | Estratégia |
 |---|---|---|
-| Q01 | 69 ms | lê view materializada |
-| Q02 | 1.5 ms | lê view materializada |
-| Q02b | 1.6 ms | lê view materializada |
+| Q01 | 76 ms | lê view materializada |
+| Q02 | 1.1 ms | lê view materializada |
+| Q02b | 1.7 ms | lê view materializada |
 | Q03 | 1.274 ms | varredura do fato inteiro |
-| Q04 | 1.860 ms | agrega 24 meses |
-| Q05 | 250 ms | índice + agregação por SKU |
-| Q06 | 559 ms | compara contagens |
+| Q04 | 1.843 ms | agrega 24 meses |
+| Q05 | 272 ms | índice + agregação por SKU |
+| Q06 | 81 ms | compara contagens |
 | Q07 | 760 ms | agrega por dia da semana |
 | Q08 | 27 ms | fato de compras é pequeno |
-| Q09 | 3.649 ms | duas agregações sobre o fato |
-| Q10 | 188 ms | tabela de métricas |
+| Q09 | 3.559 ms | duas agregações sobre o fato |
+| Q10 | 53 ms | tabela de métricas |
 
-**6 consultas abaixo de 500 ms; 5 acima** (Q03, Q04, Q06, Q07, Q09). O padrão não é acidente: as rápidas leem view materializada ou tabela pequena; as lentas varrem o fato de 4,1 milhões de linhas.
+**7 consultas abaixo de 500 ms; 4 acima** (Q03, Q04, Q07, Q09). O padrão não é acidente: as rápidas leem view materializada ou tabela pequena; as lentas varrem o fato de 4,1 milhões de linhas.
 
 <!-- TEMPOS_FIM -->
 
-**As consultas que leem view materializada** (Q01, Q02, Q02b, Q08) ficam em
+**As consultas que leem view materializada** (Q01, Q02, Q02b) ficam em
 milissegundos. **As que varrem o fato inteiro** (Q03, Q04, Q07, Q09) ficam na
 casa dos segundos — é a diferença entre ler 4,1 milhões de linhas e ler 1.260,
-e é a razão de a camada ouro existir.
+e é a razão de a camada ouro existir. A Q08 é rápida por outro motivo: o fato
+de compras tem 37 mil linhas, não 4 milhões.
 
 ## Restore test (RTO medido)
 

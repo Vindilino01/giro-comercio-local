@@ -3,7 +3,7 @@
 **Pergunta de negocio:** A promocao valeu a pena?
 
 **Linhas retornadas:** 8  
-**Tempo de execucao:** 3649.4 ms
+**Tempo de execucao:** 3558.7 ms
 
 ## Consulta
 

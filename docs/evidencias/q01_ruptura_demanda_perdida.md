@@ -3,7 +3,7 @@
 **Pergunta de negocio:** Quanto deixei de vender por falta de produto?
 
 **Linhas retornadas:** 1  
-**Tempo de execucao:** 68.6 ms
+**Tempo de execucao:** 76.4 ms
 
 ## Consulta
 

@@ -72,7 +72,7 @@ Note que ele não é o melhor em nenhum critério isolado — é o melhor no
 
 ## As oito alternativas descartadas
 
-O edital pede pelo menos duas. Documentamos sete, uma para cada linha da tabela
+O edital pede pelo menos duas. Documentamos oito, uma para cada linha da tabela
 de tipos de banco da seção 4.3.
 
 ### 1. MongoDB (documentos) — descartado
@@ -239,7 +239,7 @@ dedicada. Ver seção 4.7.
 
 - **É cache, não fonte de verdade.** Redis pode perder dados em falha de
   configuração; não tem o modelo de consulta necessário.
-- **Não resolve nenhum problema atual.** As consultas rodam em 1–90 ms. Não há
+- **Não resolve nenhum problema atual.** As consultas rodam em 1 ms (views materializadas) a 3,6 s (varredura do fato). Não há
   gargalo de latência para resolver.
 - **Adicionaria um componente a operar** — e um ponto de falha no pitch.
 

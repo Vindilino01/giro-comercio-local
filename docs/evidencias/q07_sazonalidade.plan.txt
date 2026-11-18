@@ -1,46 +1,46 @@
-Sort  (cost=106988.30..106997.25 rows=3582 width=138) (actual time=872.314..891.477 rows=7.00 loops=1)
+Sort  (cost=106988.30..106997.25 rows=3582 width=138) (actual time=855.996..874.676 rows=7.00 loops=1)
   Sort Key: m.dia_semana_iso
   Sort Method: quicksort  Memory: 25kB
   Buffers: shared hit=55200
   CTE media_dia
-    ->  HashAggregate  (cost=106481.32..106526.09 rows=3582 width=53) (actual time=872.270..891.438 rows=7.00 loops=1)
+    ->  HashAggregate  (cost=106481.32..106526.09 rows=3582 width=53) (actual time=855.943..874.629 rows=7.00 loops=1)
           Group Key: t.dia_semana_iso, t.nome_dia_semana
           Batches: 1  Memory Usage: 97kB
           Buffers: shared hit=55197
-          ->  Finalize HashAggregate  (cost=105317.20..105764.94 rows=35819 width=49) (actual time=871.748..891.244 rows=731.00 loops=1)
+          ->  Finalize HashAggregate  (cost=105317.20..105764.94 rows=35819 width=49) (actual time=855.473..874.435 rows=731.00 loops=1)
                 Group Key: t.dia_semana_iso, t.nome_dia_semana, f.data_venda
                 Batches: 1  Memory Usage: 1617kB
                 Buffers: shared hit=55197
-                ->  Gather  (cost=95198.29..104242.62 rows=85966 width=49) (actual time=869.747..889.589 rows=2136.00 loops=1)
+                ->  Gather  (cost=95198.29..104242.62 rows=85966 width=49) (actual time=853.671..872.992 rows=2148.00 loops=1)
                       Workers Planned: 2
                       Workers Launched: 2
                       Buffers: shared hit=55197
-                      ->  Partial HashAggregate  (cost=94198.29..94646.02 rows=35819 width=49) (actual time=852.108..852.536 rows=712.00 loops=3)
+                      ->  Partial HashAggregate  (cost=94198.29..94646.02 rows=35819 width=49) (actual time=835.401..835.800 rows=716.00 loops=3)
                             Group Key: t.dia_semana_iso, t.nome_dia_semana, f.data_venda
                             Batches: 1  Memory Usage: 1361kB
                             Buffers: shared hit=55197
                             Worker 0:  Batches: 1  Memory Usage: 1361kB
                             Worker 1:  Batches: 1  Memory Usage: 1361kB
-                            ->  Hash Join  (cost=24.45..76971.94 rows=1722635 width=31) (actual time=0.579..447.715 rows=1378097.00 loops=3)
+                            ->  Hash Join  (cost=24.45..76971.94 rows=1722635 width=31) (actual time=0.577..434.914 rows=1378097.00 loops=3)
                                   Hash Cond: (f.data_venda = t.data)
                                   Buffers: shared hit=55197
-                                  ->  Parallel Seq Scan on fato_vendas f  (cost=0.00..72399.35 rows=1722635 width=18) (actual time=0.010..90.168 rows=1378097.00 loops=3)
+                                  ->  Parallel Seq Scan on fato_vendas f  (cost=0.00..72399.35 rows=1722635 width=18) (actual time=0.011..86.890 rows=1378097.00 loops=3)
                                         Buffers: shared hit=55173
-                                  ->  Hash  (cost=15.31..15.31 rows=731 width=17) (actual time=0.560..0.561 rows=731.00 loops=3)
+                                  ->  Hash  (cost=15.31..15.31 rows=731 width=17) (actual time=0.557..0.558 rows=731.00 loops=3)
                                         Buckets: 1024  Batches: 1  Memory Usage: 45kB
                                         Buffers: shared hit=24
-                                        ->  Seq Scan on dim_tempo t  (cost=0.00..15.31 rows=731 width=17) (actual time=0.334..0.449 rows=731.00 loops=3)
+                                        ->  Seq Scan on dim_tempo t  (cost=0.00..15.31 rows=731 width=17) (actual time=0.328..0.446 rows=731.00 loops=3)
                                               Buffers: shared hit=24
-  ->  Nested Loop  (cost=80.60..250.75 rows=3582 width=138) (actual time=872.294..872.302 rows=7.00 loops=1)
+  ->  Nested Loop  (cost=80.60..250.75 rows=3582 width=138) (actual time=855.967..855.974 rows=7.00 loops=1)
         Buffers: shared hit=55197
-        ->  Aggregate  (cost=80.60..80.61 rows=1 width=32) (actual time=872.288..872.289 rows=1.00 loops=1)
+        ->  Aggregate  (cost=80.60..80.61 rows=1 width=32) (actual time=855.961..855.962 rows=1.00 loops=1)
               Buffers: shared hit=55197
-              ->  CTE Scan on media_dia  (cost=0.00..71.64 rows=3582 width=32) (actual time=872.273..872.284 rows=7.00 loops=1)
+              ->  CTE Scan on media_dia  (cost=0.00..71.64 rows=3582 width=32) (actual time=855.947..855.957 rows=7.00 loops=1)
                     Storage: Memory  Maximum Storage: 17kB
                     Buffers: shared hit=55197
         ->  CTE Scan on media_dia m  (cost=0.00..71.64 rows=3582 width=74) (actual time=0.000..0.001 rows=7.00 loops=1)
               Storage: Memory  Maximum Storage: 17kB
 Planning:
   Buffers: shared hit=64
-Planning Time: 1.409 ms
-Execution Time: 892.192 ms
+Planning Time: 1.850 ms
+Execution Time: 875.460 ms

@@ -3,7 +3,7 @@
 **Pergunta de negocio:** Quais 20% dos produtos fazem 80% da receita?
 
 **Linhas retornadas:** 3  
-**Tempo de execucao:** 1273.8 ms
+**Tempo de execucao:** 1273.6 ms
 
 ## Consulta
 

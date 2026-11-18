@@ -3,7 +3,7 @@
 **Pergunta de negocio:** Posso confiar no estoque do sistema?
 
 **Linhas retornadas:** 3  
-**Tempo de execucao:** 559.0 ms
+**Tempo de execucao:** 80.8 ms
 
 ## Consulta
 

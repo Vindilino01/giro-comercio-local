@@ -18,7 +18,7 @@ opostos:
   tabela desnormalizada de 4,1 milhões de linhas, seria preciso atualizar milhões
   de registros e o risco de inconsistência seria alto. Normalizado, é uma linha.
 - **Star schema evita joins caros na leitura.** O analista não deveria precisar
-  conhecer 14 tabelas normalizadas para responder "curva ABC".
+  conhecer 15 tabelas normalizadas para responder "curva ABC".
 
 Não é duplicação: é a **mesma informação organizada para dois padrões de acesso
 diferentes**. A prata é a fonte de verdade; o ouro é derivado e reconstruível a
@@ -291,7 +291,7 @@ O edital pergunta explicitamente sobre isso (seção 4.4).
 | **MVP** | 6,3M linhas, 3,1 GB | Nó único, partição mensal | R$ 0 |
 | **10× (30 lojas)** | 63M linhas, 15 GB | Mais RAM; `work_mem` maior | ~R$ 200/mês |
 | **100× (300 lojas)** | 636M linhas, ~150 GB | Retenção + Parquet; réplica de leitura | ~R$ 2.000/mês |
-| **1000×** | 19B linhas | Citus (sharding por `loja_id`) ou warehouse | avaliar |
+| **1000×** | 6,36B linhas | Citus (sharding por `loja_id`) ou warehouse | avaliar |
 
 **O modelo já está preparado para isso:** `loja_id` está em todas as tabelas de
 fato (permite sharding por loja sem redesenho), e a partição é por tempo (permite
@@ -354,7 +354,7 @@ Isso não significa que a sazonalidade seja inútil. Significa que ela **não se
 para dimensionar ponto de pedido**, porque o lead time de 9 a 14 dias cobre
 quase duas semanas completas — cada dia fraco é compensado por um dia forte, e a
 soma volta à média. Medido: adotar a soma dia a dia no horizonte muda o ponto de
-pedido em **0,03% em média** (máximo 1,23%), embora 591 pares subam e 509 desçam.
+pedido em **0,03% em média** (máximo 1,23%), embora 545 pares subam e 555 desçam — o efeito existe, mas se compensa.
 
 Onde o fator tem efeito real é no **abastecimento diário de gôndola**:
 
@@ -389,7 +389,7 @@ O modelo não é validado por inspeção visual. É validado por:
 
 | Evidência | Arquivo | O que prova |
 |---|---|---|
-| 22 testes de constraint | `tests/test_constraints.py` | O banco **rejeita** os 22 tipos de dado inválido |
+| 23 testes de constraint | `tests/test_constraints.py` | O banco **rejeita** os 23 tipos de dado inválido |
 | Carga limpa 100% | `docs/evidencias/carga_limpa.json` | 0 linhas rejeitadas em 6,3M; 3.290 cupons cancelados corrigidos (DQ020) |
 | Equação de estoque | constraint `snapshot_equacao_ck` | Nenhum snapshot com estoque incoerente |
 | Plano `EXPLAIN ANALYZE` | `docs/evidencias/q*.plan.txt` | As consultas usam os índices e partições previstos |

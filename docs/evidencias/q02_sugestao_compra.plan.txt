@@ -1,14 +1,14 @@
-Sort  (cost=110.64..111.14 rows=200 width=172) (actual time=0.887..0.887 rows=4.00 loops=1)
+Sort  (cost=64.69..64.70 rows=4 width=145) (actual time=0.870..0.871 rows=4.00 loops=1)
   Sort Key: (CASE situacao WHEN 'RUPTURA'::text THEN 1 WHEN 'CRITICO'::text THEN 2 WHEN 'REPOR'::text THEN 3 ELSE 4 END)
   Sort Method: quicksort  Memory: 25kB
-  Buffers: shared hit=67
-  ->  HashAggregate  (cost=95.50..103.00 rows=200 width=172) (actual time=0.862..0.867 rows=4.00 loops=1)
+  Buffers: shared hit=36
+  ->  HashAggregate  (cost=64.50..64.65 rows=4 width=145) (actual time=0.838..0.842 rows=4.00 loops=1)
         Group Key: situacao
         Batches: 1  Memory Usage: 32kB
-        Buffers: shared hit=64
-        ->  Seq Scan on mv_sugestao_compra  (cost=0.00..76.60 rows=1260 width=160) (actual time=0.014..0.229 rows=1260.00 loops=1)
-              Buffers: shared hit=64
+        Buffers: shared hit=33
+        ->  Seq Scan on mv_sugestao_compra  (cost=0.00..45.60 rows=1260 width=26) (actual time=0.016..0.140 rows=1260.00 loops=1)
+              Buffers: shared hit=33
 Planning:
-  Buffers: shared hit=88
-Planning Time: 1.623 ms
-Execution Time: 0.923 ms
+  Buffers: shared hit=93
+Planning Time: 1.539 ms
+Execution Time: 0.916 ms

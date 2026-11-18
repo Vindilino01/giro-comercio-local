@@ -268,7 +268,7 @@ foi desenhado para o tamanho de hoje.
 
 | Prometido na proposta | Entregue | Status |
 |---|---|---|
-| Banco criado com amostra | 6,36M linhas, 90 tabelas | ✅ |
+| Banco criado com amostra | 6,36M linhas, 28 tabelas lógicas | ✅ |
 | ≥5 consultas de negócio | 11 consultas | ✅ |
 | Justificativa de banco com alternativas | 8 alternativas, matriz ponderada | ✅ |
 | Modelo, dicionário, chaves, índices | Tudo implementado e gerado do catálogo | ✅ |

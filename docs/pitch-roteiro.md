@@ -247,7 +247,7 @@ O professor vai perguntar.
 
 > Recapitulando o que o Giro entrega:
 >
-> **Um banco que recusa dado ruim.** 22 testes provam que ele rejeita. Não é
+> **Um banco que recusa dado ruim.** 23 testes provam que ele rejeita. Não é
 > declaração — é evidência executável.
 >
 > **Um pipeline que mede a própria eficácia.** 96.61% de recall em 17 tipos de
@@ -311,13 +311,15 @@ O professor vai perguntar.
 
 ### "Por que 7 integrantes se o edital permite 5?"
 
-> A professora autorizou por escrito antes do início. O documento está no
-> repositório. E todos os 7 falam neste pitch.
+> A professora autorizou por escrito antes do início. A autorização é anexada
+> ao relatório final (`docs/autorizacao-grupo.pdf`) — confira se o arquivo está
+> lá antes de apresentar. E todos os 7 falam neste pitch.
 
 ### "Quanto tempo leva para rodar tudo?"
 
-> Cerca de 30 minutos em um notebook (as duas cargas de 6,3M linhas dominam). A carga de 6,36 milhões de linhas leva cerca de
-> dois minutos — medimos linhas por segundo no log.
+> Cerca de 30 minutos em um notebook (as duas cargas de 6,3M linhas dominam).
+> A carga limpa sozinha levou 684 segundos — cerca de 11 minutos. Medimos
+> linhas por segundo no log.
 
 ### "E se o banco cair durante a apresentação?"
 

@@ -53,9 +53,9 @@ O comando acima executa **sete etapas**, nesta ordem:
 | 4 | `marts` | materializa star schema e as 5 views materializadas |
 | 5 | `consultas` | executa as 11 consultas e exporta as evidências |
 | 6 | `painel` | gera `docs/painel.html` e **verifica cada número contra o banco** |
-| 7 | `testes` | 22 testes de constraint + 25 testes de integridade |
+| 7 | `testes` | 23 testes de constraint + 25 testes de integridade |
 
-Tempo total: **~25 minutos** em um notebook comum.
+Tempo total: **~30 minutos** em um notebook comum.
 
 ### Comandos úteis
 
@@ -78,6 +78,7 @@ Tempo total: **~25 minutos** em um notebook comum.
 | `python scripts/conferir_numeros.py` | compara os números dos documentos com o banco |
 | `python src/benchmark_duckdb.py` | benchmark colunar para o cenário 100× |
 | `.\scripts\pg.ps1 psql` | abre sessão psql no banco `giro` |
+| `.\scripts\backup.ps1` | dump validado com `pg_restore -l` + retenção de 7 diários |
 
 ---
 
@@ -140,7 +141,7 @@ do Teorema CAP estão em
 ## Estrutura do repositório
 
 ```
-db/migrations/     migrations em ordem numérica (001..011)
+db/migrations/     migrations em ordem de dependência (001..012)
 db/queries/        as 11 consultas de negócio (Q01..Q10, Q02b)
 db/build.sql       aplica todas as migrations
 src/               pipeline: gerador, injetor de defeitos, ingestão, marts,
@@ -209,6 +210,28 @@ Declarado em [`docs/08-declaracao-ia.md`](docs/08-declaracao-ia.md), conforme
 exige a seção 2 do edital.
 
 ---
+
+## Backup
+
+`scripts/backup.ps1` faz o dump, valida com `pg_restore -l` e aplica a retenção
+(7 diários). Rodá-lo é um comando:
+
+```powershell
+.\scripts\backup.ps1
+.\scripts\backup.ps1 -Destino D:\backups\giro   # cópia fora da máquina
+```
+
+**O que o repositório não faz:** agendar. Isso exige decisão de infraestrutura
+(conta de serviço, janela, destino fora da máquina) e não cabe num projeto de
+disciplina. Quem for operar cria a tarefa uma vez, como administrador:
+
+```powershell
+schtasks /create /tn "Giro Backup" /sc daily /st 02:30 /tr ^
+  "powershell -NoProfile -File C:\caminho\do\projeto\scripts\backup.ps1"
+```
+
+O teste de restore (`python tests/test_restore.py`) prova que o dump é
+restaurável, não apenas gerado: **RTO medido de 7,5 min** para 3,1 GB.
 
 ## Antes de entregar
 

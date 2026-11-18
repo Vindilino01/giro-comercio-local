@@ -3,7 +3,7 @@
 **Pergunta de negocio:** Quando eu vendo mais?
 
 **Linhas retornadas:** 7  
-**Tempo de execucao:** 760.1 ms
+**Tempo de execucao:** 760.4 ms
 
 ## Consulta
 

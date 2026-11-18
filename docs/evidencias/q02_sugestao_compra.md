@@ -3,7 +3,7 @@
 **Pergunta de negocio:** O que comprar hoje e quanto custa?
 
 **Linhas retornadas:** 4  
-**Tempo de execucao:** 1.5 ms
+**Tempo de execucao:** 1.1 ms
 
 ## Consulta
 

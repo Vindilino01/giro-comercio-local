@@ -514,6 +514,23 @@ def etapa_painel() -> None:
             erro("gate de confianca nao bloqueia a sugestao")
         else:
             ok("loja abaixo de 85% tem a sugestao bloqueada")
+
+    # PDFs entregues: procura afirmacoes que a documentacao ja corrigiu.
+    # O relatorio e um retrato do estado; numero velho impresso no PDF
+    # desmente o markdown atual e nao aparece em nenhum teste.
+    if (RAIZ / "docs" / "relatorio-final.pdf").exists():
+        passo("conferindo se o PDF entregue tem afirmacao obsoleta")
+        r = subprocess.run(
+            [sys.executable, str(RAIZ / "scripts" / "conferir_pdf_obsoleto.py")],
+            capture_output=True, text=True, encoding="utf-8",
+            errors="replace", cwd=RAIZ)
+        for linha in r.stdout.strip().splitlines()[-3:]:
+            print(f"    {linha}")
+        if "0 afirmacao" not in r.stdout:
+            falhas += 1
+            erro("o PDF entregue tem numero que o texto ja corrigiu")
+        else:
+            ok("PDF sem afirmacao obsoleta")
     else:
         aviso("node nao encontrado; verificacao de runtime do painel pulada")
 

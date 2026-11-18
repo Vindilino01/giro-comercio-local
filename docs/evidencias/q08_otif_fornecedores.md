@@ -3,7 +3,7 @@
 **Pergunta de negocio:** Qual fornecedor me deixa na mao?
 
 **Linhas retornadas:** 6  
-**Tempo de execucao:** 27.3 ms
+**Tempo de execucao:** 27.1 ms
 
 ## Consulta
 
