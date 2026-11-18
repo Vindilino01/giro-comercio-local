@@ -263,13 +263,24 @@ ocupa disco e onera `INSERT` — e o PDV insere o dia todo.
 | `(loja_id, data_ref) WHERE houve_ruptura` | parcial | Q01; ruptura é exceção, índice fica minúsculo |
 | `(data_movimento, tipo) WHERE tipo IN ('PERDA','VENCIMENTO','AVARIA')` | parcial | Q05; perdas são minoria dos eventos |
 | `gin(nome gin_trgm_ops)` | **GIN trigram** | autocomplete de produto no dashboard |
-| `USING brin (data_venda)` | **BRIN** | varredura histórica ampla, **~1% do tamanho de um B-tree** |
+| `USING brin (data_venda)` | **BRIN** | varredura histórica ampla: **0,8% do tamanho do B-tree** em `item_venda` |
 
 **Por que BRIN além do B-tree:** dados inseridos em ordem cronológica têm
 correlação física altíssima. O BRIN guarda apenas mínimo/máximo por bloco de
 páginas, funcionando bem para varredura de intervalo amplo (relatório anual,
 exportação). Para busca pontual, o B-tree continua sendo escolhido pelo
 planejador. Os dois coexistem.
+
+**Medição que sustenta a afirmação** (era "~1%", que é impreciso):
+
+| Índice | BRIN | B-tree equivalente | BRIN / B-tree |
+|---|---|---|---|
+| `item_venda` (4,16M linhas) | 2.064 kB | 247 MB (covering) | **0,8%** |
+| `venda` (545 mil linhas) | incluído acima | 5.960 kB (`loja_id, data_venda`) | **35%** |
+
+O ganho do BRIN cresce com o tamanho da tabela: 0,8% num fato de 4 milhões de
+linhas, 35% numa tabela de 545 mil. Citar "~1%" para os dois casos seria
+escolher o número favorável — por isso estão os dois medidos.
 
 ### Estratégia de crescimento
 

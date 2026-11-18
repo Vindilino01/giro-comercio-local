@@ -350,7 +350,7 @@ evidência está em `tests/test_constraints.py`, caso C11.
 |---|---|---|
 | Particionamento mensal | `005_particoes.sql` | *Partition pruning*: consulta de 30 dias lê 1 partição de 31 |
 | Índices `INCLUDE` | `006_indices.sql` | *Index-only scan* para agregação por produto |
-| Índices BRIN | `006_indices.sql` | Varredura histórica ampla com 1% do tamanho de um B-tree |
+| Índices BRIN | `006_indices.sql` | Varredura histórica: **0,8% do tamanho do B-tree** em `item_venda` (2 MB vs 247 MB), 35% em `venda` (2 MB vs 5,96 MB) |
 | Índices parciais | `006_indices.sql` | Índice de ruptura ocupa fração do espaço |
 | Views materializadas | `011_ouro_views.sql` | Previsão e sugestão pré-computadas |
 | Window functions | `q03`, `q04` | Curva ABC e giro sem self-join |
