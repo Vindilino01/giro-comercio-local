@@ -231,7 +231,8 @@ dialog#dlg-copia form { text-align: right; }
   background: transparent;
   color: var(--paper);
   border: 1px solid rgba(241,240,234,.42);
-  padding: .375rem 2rem .375rem .625rem;
+  padding: .625rem 2rem .625rem .625rem;
+  min-height: 44px;
   font-size: var(--step-1);
   font-weight: 500;
   cursor: pointer;
@@ -432,8 +433,14 @@ dialog#dlg-copia form { text-align: right; }
 .service input[type="range"] {
   appearance: none;
   width: 100%;
-  height: 1.75rem;
-  margin: .5rem 0 0;
+  /* O trilho tem 3px e o polegar, 18. A area de toque e criada por
+     padding vertical, nao por height: height empurrava o layout e roubava
+     30px da primeira dobra (6 produtos visiveis em vez de 8). Com padding,
+     o alvo de 44px existe sem custar altura de layout. */
+  height: 20px;
+  padding: 12px 0;
+  box-sizing: content-box;
+  margin: 0;
   background: transparent;
   cursor: pointer;
 }
@@ -629,6 +636,7 @@ dialog#dlg-copia form { text-align: right; }
   font-weight: 600;
   color: var(--ink-3);
   padding: .5rem .875rem;
+  min-height: 44px;
   cursor: pointer;
   margin-bottom: -1px;
 }
@@ -733,7 +741,11 @@ dialog#dlg-copia form { text-align: right; }
   appearance: none;
   background: transparent;
   border: 1px solid var(--rule-2);
-  padding: .4375rem .75rem;
+  /* 44px de altura: o piso de alvo de toque. Antes era .4375rem de
+     padding, que dava 32px - apertado para quem esta de pe, com o
+     notebook na bancada e luz fria. O texto nao muda; so o alvo. */
+  padding: .625rem .875rem;
+  min-height: 44px;
   font-size: var(--step-0);
   font-weight: 600;
   letter-spacing: .05em;
@@ -1287,7 +1299,10 @@ details.rules > summary:hover { color: var(--green-deep); }
      encolhe para o degrau 12px e o trilho do slider encurta. Nada de
      conteudo sai, so o respiro. */
   .service { padding-top: .5rem; }
-  .service input[type="range"] { height: 1.25rem; margin-top: .25rem; }
+  /* Mantem 44px de area de toque: encolher para 20px economizava 24px de
+     altura e custava o alvo do dedo. O trilho continua fino; o que cresce
+     e a area clicavel. */
+  .service input[type="range"] { height: 20px; padding: 12px 0; margin-top: 0; }
   .service__note { font-size: var(--step--1); line-height: 1.35; max-width: 52ch; margin-top: .25rem; }
   .band { min-height: 4rem; }
   .band__seg { padding: .5rem .625rem; }
@@ -1493,7 +1508,7 @@ details.rules > summary:hover { color: var(--green-deep); }
         <span class="stamp__label">Referência do dado</span>
         <span class="stamp__value" id="ref-data">–</span>
       </div>
-      <span class="tag">dados sintéticos</span>
+      <span class="tag">dados de demonstração</span>
     </div>
   </div>
 </header>
@@ -1543,7 +1558,7 @@ details.rules > summary:hover { color: var(--green-deep); }
       <div class="service">
         <div class="service__head">
           <span class="service__label" id="nivel-label">Margem de segurança</span>
-          <output class="service__out num" id="nivel-out" for="nivel">95%<small id="nivel-z">z 1,65</small></output>
+          <output class="service__out num" id="nivel-out" for="nivel">95%</output>
         </div>
         <input type="range" id="nivel" min="90" max="99" step="1" value="95"
                aria-labelledby="nivel-label" aria-describedby="nivel-nota"
@@ -1562,9 +1577,8 @@ details.rules > summary:hover { color: var(--green-deep); }
           <span style="--pos:100%">99%</span>
         </div>
         <p class="service__note" id="nivel-nota">
-          Em 95%, você aceita faltar 5 vezes em 100. Subir para 99% quase acaba
-          com a falta, mas enche o estoque e trava dinheiro. É o mesmo dilema de
-          sempre: faltar ou sobrar.
+          95% aceita faltar 5 vezes em 100. Subir para 99% quase acaba com a
+          falta, mas enche o estoque e trava dinheiro.
         </p>
       </div>
     </div>
@@ -1601,10 +1615,11 @@ details.rules > summary:hover { color: var(--green-deep); }
         </div>
       </div>
 
-      <ul class="lista" id="picking-lista" role="tabpanel"
+      <ul class="lista" id="picking-lista" role="tabpanel" tabindex="0"
           aria-labelledby="modo-lista"></ul>
 
-      <div class="table-scroll" id="picking-tabela-wrap" hidden>
+      <div class="table-scroll" id="picking-tabela-wrap" role="tabpanel"
+           tabindex="0" aria-labelledby="modo-tabela" hidden>
         <table class="picking" id="tabela">
           <caption class="vh" id="tabela-caption"></caption>
           <thead id="tabela-head"></thead>
@@ -1861,6 +1876,20 @@ const lojaNome = (id) => (DADOS.lojas.find((l) => l.loja_id === id) || {}).nome 
    muda e o que o dono le: "ACABOU", "QUASE ACABANDO", "COMPRAR",
    "TEM BASTANTE". Ninguem pede "repor nivel critico" no fornecedor.
    --------------------------------------------------------------------- */
+/* Nome legivel das dimensoes de qualidade. "Acuracidade" e o nome
+   tecnico (DAMA-DMBOK) e continua no banco; na tela vira o que o dono
+   reconhece. As outras seis ja estavam em portugues comum. */
+const ROTULO_DIMENSAO = {
+  acuracidade: "contagem de estoque",
+  completude: "informação completa",
+  consistencia: "números que fecham",
+  unicidade: "sem duplicidade",
+  validade: "dados válidos",
+  atualidade: "dados do dia",
+  conformidade: "formato correto",
+};
+const rotuloDimensao = (d) => ROTULO_DIMENSAO[d] || d;
+
 const ROTULO_SITUACAO = {
   RUPTURA: "ACABOU",
   CRITICO: "QUASE ACABANDO",
@@ -1988,6 +2017,20 @@ function agregar(linhas) {
    --------------------------------------------------------------------- */
 function renderResumo(agg) {
   const perda = DADOS.perda.find((p) => p.loja_id === estado.loja) || DADOS.perda[0];
+
+  // Estado vazio: sem produto a comprar, a lede deixa de narrar um pedido
+  // que nao existe. "R$ 0,00 de 0 fornecedores para as 3 lojas" era uma
+  // frase impossivel - ninguem fala assim.
+  if (!agg.fornecedores.length) {
+    el("lede").innerHTML =
+      `Nada a comprar agora${estado.loja ? " em " + lojaNome(estado.loja) : ""}: ` +
+      `o estoque cobre os próximos dias em todos os produtos. ` +
+      `No último ano, produto em falta custou <b data-tone="red">${fmtBRL(perda.receita)}</b>.`;
+    el("total-pedido").textContent = "—";
+    el("total-meta").innerHTML = "nenhum produto abaixo do mínimo";
+    return;
+  }
+
   el("lede").innerHTML =
     `Esta semana você precisa comprar <b>${fmtBRLcents(agg.cent)}</b> ` +
     `de ${agg.fornecedores.length} ${agg.fornecedores.length === 1 ? "fornecedor" : "fornecedores"}` +
@@ -2013,8 +2056,10 @@ function renderDelta(agg) {
   if (estado.nivel === 95) {
     // 1,65 e o valor que a migration 011 aplica. Dizer 1,645 aqui
     // contradizia o proprio controle logo acima.
-    el("total-delta").textContent =
-      "Padrão da casa: aceitar faltar 5 vezes em 100.";
+    // O delta em 95% fica vazio: a nota do controle logo abaixo ja
+    // explica o que 95% significa. Repetir era dizer a mesma frase duas
+    // vezes em duas linhas seguidas.
+    el("total-delta").textContent = "";
     return;
   }
   const sinal = d >= 0 ? "+" : "−";
@@ -2029,7 +2074,7 @@ function renderNivel() {
   // 95% imprime "1,65" para bater com a migration 011; os outros niveis
   // usam a inversa real da normal e precisam das tres casas.
   el("nivel-out").innerHTML =
-    `${estado.nivel}%<small id="nivel-z">z ${fmtDec(z, estado.nivel === 95 ? 2 : 3)}</small>`;
+    `${estado.nivel}%`;
   el("nivel").setAttribute("aria-valuetext", `${estado.nivel}% — margem de segurança`);
 }
 
@@ -2173,6 +2218,9 @@ function renderLista(linhas) {
 /* Alterna entre a lista e a tabela. O estado e visual, nao muda o calculo. */
 let modoPedido = "lista";
 
+/* Troca de modo por acao do usuario: move o foco para o painel que
+   apareceu. Sem isso, quem usa teclado ou leitor de tela ativa a aba e o
+   foco fica no botao: o conteudo novo esta na tela mas nao e anunciado. */
 function renderModo() {
   const lista = el("picking-lista");
   const tabela = el("picking-tabela-wrap");
@@ -2184,6 +2232,14 @@ function renderModo() {
   tabela.hidden = ehLista;
   bLista.setAttribute("aria-selected", String(ehLista));
   bTabela.setAttribute("aria-selected", String(!ehLista));
+}
+
+/* Troca de modo por acao do usuario: move o foco para o painel. */
+function trocarModo(novo) {
+  modoPedido = novo;
+  renderModo();
+  const alvo = el(novo === "lista" ? "picking-lista" : "picking-tabela-wrap");
+  if (alvo) alvo.focus();
 }
 
 /* ---------------------------------------------------------------------
@@ -2543,7 +2599,7 @@ function renderChart() {
   }
 
   el("chart-desc").textContent =
-    `Receita perdida por mês, de ${fmtMes(serie[0].ano_mes)} a ${fmtMes(serie[serie.length - 1].ano_mes)}. ` +
+    `Quanto deixou de entrar por mês, de ${fmtMes(serie[0].ano_mes)} a ${fmtMes(serie[serie.length - 1].ano_mes)}. ` +
     `O pior mês foi ${fmtMes(pico.ano_mes)}: ${fmtBRL(pico.receita)} deixaram de entrar por falta de produto.`;
 
   // Escala e extremos: no papel nao existe tooltip, entao a magnitude tem
@@ -2746,9 +2802,9 @@ function renderConfianca() {
       meta: m ? `${m.resumo.regras_com_recall_100} tipos são pegos em 100% dos casos.` : "",
     },
     {
-      rotulo: "Linhas separadas na entrada",
+      rotulo: "Linhas separadas para conferir",
       valor: m ? fmtInt(m.resumo.registros_em_quarentena) : "—",
-      meta: "Um erro de cadastro derruba tudo que depende dele, por isso a quarentena é maior que o número de erros.",
+      meta: "Um erro de cadastro derruba tudo que depende dele, por isso a lista de linhas separadas é maior que o número de erros.",
     },
   ];
 
@@ -2791,7 +2847,7 @@ function renderConfianca() {
     tag.textContent = SELA_ROTULO[s.selo] || s.selo.replace("_", " ");
     const fraca = document.createElement("span");
     fraca.className = "seal__weak";
-    fraca.textContent = `Ponto mais fraco: ${pior.dimensao} (${fmtPct(pior.score, 2)})`;
+    fraca.textContent = `Ponto mais fraco: ${rotuloDimensao(pior.dimensao)} (${fmtPct(pior.score, 2)})`;
     row.append(nome, score, tag, fraca);
     selos.appendChild(row);
   }
@@ -3128,14 +3184,8 @@ function iniciar() {
 
   // Alternancia lista/tabela. Um botao so por vez: os dois mostram o
   // MESMO array de linhas, entao nao ha estado de dados a sincronizar.
-  el("modo-lista").addEventListener("click", () => {
-    modoPedido = "lista";
-    renderModo();
-  });
-  el("modo-tabela").addEventListener("click", () => {
-    modoPedido = "tabela";
-    renderModo();
-  });
+  el("modo-lista").addEventListener("click", () => trocarModo("lista"));
+  el("modo-tabela").addEventListener("click", () => trocarModo("tabela"));
 
   renderModo();
   render();
