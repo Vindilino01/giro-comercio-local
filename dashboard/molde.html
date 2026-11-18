@@ -606,6 +606,108 @@ dialog#dlg-copia form { text-align: right; }
 .service { margin-top: .125rem; }
 
 /* ---- tabela de separacao ---- */
+/* ---------------------------------------------------------------------
+   Dois modos de ver o pedido.
+
+   A tabela explica a conta: demanda, ponto de pedido, cobertura. A lista
+   só diz o que comprar. O dono imprime a lista; quem quiser conferir abre
+   a tabela. As duas leem o mesmo array `linhas`.
+   --------------------------------------------------------------------- */
+.modos {
+  display: flex;
+  gap: 0;
+  margin-top: 1.5rem;
+  border-bottom: 1px solid var(--rule-2);
+}
+.modos__btn {
+  appearance: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--ink-3);
+  padding: .5rem .875rem;
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+.modos__btn:hover { color: var(--ink); }
+.modos__btn[aria-selected="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--green);
+}
+
+/* Lista de compras: uma linha por produto, com caixa de marcar. */
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  columns: 2;
+  column-gap: 2.5rem;
+}
+.lista__loja {
+  break-inside: avoid;
+  margin: .75rem 0 .25rem;
+  padding-top: .5rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  column-span: all;
+}
+.lista__item {
+  break-inside: avoid;
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .375rem 0;
+  border-bottom: 1px dotted var(--rule);
+  font-size: var(--step-0);
+}
+.lista__check {
+  width: .875rem;
+  height: .875rem;
+  border: 1px solid var(--rule-2);
+  align-self: center;
+}
+.lista__nome { min-width: 0; }
+.lista__qtd {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: var(--step-1);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lista__un {
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 500;
+  color: var(--ink-2);
+  margin-left: .15em;
+}
+.lista__item--acabou .lista__nome { font-weight: 600; }
+.lista__vazio {
+  column-span: all;
+  padding: 1rem 0;
+  color: var(--ink-2);
+}
+@media (max-width: 700px) {
+  .lista { columns: 1; }
+}
+
+@media print {
+  /* No papel a lista e o unico modo que faz sentido: a tabela tem 10
+     colunas e nao cabe em A4 sem virar ilegivel. */
+  .modos { display: none; }
+  .lista { columns: 2; column-gap: 2rem; }
+  #picking-tabela-wrap { display: none !important; }
+}
+
 .picking__wrap {
   margin-top: 1.25rem;
   border-top: 1px solid var(--ink);
@@ -1023,7 +1125,10 @@ table.data caption {
 .seals { display: flex; flex-direction: column; border-top: 1px solid var(--ink); }
 .seal {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) 5rem 6rem minmax(0, 1fr);
+  /* A coluna do selo era 6rem (96px) e "DÁ PARA CONFIAR" nao cabia:
+     o texto vazava por cima do "Ponto mais fraco" ao lado. 8.5rem cabe a
+     palavra mais longa e ainda deixa o rotulo quebrar em duas linhas. */
+  grid-template-columns: minmax(0, 1fr) 5rem 8.5rem minmax(0, 1.2fr);
   align-items: baseline;
   gap: 1rem;
   padding: .6875rem 0;
@@ -1044,11 +1149,13 @@ table.data caption {
   justify-self: start;
   font-size: var(--step--1);
   font-weight: 600;
-  letter-spacing: .06em;
+  letter-spacing: .04em;
   text-transform: uppercase;
   padding: .125rem .4375rem;
   border: 1px solid currentColor;
-  white-space: nowrap;
+  /* nowrap fazia "DÁ PARA CONFIAR" transbordar da coluna de 6rem. Com
+     quebra, o rotulo ocupa duas linhas curtas e cabe. */
+  line-height: 1.25;
 }
 .seal__tag[data-selo="CONFIAVEL"] { color: var(--green); }
 .seal__tag[data-selo="ATENCAO"] { color: var(--ochre); }
@@ -1375,7 +1482,7 @@ details.rules > summary:hover { color: var(--green-deep); }
            h1 confundem a navegacao por leitor de tela. -->
       <div class="brand__name">Giro</div>
       <span class="brand__rule" aria-hidden="true"></span>
-      <span class="brand__claim">Previsão de estoque para mercadinho de bairro</span>
+      <span class="brand__claim">O que comprar, sem adivinhar</span>
     </div>
     <div class="masthead__meta">
       <label class="field" for="loja">
@@ -1417,11 +1524,11 @@ details.rules > summary:hover { color: var(--green-deep); }
            semana, e a unica coisa na pagina que merece o nivel
            maximo de heading. Sem isto o documento comecava em h2 e
            leitores de tela nao encontravam o titulo da pagina. -->
-      <h1 id="h-pedido">O pedido da semana</h1>
+      <h1 id="h-pedido">O que comprar nesta semana</h1>
       <p class="section__note">
-        Ponto de pedido = demanda prevista no lead time + estoque de segurança.
-        A compra é arredondada ao múltiplo do fornecedor, e a sugestão só aparece
-        quando o estoque cobre menos do que o fornecedor leva para entregar.
+        Some quanto você vende por dia, multiplique pelos dias que o fornecedor
+        leva para entregar e acrescente uma folga para não faltar. Se o que está
+        na prateleira não cobre isso, o produto aparece na lista abaixo.
       </p>
     </div>
 
@@ -1435,13 +1542,13 @@ details.rules > summary:hover { color: var(--green-deep); }
 
       <div class="service">
         <div class="service__head">
-          <span class="service__label" id="nivel-label">Nível de serviço</span>
+          <span class="service__label" id="nivel-label">Margem de segurança</span>
           <output class="service__out num" id="nivel-out" for="nivel">95%<small id="nivel-z">z 1,65</small></output>
         </div>
         <input type="range" id="nivel" min="90" max="99" step="1" value="95"
                aria-labelledby="nivel-label" aria-describedby="nivel-nota"
-               aria-valuetext="95% — nível de serviço">
-        <!-- Escala do nível de serviço.
+               aria-valuetext="95% — margem de segurança">
+        <!-- Escala da margem de segurança.
              O trilho tem 10 posições (90..99). Cada rótulo cai na
              posição REAL do seu valor: (valor - 90) / 9 * 100%.
              São 5 rótulos, não 6: com "98%" e "99%" a 11% de distância
@@ -1455,8 +1562,9 @@ details.rules > summary:hover { color: var(--green-deep); }
           <span style="--pos:100%">99%</span>
         </div>
         <p class="service__note" id="nivel-nota">
-          Estoque de segurança = z × σ × √lead time. Subir o nível protege
-          contra falta e imobiliza mais capital: o mesmo trade-off da página.
+          Em 95%, você aceita faltar 5 vezes em 100. Subir para 99% quase acaba
+          com a falta, mas enche o estoque e trava dinheiro. É o mesmo dilema de
+          sempre: faltar ou sobrar.
         </p>
       </div>
     </div>
@@ -1468,6 +1576,21 @@ details.rules > summary:hover { color: var(--green-deep); }
       <span id="band-legend-right"></span>
     </div>
 
+    <!-- Duas formas de ler o mesmo pedido. A lista e o modo padrao: nome,
+         quantidade e uma caixa para marcar. A tabela tem as colunas que
+         explicam a conta, para quem quiser conferir. O dono usa a lista;
+         a banca olha a tabela. -->
+    <div class="modos" role="tablist" aria-label="Como ver o pedido">
+      <button class="modos__btn" id="modo-lista" role="tab"
+              aria-selected="true" aria-controls="picking-lista" type="button">
+        Lista de compras
+      </button>
+      <button class="modos__btn" id="modo-tabela" role="tab"
+              aria-selected="false" aria-controls="tabela" type="button">
+        Conferir a conta
+      </button>
+    </div>
+
     <div class="picking__wrap" id="painel-fornecedor" aria-labelledby="picking-title">
       <div class="picking__head">
         <h2 class="picking__title" id="picking-title">—</h2>
@@ -1477,7 +1600,11 @@ details.rules > summary:hover { color: var(--green-deep); }
           <button class="btn" id="imprimir" type="button">Imprimir</button>
         </div>
       </div>
-      <div class="table-scroll">
+
+      <ul class="lista" id="picking-lista" role="tabpanel"
+          aria-labelledby="modo-lista"></ul>
+
+      <div class="table-scroll" id="picking-tabela-wrap" hidden>
         <table class="picking" id="tabela">
           <caption class="vh" id="tabela-caption"></caption>
           <thead id="tabela-head"></thead>
@@ -1507,27 +1634,28 @@ details.rules > summary:hover { color: var(--green-deep); }
   <!-- ================= A PERDA ================= -->
   <section class="section" id="perda" aria-labelledby="h-perda">
     <div class="section__head">
-      <h2 id="h-perda">A perda que não passa pelo caixa</h2>
+      <h2 id="h-perda">O que você deixou de vender sem perceber</h2>
       <p class="section__note">
-        Quando o produto falta, a venda registrada é zero, mas a demanda não era
-        zero. O Giro reconstrói a venda perdida com a média do mesmo dia da semana
-        em dias sem ruptura, e marca cada valor como observado ou reconstruído.
+        Quando o produto acaba na prateleira, o caixa registra zero — mas havia
+        cliente querendo comprar. Essa venda não aparece em relatório nenhum.
+        O Giro estima quanto era, olhando o que você vende num dia normal
+        igual a esse (mesmo dia da semana, sem falta).
       </p>
     </div>
 
     <div class="loss__figures">
       <div class="loss__lead">
-        <p class="figure__label">Receita perdida em 12 meses</p>
+        <p class="figure__label">Quanto deixei de vender em 12 meses</p>
         <p class="figure__value figure__value--red poster__value num" id="perda-receita">–</p>
         <p class="figure__meta" id="perda-equiv"></p>
       </div>
       <div>
-        <p class="figure__label">Taxa de ruptura medida</p>
+        <p class="figure__label">Com que frequência faltou</p>
         <p class="figure__value num" id="ruptura-taxa">–</p>
         <p class="figure__meta" id="ruptura-meta"></p>
       </div>
       <div>
-        <p class="figure__label">Demanda reconstruída</p>
+        <p class="figure__label">Quanto disso é estimativa</p>
         <p class="figure__value num" id="reconstruida-valor">–</p>
         <p class="figure__meta" id="reconstruida-meta"></p>
       </div>
@@ -1539,15 +1667,15 @@ details.rules > summary:hover { color: var(--green-deep); }
       <p class="vh" id="chart-desc"></p>
       <div class="chart__axis" id="chart-axis" aria-hidden="true"></div>
       <div class="chart__legend">
-        <span><i data-k="win"></i>Os 12 meses do relatório</span>
-        <span><i data-k="out"></i>Histórico anterior</span>
+        <span><i data-k="win"></i>Últimos 12 meses</span>
+        <span><i data-k="out"></i>Meses anteriores</span>
         <span><i data-k="peak"></i>Pior mês</span>
       </div>
     </figure>
 
     <div class="offenders">
       <div class="offenders__head">
-        <h3>Onde a perda se concentra</h3>
+        <h3>Quais produtos mais pesaram</h3>
         <p class="offenders__note" id="offenders-note"></p>
       </div>
       <div class="data-wrap">
@@ -1555,10 +1683,10 @@ details.rules > summary:hover { color: var(--green-deep); }
           <thead>
             <tr>
               <th scope="col">Produto</th>
-              <th scope="col">Departamento</th>
-              <th scope="col" class="c-num">Rupturas</th>
+              <th scope="col">Seção</th>
+              <th scope="col" class="c-num">Faltou (vezes)</th>
               <th scope="col" class="c-num">Unidades</th>
-              <th scope="col" class="c-num">Receita perdida</th>
+              <th scope="col" class="c-num">Deixei de vender</th>
             </tr>
           </thead>
           <tbody id="offenders-body"></tbody>
@@ -1570,22 +1698,23 @@ details.rules > summary:hover { color: var(--green-deep); }
   <!-- ================= O CAPITAL ================= -->
   <section class="section" id="capital" aria-labelledby="h-capital">
     <div class="section__head">
-      <h2 id="h-capital">O outro lado do trade-off</h2>
+      <h2 id="h-capital">O outro lado: dinheiro parado na prateleira</h2>
       <p class="section__note">
-        Cobertura é quantos dias o estoque aguenta. Abaixo do lead time é risco de
-        falta; muito acima é capital imobilizado e, no perecível, perda seca.
-        Neste retrato o risco maior está na falta, não no excesso.
+        Comprar demais também custa. O produto fica parado, o dinheiro não gira
+        e o perecível vence. Aqui aparece quantos dias o seu estoque aguenta —
+        comparado com os dias que o fornecedor leva para entregar. Neste
+        retrato, o risco maior é faltar, não sobrar.
       </p>
     </div>
 
     <div class="loss__figures">
       <div>
-        <p class="figure__label">Estoque médio por dia</p>
+        <p class="figure__label">Dinheiro parado no estoque (média)</p>
         <p class="figure__value num" id="estoque-valor">–</p>
         <p class="figure__meta" id="estoque-meta"></p>
       </div>
       <div>
-        <p class="figure__label">Perecível em risco de vencimento</p>
+        <p class="figure__label">Perecível perto de vencer</p>
         <p class="figure__value figure__value--red num" id="vencimento-valor">–</p>
         <p class="figure__meta" id="vencimento-meta"></p>
       </div>
@@ -1593,19 +1722,19 @@ details.rules > summary:hover { color: var(--green-deep); }
 
     <div class="capital__grid">
       <div>
-        <h3 class="panel__title">Cobertura do estoque</h3>
+        <h3 class="panel__title">Quantos dias o estoque aguenta</h3>
         <div class="hbars" id="cobertura-bars"></div>
         <p class="panel__note" id="cobertura-nota"></p>
       </div>
       <div>
-        <h3 class="panel__title">Receita e margem por departamento</h3>
+        <h3 class="panel__title">O que mais vende, por seção</h3>
         <div class="data-wrap">
           <table class="data" id="departamentos">
             <thead>
               <tr>
-                <th scope="col">Departamento</th>
-                <th scope="col" class="c-num">SKUs</th>
-                <th scope="col" class="c-num">Receita</th>
+                <th scope="col">Seção</th>
+                <th scope="col" class="c-num">Produtos</th>
+                <th scope="col" class="c-num">Vende</th>
                 <th scope="col" class="c-num">Margem</th>
               </tr>
             </thead>
@@ -1620,31 +1749,32 @@ details.rules > summary:hover { color: var(--green-deep); }
   <!-- ================= A CONFIANCA ================= -->
   <section class="section" id="confianca" aria-labelledby="h-confianca">
     <div class="section__head">
-      <h2 id="h-confianca">Por que dá para confiar nesses números</h2>
+      <h2 id="h-confianca">Dá para confiar nesses números?</h2>
       <p class="section__note">
-        Previsão é tão boa quanto o estoque que a alimenta. O Giro mede a
-        qualidade do dado de cada loja e testa o próprio filtro contra defeitos
-        injetados de propósito, com gabarito.
+        Previsão boa depende de estoque bem contado. Se o sistema diz que tem 10
+        e a prateleira tem 6, a conta está errada por mais correto que seja o
+        cálculo. Por isso cada loja recebe uma nota — e a nota usa o <b>pior</b>
+        item, não a média.
       </p>
     </div>
 
     <div class="trust__figures" id="trust-figures"></div>
 
-    <h3 class="panel__title">Selo de confiança por loja</h3>
+    <h3 class="panel__title">A nota de cada loja</h3>
     <div class="seals" id="seals"></div>
     <p class="panel__note" id="seals-note"></p>
 
     <details class="rules">
-      <summary id="rules-summary">Ver as regras de qualidade e a detecção medida</summary>
+      <summary id="rules-summary">Ver como a nota é calculada</summary>
       <div class="data-wrap">
         <table class="data" id="regras">
           <caption id="regras-caption"></caption>
           <thead>
             <tr>
-              <th scope="col">Regra</th>
-              <th scope="col">Dimensão</th>
-              <th scope="col" class="c-num">Injetados</th>
-              <th scope="col" class="c-num">Detectados</th>
+              <th scope="col">O que é conferido</th>
+              <th scope="col">Tipo</th>
+              <th scope="col" class="c-num">Erros plantados</th>
+              <th scope="col" class="c-num">Pegos</th>
               <th scope="col" class="c-num">Recall</th>
               <th scope="col" class="c-num">Precisão</th>
               <th scope="col" class="c-num">F1</th>
@@ -1658,14 +1788,14 @@ details.rules > summary:hover { color: var(--green-deep); }
 
   <footer class="foot">
     <p>
-      <b>Giro</b> · A3 Análise de Dados e Big Data.
-      Página gerada por <b>dashboard/gerar.py</b> a partir do PostgreSQL do projeto.
-      Todo número aqui sai de uma consulta versionada; nenhum foi digitado à mão.
+      <b>Giro</b> · projeto da disciplina Análise de Dados e Big Data.
+      Tela gerada a partir do banco do projeto: cada número vem de uma consulta,
+      nenhum foi digitado à mão.
     </p>
     <p>
-      O conjunto de dados é <b>sintético</b>, calibrado com os patamares publicados
-      do setor (8,3% de ruptura global, Nielsen; 10–12% no Brasil, Neogrid).
-      Não há cliente, loja ou fornecedor real nesta página.
+      Os dados são <b>simulados</b>, calibrados com números públicos do setor
+      (8,3% de falta, Nielsen; 10–12% no Brasil, Neogrid). Não existe cliente,
+      loja ou fornecedor real nesta página.
     </p>
     <p class="foot__right" id="foot-meta"></p>
   </footer>
@@ -1722,6 +1852,28 @@ const estado = { loja: 0, fornecedor: null, nivel: 95, ordem: "urgencia" };
 
 const el = (id) => document.getElementById(id);
 const lojaNome = (id) => (DADOS.lojas.find((l) => l.loja_id === id) || {}).nome || "–";
+
+/* ---------------------------------------------------------------------
+   Rotulo de situacao em portugues de loja.
+
+   Os valores internos continuam RUPTURA / CRITICO / REPOR / OK, porque
+   sao eles que casam com a coluna `situacao` da view no banco. O que
+   muda e o que o dono le: "ACABOU", "QUASE ACABANDO", "COMPRAR",
+   "TEM BASTANTE". Ninguem pede "repor nivel critico" no fornecedor.
+   --------------------------------------------------------------------- */
+const ROTULO_SITUACAO = {
+  RUPTURA: "ACABOU",
+  CRITICO: "QUASE ACABANDO",
+  REPOR: "COMPRAR",
+  OK: "TEM BASTANTE",
+};
+const rotuloSituacao = (s) => ROTULO_SITUACAO[s] || s;
+
+const SELA_ROTULO = {
+  CONFIAVEL: "DÁ PARA CONFIAR",
+  ATENCAO: "USE COM RESERVA",
+  NAO_CONFIAVEL: "NÃO DÁ PARA CONFIAR",
+};
 
 /* ---------------------------------------------------------------------
    O calculo. Repete exatamente a formula da migration 011:
@@ -1837,16 +1989,16 @@ function agregar(linhas) {
 function renderResumo(agg) {
   const perda = DADOS.perda.find((p) => p.loja_id === estado.loja) || DADOS.perda[0];
   el("lede").innerHTML =
-    `O Giro recomenda comprar <b>${fmtBRLcents(agg.cent)}</b> ` +
-    `em ${agg.fornecedores.length} ${agg.fornecedores.length === 1 ? "fornecedor" : "fornecedores"}` +
-    `${estado.loja ? " para " + lojaNome(estado.loja) : " nas " + DADOS.lojas.length + " lojas"}. ` +
-    `Nos últimos 12 meses, a falta de produto custou <b data-tone="red">${fmtBRL(perda.receita)}</b> ` +
-    `em receita que a prateleira vazia não registrou.`;
+    `Esta semana você precisa comprar <b>${fmtBRLcents(agg.cent)}</b> ` +
+    `de ${agg.fornecedores.length} ${agg.fornecedores.length === 1 ? "fornecedor" : "fornecedores"}` +
+    `${estado.loja ? " para " + lojaNome(estado.loja) : " para as " + DADOS.lojas.length + " lojas"}. ` +
+    `No último ano, produto em falta custou <b data-tone="red">${fmtBRL(perda.receita)}</b> ` +
+    `— venda que o caixa não registrou porque não havia na prateleira.`;
 
   el("total-pedido").textContent = fmtBRLcents(agg.cent);
   el("total-meta").innerHTML =
-    `<b>${fmtInt(agg.skus)}</b> SKUs · <b>${agg.rupturas}</b> em ruptura · ` +
-    `<b>${agg.criticos}</b> em estado crítico`;
+    `<b>${fmtInt(agg.skus)}</b> produtos · <b>${agg.rupturas}</b> em falta · ` +
+    `<b>${agg.criticos}</b> quase acabando`;
 }
 
 function renderDelta(agg) {
@@ -1861,13 +2013,14 @@ function renderDelta(agg) {
   if (estado.nivel === 95) {
     // 1,65 e o valor que a migration 011 aplica. Dizer 1,645 aqui
     // contradizia o proprio controle logo acima.
-    el("total-delta").textContent = "Referência: nível de serviço de 95% (z = 1,65).";
+    el("total-delta").textContent =
+      "Padrão da casa: aceitar faltar 5 vezes em 100.";
     return;
   }
   const sinal = d >= 0 ? "+" : "−";
   el("total-delta").textContent =
-    `${sinal}${fmtBRL(Math.abs(d) / 100)} em relação a 95% · ` +
-    `${d >= 0 ? "mais proteção contra falta, mais capital imobilizado" : "menos capital imobilizado, mais risco de falta"}`;
+    `${sinal}${fmtBRL(Math.abs(d) / 100)} em relação ao padrão · ` +
+    `${d >= 0 ? "mais segurança contra falta, mais dinheiro parado" : "menos dinheiro parado, mais risco de faltar"}`;
 }
 
 function renderNivel() {
@@ -1876,10 +2029,8 @@ function renderNivel() {
   // 95% imprime "1,65" para bater com a migration 011; os outros niveis
   // usam a inversa real da normal e precisam das tres casas.
   el("nivel-out").innerHTML =
-    `${estado.nivel}%<small>z ${fmtDec(z, estado.nivel === 95 ? 2 : 3)}</small>`;
-  // O valor do slider precisa dizer o que representa: "95" sozinho nao
-  // informa que e o nivel de servico que recalcula o pedido inteiro.
-  el("nivel").setAttribute("aria-valuetext", `${estado.nivel}% — nível de serviço`);
+    `${estado.nivel}%<small id="nivel-z">z ${fmtDec(z, estado.nivel === 95 ? 2 : 3)}</small>`;
+  el("nivel").setAttribute("aria-valuetext", `${estado.nivel}% — margem de segurança`);
 }
 
 /* ---------------------------------------------------------------------
@@ -1934,7 +2085,7 @@ function renderBand(agg) {
     // em 6 colunas proporcionais, mas a barra abaixo do nome preserva a
     // leitura de proporcao no papel.
     b.style.setProperty("--fatia", (f.cent / total).toFixed(5));
-    b.title = `${f.nome}: ${fmtBRLcents(f.cent)} · ${f.skus} SKUs · lead ${f.lead} dias`;
+    b.title = `${f.nome}: ${fmtBRLcents(f.cent)} · ${f.skus} produtos · entrega em ${f.lead} dias`;
 
     const nome = document.createElement("span");
     nome.className = "band__name";
@@ -1955,7 +2106,84 @@ function renderBand(agg) {
   }
 
   el("band-legend-right").textContent =
-    `${agg.fornecedores.length} fornecedores · ${fmtInt(agg.skus)} SKUs · ${fmtInt(agg.rupturas)} em ruptura`;
+    `${agg.fornecedores.length} fornecedores · ${fmtInt(agg.skus)} produtos · ${fmtInt(agg.rupturas)} em falta`;
+}
+
+/* ---------------------------------------------------------------------
+   Lista de compras
+
+   O modo que o dono usa. Uma linha por produto, agrupada por loja quando
+   o escopo e "todas as lojas". Sem colunas de analise: nome, quantidade,
+   unidade e uma caixa para marcar a dedo quando separar no estoque.
+   --------------------------------------------------------------------- */
+function renderLista(linhas) {
+  const ul = el("picking-lista");
+  ul.textContent = "";
+
+  if (!linhas.length) {
+    const li = document.createElement("li");
+    li.className = "lista__vazio";
+    li.textContent = "Nenhum produto precisa de compra deste fornecedor neste nível de margem.";
+    ul.appendChild(li);
+    return;
+  }
+
+  const agrupar = estado.loja === 0;
+  const ids = agrupar
+    ? DADOS.lojas.map((l) => l.loja_id).filter((id) => linhas.some((l) => l.loja_id === id))
+    : [null];
+
+  for (const id of ids) {
+    if (agrupar) {
+      const cab = document.createElement("li");
+      cab.className = "lista__loja";
+      cab.textContent = lojaNome(id);
+      ul.appendChild(cab);
+    }
+
+    const doGrupo = id === null ? linhas : linhas.filter((l) => l.loja_id === id);
+    for (const l of doGrupo) {
+      const li = document.createElement("li");
+      li.className = "lista__item" + (l.situacao === "RUPTURA" ? " lista__item--acabou" : "");
+
+      const box = document.createElement("span");
+      box.className = "lista__check";
+      box.setAttribute("aria-hidden", "true");
+
+      const nome = document.createElement("span");
+      nome.className = "lista__nome";
+      nome.textContent = l.nome;
+
+      const qtd = document.createElement("span");
+      qtd.className = "lista__qtd";
+      qtd.textContent = fmtInt(l.qtd);
+      if (l.unidade && l.unidade !== "UN") {
+        const un = document.createElement("span");
+        un.className = "lista__un";
+        un.textContent = l.unidade;
+        qtd.appendChild(un);
+      }
+
+      li.append(box, nome, qtd);
+      ul.appendChild(li);
+    }
+  }
+}
+
+/* Alterna entre a lista e a tabela. O estado e visual, nao muda o calculo. */
+let modoPedido = "lista";
+
+function renderModo() {
+  const lista = el("picking-lista");
+  const tabela = el("picking-tabela-wrap");
+  const bLista = el("modo-lista");
+  const bTabela = el("modo-tabela");
+  const ehLista = modoPedido === "lista";
+
+  lista.hidden = !ehLista;
+  tabela.hidden = ehLista;
+  bLista.setAttribute("aria-selected", String(ehLista));
+  bTabela.setAttribute("aria-selected", String(!ehLista));
 }
 
 /* ---------------------------------------------------------------------
@@ -1964,14 +2192,14 @@ function renderBand(agg) {
 const COLUNAS = [
   { k: "situacao", t: "Situação", ordenar: true, cls: "" },
   { k: "nome", t: "Produto", ordenar: true, cls: "c-sku" },
-  { k: "dep", t: "Departamento", ordenar: true, cls: "c-dep" },
-  { k: "estoque", t: "Estoque", ordenar: true, cls: "c-num" },
-  { k: "demanda", t: "Demanda/dia", ordenar: true, cls: "c-num" },
-  { k: "cobertura", t: "Dias de estoque", ordenar: true, cls: "c-num" },
-  { k: "ponto", t: "Ponto de pedido", ordenar: true, cls: "c-num" },
+  { k: "dep", t: "Seção", ordenar: true, cls: "c-dep" },
+  { k: "estoque", t: "Tem hoje", ordenar: true, cls: "c-num" },
+  { k: "demanda", t: "Vende/dia", ordenar: true, cls: "c-num" },
+  { k: "cobertura", t: "Dura (dias)", ordenar: true, cls: "c-num" },
+  { k: "ponto", t: "Precisa ter", ordenar: true, cls: "c-num" },
   { k: "qtd", t: "Comprar", ordenar: true, cls: "c-num" },
-  { k: "valorCent", t: "Valor", ordenar: true, cls: "c-num" },
-  { k: "lead", t: "Entrega (dias)", ordenar: true, cls: "c-num" },
+  { k: "valorCent", t: "Custo", ordenar: true, cls: "c-num" },
+  { k: "lead", t: "Entrega", ordenar: true, cls: "c-num" },
 ];
 
 const PESO = { RUPTURA: 0, CRITICO: 1, REPOR: 2, OK: 3 };
@@ -2057,6 +2285,7 @@ function renderTabela(agg) {
   const linhas = ordenar(doFornecedor);
   const body = el("tabela-body");
   body.textContent = "";
+  renderLista(linhas);
 
   const maxCob = Math.max(1, ...linhas.map((l) => (isFinite(l.cobertura) ? l.cobertura : 0)));
 
@@ -2082,7 +2311,7 @@ function renderTabela(agg) {
     n.textContent = lojaNome(id);
     const sum = document.createElement("span");
     sum.className = "grp__sum";
-    sum.textContent = `${fmtInt(doGrupo.length)} SKUs · ${volGrupo} · ${fmtBRLcents(cent)}`;
+    sum.textContent = `${fmtInt(doGrupo.length)} produtos · ${volGrupo} · ${fmtBRLcents(cent)}`;
     td.append(n, sum);
     tr.appendChild(td);
     return tr;
@@ -2098,12 +2327,12 @@ function renderTabela(agg) {
     // que o dono precisa ver: "nao da para decidir com este estoque".
     if (l.bloqueada) {
       sit.className = "sit sit--semconfianca";
-      sit.textContent = "SEM CONFIANÇA";
-      sit.title = `Pior dimensão da loja: ${fmtPct(l.confianca, 1)}. ` +
-        "Corrija o inventário antes de usar a sugestão.";
+      sit.textContent = "NÃO CONFIÁVEL";
+      sit.title = `A contagem desta loja está com ${fmtPct(l.confianca, 1)} de ` +
+        "acerto. Corrija o inventário antes de usar a sugestão.";
     } else {
       sit.className = "sit sit--" + l.situacao.toLowerCase();
-      sit.textContent = l.situacao;
+      sit.textContent = rotuloSituacao(l.situacao);
     }
     tdSit.appendChild(sit);
 
@@ -2178,9 +2407,9 @@ function renderTabela(agg) {
   // Sob "todas as lojas" a linha e um par (loja, SKU): dizer "162 SKUs"
   // seria contar a mesma peca tres vezes.
   const contagem = agrupar
-    ? `${fmtInt(nomes)} SKUs em ${grupos.length} lojas`
-    : `${fmtInt(linhas.length)} SKUs`;
-  sub.textContent = `  ${contagem} · lead ${(agregarDoFornecedor(linhas) || {}).lead || 0} dias`;
+    ? `${fmtInt(nomes)} produtos em ${grupos.length} lojas`
+    : `${fmtInt(linhas.length)} produtos`;
+  sub.textContent = `  ${contagem} · entrega em ${(agregarDoFornecedor(linhas) || {}).lead || 0} dias`;
   titulo.appendChild(sub);
 
   const cent = linhas.reduce((s, l) => s + l.valorCent, 0);
@@ -2189,7 +2418,7 @@ function renderTabela(agg) {
   const volume = resumirUnidades(linhas);
 
   el("picking-total").innerHTML =
-    `${fmtBRLcents(cent)}<small>${volume} em ${fmtInt(nomes)} SKUs</small>`;
+    `${fmtBRLcents(cent)}<small>${volume} em ${fmtInt(nomes)} produtos</small>`;
 
   el("picking-hint").textContent =
     !linhas.length
@@ -2202,7 +2431,7 @@ function renderTabela(agg) {
     !linhas.length
       ? "Lista de compra vazia: nenhum SKU deste fornecedor precisa de compra neste nível."
       : `Lista de compra de ${estado.fornecedor || "fornecedor"}, ` +
-        (agrupar ? `${fmtInt(nomes)} SKUs em ${grupos.length} lojas, ` : `${fmtInt(linhas.length)} SKUs, `) +
+        (agrupar ? `${fmtInt(nomes)} produtos em ${grupos.length} lojas, ` : `${fmtInt(linhas.length)} produtos, `) +
         `total ${fmtBRLcents(cent)}.`;
 
   // ------------------------------------------------------------------
@@ -2241,26 +2470,26 @@ function renderPerda(agg) {
   // a perda financiaria; o numero acompanha o filtro e o nivel.
   const pedidos = agg.cent > 0 ? p.receita / (agg.cent / 100) : 0;
   el("perda-equiv").innerHTML =
-    `<b>${fmtInt(p.eventos)}</b> eventos de ruptura, <b>${fmtInt(p.unidades)}</b> unidades ` +
-    `que ninguém comprou em <b>${fmtInt(p.skus)}</b> SKUs. ` +
+    `Em <b>${fmtInt(p.eventos)}</b> ocasiões a prateleira estava vazia, ` +
+    `somando <b>${fmtInt(p.unidades)}</b> unidades em <b>${fmtInt(p.skus)}</b> produtos. ` +
     (pedidos >= 1
-      ? `Em valor, equivale a <b>${fmtDec(pedidos, 1)}</b> pedidos como o desta semana.`
+      ? `Esse prejuízo pagaria <b>${fmtDec(pedidos, 1)}</b> compras do tamanho desta semana.`
       : "");
 
   const rup = DADOS.ruptura.find((x) => x.loja_id === estado.loja) || DADOS.ruptura[0];
   el("ruptura-taxa").textContent = fmtPct(rup.taxa_pct, 2);
   el("ruptura-meta").innerHTML =
-    `<b>${fmtInt(rup.com_ruptura)}</b> de ${fmtInt(rup.sku_dia)} SKU-dia com estoque zerado. ` +
-    `O benchmark global do setor é 8,3% (Nielsen) e 10–12% no Brasil (Neogrid).`;
+    `O produto estava em falta em <b>${fmtPct(rup.taxa_pct, 2)}</b> das vezes que ` +
+    `conferimos. A média do setor é 8,3% (Nielsen) e 10–12% no Brasil (Neogrid).`;
 
   const rec = DADOS.reconstrucao.filter((x) => x.loja_id === estado.loja);
   const recon = rec.find((x) => x.fonte_demanda === "reconstruida") || { linhas: 0, pct: 0 };
   const obsRup = rec.find((x) => x.fonte_demanda === "observada_em_ruptura") || { linhas: 0, pct: 0 };
   el("reconstruida-valor").textContent = fmtInt(recon.linhas);
   el("reconstruida-meta").innerHTML =
-    `${fmtPct(recon.pct, 2)} das linhas de demanda foram reconstruídas, mais ` +
-    `${fmtInt(obsRup.linhas)} registradas em ruptura sem referência melhor. ` +
-    `Sem isso, o modelo aprenderia a pedir menos justamente do que mais falta.`;
+    `${fmtPct(recon.pct, 2)} dos dias foram <b>estimados</b> por não haver venda ` +
+    `registrada, mais ${fmtInt(obsRup.linhas)} dias com falta e referência fraca. ` +
+    `Sem essa estimativa, o sistema aprenderia a pedir menos justamente do que mais falta.`;
 
   renderChart();
   renderOffenders();
@@ -2315,7 +2544,7 @@ function renderChart() {
 
   el("chart-desc").textContent =
     `Receita perdida por mês, de ${fmtMes(serie[0].ano_mes)} a ${fmtMes(serie[serie.length - 1].ano_mes)}. ` +
-    `O pior mês foi ${fmtMes(pico.ano_mes)}, com ${fmtBRL(pico.receita)} em ${fmtInt(pico.eventos)} rupturas.`;
+    `O pior mês foi ${fmtMes(pico.ano_mes)}: ${fmtBRL(pico.receita)} deixaram de entrar por falta de produto.`;
 
   // Escala e extremos: no papel nao existe tooltip, entao a magnitude tem
   // que estar escrita. O pior mes e o topo da escala, entao o segundo
@@ -2329,7 +2558,7 @@ const tip = el("tip");
 function mostrarTip(ev) {
   const t = ev.currentTarget;
   tip.innerHTML = `${fmtMes(t.dataset.mes)}<br><b>${fmtBRL(Number(t.dataset.receita))}</b><br>` +
-    `${fmtInt(Number(t.dataset.eventos))} rupturas`;
+    `${fmtInt(Number(t.dataset.eventos))} faltas`;
   const r = t.getBoundingClientRect();
   tip.style.left = (r.left + r.width / 2) + "px";
   tip.style.top = (r.top - 8) + "px";
@@ -2379,7 +2608,7 @@ function renderOffenders() {
   const soma12 = linhas.reduce((s, l) => s + l.receita, 0);
   el("offenders-note").textContent =
     linhas.length
-      ? `Estes ${linhas.length} SKUs concentram ${fmtPct(100 * soma12 / total.receita)} da receita perdida.`
+      ? `Estes ${linhas.length} produtos respondem por ${fmtPct(100 * soma12 / total.receita)} de tudo que você deixou de vender.`
       : "";
 }
 
@@ -2387,30 +2616,30 @@ function renderOffenders() {
    O capital
    --------------------------------------------------------------------- */
 const FAIXAS = [
-  { rotulo: "0–4 dias", min: 0, max: 5, tom: "red", nota: "abaixo do lead time" },
-  { rotulo: "5–9 dias", min: 5, max: 10, tom: "ochre", nota: "risco" },
-  { rotulo: "10–14 dias", min: 10, max: 15, tom: "green", nota: "saudável" },
-  { rotulo: "15–19 dias", min: 15, max: 20, tom: "green", nota: "saudável" },
-  { rotulo: "20–29 dias", min: 20, max: 30, tom: "", nota: "alto" },
-  { rotulo: "30–39 dias", min: 30, max: 40, tom: "", nota: "parado" },
-  { rotulo: "40+ dias", min: 40, max: Infinity, tom: "", nota: "parado" },
+  { rotulo: "0–4 dias", min: 0, max: 5, tom: "red", nota: "acaba antes de chegar" },
+  { rotulo: "5–9 dias", min: 5, max: 10, tom: "ochre", nota: "atenção" },
+  { rotulo: "10–14 dias", min: 10, max: 15, tom: "green", nota: "equilibrado" },
+  { rotulo: "15–19 dias", min: 15, max: 20, tom: "green", nota: "equilibrado" },
+  { rotulo: "20–29 dias", min: 20, max: 30, tom: "", nota: "um pouco alto" },
+  { rotulo: "30–39 dias", min: 30, max: 40, tom: "", nota: "dinheiro parado" },
+  { rotulo: "40+ dias", min: 40, max: Infinity, tom: "", nota: "dinheiro parado" },
 ];
 
 function renderCapital(linhas) {
   const ev = DADOS.estoque_valor.find((x) => x.loja_id === estado.loja) || DADOS.estoque_valor[0];
   el("estoque-valor").textContent = fmtBRL(ev.valor_medio_dia);
   el("estoque-meta").innerHTML =
-    `Média dos ${fmtInt(ev.dias)} dias de histórico. Comprar errado para mais ` +
-    `imobiliza esse capital na prateleira.`;
+    `Valor médio parado na prateleira ao longo de ${fmtInt(ev.dias)} dias. ` +
+    `Comprar demais transforma esse dinheiro em produto encalhado.`;
 
   const venc = DADOS.vencimento.filter((v) => v.loja_id === estado.loja);
   const totalVenc = venc.reduce((s, v) => s + v.valor, 0);
   const skusVenc = venc.reduce((s, v) => s + v.skus, 0);
   el("vencimento-valor").textContent = fmtBRL(totalVenc);
   el("vencimento-meta").innerHTML = skusVenc
-    ? `<b>${fmtInt(skusVenc)}</b> SKUs perecíveis com cobertura acima de 70% da validade. ` +
-      `No perecível, excesso não é capital parado: é perda seca.`
-    : "Nenhum perecível com cobertura acima de 70% da validade.";
+    ? `<b>${fmtInt(skusVenc)}</b> produtos perecíveis com estoque para mais de 70% do prazo de validade. ` +
+      `No perecível, sobra não é dinheiro parado: é dinheiro jogado fora.`
+    : "Nenhum perecível com estoque acima de 70% do prazo de validade.";
 
   // O histograma e uma barra de composicao: o comprimento de cada faixa e
   // a fatia de SKUs naquela faixa, e a cor diz se a faixa e saudavel.
@@ -2427,12 +2656,12 @@ function renderCapital(linhas) {
   const acima = contagem.filter((c) => c.min >= 20).reduce((s, c) => s + c.n, 0);
 
   el("cobertura-nota").innerHTML =
-    `Cada faixa é a fatia dos ${fmtInt(total)} SKUs-loja. ` +
-    `<b>${fmtPct(100 * abaixo / total, 0)}</b> está abaixo de 10 dias, ou seja, ` +
-    `abaixo do lead time típico de 9 a 14 dias: é onde a falta nasce. ` +
-    `<b>${fmtPct(100 * saudavel / total, 0)}</b> está na faixa de 10 a 19 dias. ` +
-    `Só <b>${fmtPct(100 * acima / total, 0)}</b> passa de 20 dias, então aqui o ` +
-    `excesso não é o problema principal: o risco está do outro lado.`;
+    `Cada faixa mostra quantos dos ${fmtInt(total)} produtos-loja duram aquele tanto. ` +
+    `<b>${fmtPct(100 * abaixo / total, 0)}</b> dura menos de 10 dias — menos que o ` +
+    `fornecedor leva para entregar. É aí que a falta nasce. ` +
+    `<b>${fmtPct(100 * saudavel / total, 0)}</b> está na faixa saudável (10 a 19 dias). ` +
+    `Só <b>${fmtPct(100 * acima / total, 0)}</b> passa de 20 dias: aqui, sobra não é o ` +
+    `problema principal — o risco está do outro lado.`;
 
   const bars = el("cobertura-bars");
   bars.textContent = "";
@@ -2451,7 +2680,7 @@ function renderCapital(linhas) {
     track.appendChild(fill);
     const val = document.createElement("span");
     val.className = "hbar__value num";
-    val.textContent = fmtInt(c.n) + "  " + fmtPct(100 * c.n / total, 0);
+    val.textContent = fmtInt(c.n) + "  ·  " + fmtPct(100 * c.n / total, 0);
     row.append(lab, track, val);
     bars.appendChild(row);
   }
@@ -2489,12 +2718,12 @@ function renderDepartamentos() {
   const totalSkus = abc.reduce((s, a) => s + a.skus, 0) || 1;
   const totalRec = abc.reduce((s, a) => s + a.receita, 0) || 1;
   const A = abc.find((a) => a.classe === "A") || { skus: 0, receita: 0 };
-  const unidade = estado.loja ? "SKUs" : "pares SKU-loja";
+  const unidade = estado.loja ? "produtos" : "produtos de cada loja";
   el("abc-note").innerHTML =
-    `Curva ABC na janela de 12 meses: <b>${fmtInt(A.skus)}</b> ${unidade} ` +
-    `(${fmtPct(100 * A.skus / totalSkus, 0)} do sortimento) fazem ` +
-    `<b>${fmtPct(100 * A.receita / totalRec, 0)}</b> da receita. ` +
-    `É onde o controle de estoque paga; a cauda longa pode ser comprada em lote maior.`;
+    `Poucos itens fazem quase toda a venda: <b>${fmtInt(A.skus)}</b> ${unidade} ` +
+    `(${fmtPct(100 * A.skus / totalSkus, 0)} do total) respondem por ` +
+    `<b>${fmtPct(100 * A.receita / totalRec, 0)}</b> do faturamento. ` +
+    `É nesses que vale a pena apertar o controle — o resto pode ser comprado em lote maior.`;
 }
 
 /* ---------------------------------------------------------------------
@@ -2507,19 +2736,19 @@ function renderConfianca() {
 
   const dados = [
     {
-      rotulo: "Recall de detecção",
+      rotulo: "Erros que o sistema pega",
       valor: m ? fmtPct(m.resumo.recall_global_pct, 2) : "—",
-      meta: m ? `${fmtInt(m.resumo.registros_detectados)} de ${fmtInt(m.resumo.registros_injetados)} defeitos injetados foram encontrados.` : "",
+      meta: m ? `${fmtInt(m.resumo.registros_detectados)} de ${fmtInt(m.resumo.registros_injetados)} erros plantados de propósito foram encontrados.` : "",
     },
     {
-      rotulo: "Tipos de defeito testados",
+      rotulo: "Tipos de erro conferidos",
       valor: m ? fmtInt(m.resumo.tipos_de_defeito) : "—",
-      meta: m ? `${m.resumo.regras_com_recall_100} regras com recall de 100%. Gabarito com posição de cada defeito.` : "",
+      meta: m ? `${m.resumo.regras_com_recall_100} tipos são pegos em 100% dos casos.` : "",
     },
     {
-      rotulo: "Linhas barradas na entrada",
+      rotulo: "Linhas separadas na entrada",
       valor: m ? fmtInt(m.resumo.registros_em_quarentena) : "—",
-      meta: "Um defeito de conjunto contamina todo o grupo, por isso a quarentena é maior que o número de defeitos.",
+      meta: "Um erro de cadastro derruba tudo que depende dele, por isso a quarentena é maior que o número de erros.",
     },
   ];
 
@@ -2559,31 +2788,33 @@ function renderConfianca() {
     const tag = document.createElement("span");
     tag.className = "seal__tag";
     tag.dataset.selo = s.selo;
-    tag.textContent = s.selo.replace("_", " ");
+    tag.textContent = SELA_ROTULO[s.selo] || s.selo.replace("_", " ");
     const fraca = document.createElement("span");
     fraca.className = "seal__weak";
-    fraca.textContent = `Pior dimensão: ${pior.dimensao} (${fmtPct(pior.score, 2)}) · média ${fmtPct(s.score_medio_pct, 2)}`;
+    fraca.textContent = `Ponto mais fraco: ${pior.dimensao} (${fmtPct(pior.score, 2)})`;
     row.append(nome, score, tag, fraca);
     selos.appendChild(row);
   }
 
   const piorGeral = ordenado.reduce((a, b) => (b.pior_dimensao_pct < a.pior_dimensao_pct ? b : a), ordenado[0]);
   // O selo controla o pedido: abaixo de 85% na pior dimensao, as linhas
-  // daquela loja saem como "SEM CONFIANCA" e nao entram no total. O
+  // daquela loja saem como "NAO CONFIAVEL" e nao entram no total. O
   // mecanismo esta em calcular(), que le DADOS.selo.
   el("seals-note").innerHTML =
-    `O selo vem da <b>pior</b> das ${piorGeral.dimensoes_medidas} dimensões medidas em cada loja, não da média: ` +
-    `confiança é o elo mais fraco. Acima de 95% a leitura é <b>confiável</b>; entre 85% e 95% sai com ` +
-    `<b>atenção</b>; <b>abaixo de 85% a sugestão é bloqueada</b> — o produto aparece como "sem confiança" e ` +
-    `não entra no pedido, porque com estoque errado a conta está errada por mais correto que seja o modelo. ` +
-    `Hoje a pior dimensão de todas as lojas é <b>${fmtPct(Math.min(...ordenado.map((s) => s.pior_dimensao_pct)), 2)}</b>.`;
+    `A nota usa o <b>ponto mais fraco</b> da loja, não a média — porque uma ` +
+    `contagem errada estraga a conta inteira, mesmo que o resto esteja perfeito. ` +
+    `Acima de 95% dá para confiar; entre 85% e 95% use com reserva; ` +
+    `<b>abaixo de 85% o sistema para de sugerir</b> e avisa que o inventário ` +
+    `precisa ser corrigido antes. Hoje a loja mais fraca está em ` +
+    `<b>${fmtPct(Math.min(...ordenado.map((s) => s.pior_dimensao_pct)), 2)}</b>.`;
 
   if (m) {
     el("rules-summary").textContent =
-      `Ver as ${m.por_regra.length} regras de qualidade e a detecção medida`;
+      `Ver as ${m.por_regra.length} conferências e o que cada uma pegou`;
     el("regras-caption").textContent =
-      `Cada regra foi testada contra um dataset com defeitos conhecidos. ` +
-      `Recall é quanto do injetado foi pego; precisão é quanto do barrado era defeito de verdade.`;
+      `Cada conferência foi testada contra um arquivo com erros conhecidos. ` +
+      `Recall é quanto dos erros plantados foi pego; precisão é quanto do que foi ` +
+      `barrado era erro de verdade.`;
     const body = el("regras-body");
     body.textContent = "";
     const regras = [...m.por_regra].sort((a, b) => a.f1_pct - b.f1_pct);
@@ -2597,7 +2828,8 @@ function renderConfianca() {
         [fmtPct(r.recall_pct, 1), "c-num num"],
         [fmtPct(r.precisao_pct, 1), "c-num num"],
         [fmtPct(r.f1_pct, 1), "c-num num"],
-      ];      for (const [txt, cls] of celulas) {
+      ];
+      for (const [txt, cls] of celulas) {
         const td = document.createElement("td");
         if (cls) td.className = cls;
         td.textContent = txt;
@@ -2614,12 +2846,14 @@ function renderConfianca() {
 function renderDateline() {
   const r = DADOS.referencia;
   const meses = DADOS.perda_mes.filter((m) => m.loja_id === 0).map((m) => m.ano_mes).sort();
+  // Barra de contexto: numeros de escala do arquivo, nao de gestao. O dono
+  // nao decide nada com "6,3 milhoes de linhas carregadas", mas isso diz a
+  // ele (e a banca) de quanto historico a sugestao saiu.
   el("dateline").innerHTML =
     `<span><strong>${DADOS.lojas.length}</strong> lojas</span>` +
-    `<span><strong>${fmtInt(r.skus)}</strong> SKUs ativos</span>` +
-    `<span><strong>${fmtInt(r.linhas_venda)}</strong> linhas de venda</span>` +
-    `<span><strong>${fmtInt(DADOS.lotes.reduce((s, l) => s + l.lidas, 0))}</strong> linhas carregadas</span>` +
-    `<span>janela de <strong>${fmtMes(meses[0])}</strong> a <strong>${fmtMes(meses[meses.length - 1])}</strong></span>`;
+    `<span><strong>${fmtInt(r.skus)}</strong> produtos diferentes</span>` +
+    `<span><strong>${fmtInt(r.linhas_venda)}</strong> cupons no histórico</span>` +
+    `<span>de <strong>${fmtMes(meses[0])}</strong> a <strong>${fmtMes(meses[meses.length - 1])}</strong></span>`;
 
   el("ref-data").textContent = fmtData(r.fim);
 
@@ -2628,7 +2862,7 @@ function renderDateline() {
   el("foot-meta").innerHTML =
     `Gerado em ${fmtData(DADOS.gerado_em)} às ${String(DADOS.gerado_em).slice(11, 16)} · ` +
     `${fmtInt(total)} linhas carregadas · ${fmtInt(rej)} rejeitadas na carga limpa · ` +
-    `${DADOS.regras.ativas} regras de qualidade ativas`;
+    `${DADOS.regras.ativas} conferências automáticas ativas`;
 }
 
 function renderLojas() {
@@ -2687,7 +2921,7 @@ function textoDoPedido(escopo) {
     const centF = doFornecedor.reduce((s, l) => s + l.valorCent, 0);
     out.push(`*${fornecedor.toUpperCase()}*`);
     out.push(
-      `${fmtInt(new Set(doFornecedor.map((l) => l.nome)).size)} SKUs · ` +
+      `${fmtInt(new Set(doFornecedor.map((l) => l.nome)).size)} produtos · ` +
       `${fmtBRLcents(centF)}`);
     out.push("");
 
@@ -2714,7 +2948,7 @@ function textoDoPedido(escopo) {
     }
   }
 
-  out.push(`Total geral: ${nomes} SKUs · ${volume} · ${fmtBRLcents(cent)}`);
+  out.push(`Total geral: ${nomes} produtos · ${volume} · ${fmtBRLcents(cent)}`);
   return out.join("\n");
 }
 
@@ -2892,6 +3126,18 @@ function iniciar() {
   el("copiar-todos").addEventListener("click", () => copiar("todos"));
   el("imprimir").addEventListener("click", () => window.print());
 
+  // Alternancia lista/tabela. Um botao so por vez: os dois mostram o
+  // MESMO array de linhas, entao nao ha estado de dados a sincronizar.
+  el("modo-lista").addEventListener("click", () => {
+    modoPedido = "lista";
+    renderModo();
+  });
+  el("modo-tabela").addEventListener("click", () => {
+    modoPedido = "tabela";
+    renderModo();
+  });
+
+  renderModo();
   render();
 }
 

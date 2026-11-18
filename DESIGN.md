@@ -39,6 +39,40 @@ O verde do masthead deve ficar **literal** em `.masthead` (`#0b4f3c`, não `var(
 o verificador de contraste estático precisa resolver o fundo, e um `var()` o faz assumir
 branco.
 
+## Linguagem
+
+A tela fala como o dono da loja, n�o como analista. A primeira vers�o usava
+vocabul�rio de log�stica e de BI: SKU, lead time, ruptura, cobertura, ponto de
+pedido, n�vel de servi�o, z � s � Vlead time. Nada disso existe no dia de quem
+abre a loja �s 7h.
+
+| Antes | Agora |
+|---|---|
+| SKU | produto |
+| lead time | entrega (em dias) |
+| ruptura | falta / acabou |
+| cobertura | quantos dias dura |
+| demanda/dia | vende por dia |
+| ponto de pedido | precisa ter |
+| n�vel de servi�o | margem de seguran�a |
+| receita perdida | deixei de vender |
+| departamento | se��o |
+| selo de confian�a | d� para confiar? |
+
+Os identificadores internos (colunas do banco, classes CSS, campos do JSON)
+continuam iguais: a tradu��o acontece s� na camada de texto. Isso mant�m
+dashboard/verificar.py e as consultas funcionando sem tocar em SQL.
+
+## Dois modos de ver o pedido
+
+A tabela de dez colunas explica a conta, mas n�o � como algu�m separa compra no
+estoque. Por isso o painel abre em **lista de compras**: uma linha por produto,
+caixa para marcar a dedo, quantidade e unidade. A tabela fica atr�s da aba
+"Conferir a conta".
+
+No papel (@media print) s� a lista sai: dez colunas n�o cabem em A4 sem virar
+ileg�vel, e o que o dono leva para o telefone � a lista.
+
 ## Tipografia
 
 | Voz | Fonte | Uso |
