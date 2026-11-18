@@ -351,11 +351,31 @@ avaliado é desperdício — mesmo que seja tecnicamente mais interessante.
 ### 8. O que não medimos, não sabemos
 
 Antes do laboratório de dados sujos, a afirmação era "temos regras de qualidade".
-Depois, é "detectamos 100% dos defeitos de linha, com precisão de 95%". A segunda
-frase é verificável; a primeira não é.
+Depois, é "detectamos 96,61% dos defeitos injetados, e a precisão varia por regra
+— de 0,5% a 100%, com os três casos fora da curva explicados". A segunda frase é
+verificável; a primeira não é.
 
 **Lição:** toda afirmação sobre qualidade de dados precisa de um número atrelado.
 Sem medição, é opinião.
+
+### 9. Um documento pode mentir sem que ninguém tenha mentido
+
+O achado mais desconfortável deste projeto não foi técnico. A documentação
+afirmava coisas que o código não fazia: que o preço da dimensão vinha do
+histórico (vinha de `custo / 0,7`), que a auditoria registrava alterações (a
+tabela tinha zero linhas), que o selo ocultava a sugestão abaixo de 85% (o
+painel só exibia o selo), que a sazonalidade entrava na previsão (o fator se
+cancelava na média).
+
+Nenhuma dessas frases foi escrita com má-fé. Cada uma descrevia a **intenção**
+no momento em que foi escrita, e o código evoluiu — ou não evoluiu — sem que o
+texto acompanhasse. O resultado é indistinguível de uma mentira para quem lê.
+
+**Lição:** documento não é especificação, é afirmação sobre um estado. Números
+escritos à mão envelhecem; por isso os deste trabalho agora saem de
+`docs/evidencias/` por script, e há um verificador (`scripts/conferir_numeros.py`)
+que compara o texto com o banco. A regra que ficou: **se um número aparece no
+relatório e não tem um comando que o produza, ele não deveria estar lá.**
 
 ## Próximos passos concretos
 

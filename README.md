@@ -64,12 +64,18 @@ Tempo total: **~25 minutos** em um notebook comum.
 | `python run_all.py --reset` | tudo, do zero |
 | `python run_all.py --etapa painel` | só regenera o painel e verifica |
 | `python run_all.py --etapa testes` | só as suites de validação |
+| `python -m pytest -q` | as 5 suites de uma vez |
 | `python dashboard/gerar.py` | gera `docs/painel.html` |
 | `python dashboard/verificar.py` | confere cada número do painel contra o banco |
 | `node scripts/verificar_painel.js` | abre o painel num browser e valida runtime, acessibilidade e impressão |
+| `node scripts/testar_gate_confianca.js` | força uma loja a 84% e prova que a sugestão é bloqueada |
 | `python tests/test_constraints.py` | prova que o banco rejeita dado ruim |
 | `python tests/test_integridade.py` | prova que o dado carregado é coerente |
 | `python tests/test_restore.py` | mede o RTO real do backup |
+| `python scripts/test_rls.py` | prova que cada loja vê só os seus dados |
+| `python scripts/verificar_preco.py` | confere o preço da dimensão contra o praticado no PDV |
+| `python scripts/verificar_pdfs.py` | procura artefatos de markdown nos PDFs entregues |
+| `python scripts/conferir_numeros.py` | compara os números dos documentos com o banco |
 | `python src/benchmark_duckdb.py` | benchmark colunar para o cenário 100× |
 | `.\scripts\pg.ps1 psql` | abre sessão psql no banco `giro` |
 
@@ -77,7 +83,7 @@ Tempo total: **~25 minutos** em um notebook comum.
 
 ## O painel
 
-`docs/painel.html` — **arquivo único, 780 KB, abre por duplo clique**.
+`docs/painel.html` — **arquivo único, 990 KB, abre por duplo clique**.
 
 Não é um app servidor: o pitch roda num notebook emprestado, sem rede, com
 projetor. Um servidor a mais seria um ponto de falha a mais. As fontes (Piazzolla
