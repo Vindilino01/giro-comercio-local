@@ -389,6 +389,16 @@ dialog#dlg-copia form { text-align: right; }
   color: var(--ink-2);
 }
 .poster__meta b { color: var(--ink); font-weight: 600; }
+/* Escala do pedido: responde "por que 259 mil?" comparando com a venda
+   da semana. Sem isso o numero parece absurdo para o dono. */
+.poster__escala {
+  margin-top: .375rem;
+  font-size: var(--step--1);
+  line-height: 1.45;
+  color: var(--ink-2);
+  max-width: 40ch;
+}
+.poster__escala b { color: var(--ink); font-weight: 600; }
 .poster__delta {
   margin-top: .25rem;
   font-size: var(--step-1);
@@ -666,6 +676,55 @@ dialog#dlg-copia form { text-align: right; }
   text-transform: uppercase;
   color: var(--ink-2);
   column-span: all;
+}
+/* Cabecalho de urgencia: o dono ve primeiro o que acabou. */
+.lista__grupo {
+  break-inside: avoid;
+  column-span: all;
+  margin: .875rem 0 .25rem;
+  padding: .3rem 0 .25rem;
+  border-top: 1px solid var(--ink);
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.lista__grupo:first-of-type { margin-top: .25rem; }
+.lista__resto {
+  break-inside: avoid;
+  column-span: all;
+  margin: .875rem 0 .25rem;
+  border-top: 1px solid var(--rule);
+  padding-top: .375rem;
+}
+.lista__toggle {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: .625rem 0;
+  min-height: 44px;
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  cursor: pointer;
+  text-align: left;
+}
+.lista__toggle::before { content: "▸ "; }
+.lista__toggle[aria-expanded="true"]::before { content: "▾ "; }
+.lista__sub {
+  list-style: none;
+  margin: .25rem 0 0;
+  padding: 0;
+  columns: 2;
+  column-gap: 2.5rem;
+}
+@media (max-width: 700px) {
+  .lista__sub { columns: 1; }
 }
 .lista__item {
   break-inside: avoid;
@@ -1505,7 +1564,7 @@ details.rules > summary:hover { color: var(--green-deep); }
         <select id="loja"></select>
       </label>
       <div class="stamp">
-        <span class="stamp__label">Referência do dado</span>
+        <span class="stamp__label">Vendas até</span>
         <span class="stamp__value" id="ref-data">–</span>
       </div>
       <span class="tag">dados de demonstração</span>
@@ -1552,6 +1611,7 @@ details.rules > summary:hover { color: var(--green-deep); }
         <p class="poster__label">A comprar</p>
         <p class="poster__value num" id="total-pedido">–</p>
         <p class="poster__meta" id="total-meta"></p>
+        <p class="poster__escala" id="total-escala"></p>
         <p class="poster__delta" id="total-delta" role="status" aria-live="polite"></p>
       </div>
 
@@ -1649,7 +1709,7 @@ details.rules > summary:hover { color: var(--green-deep); }
   <!-- ================= A PERDA ================= -->
   <section class="section" id="perda" aria-labelledby="h-perda">
     <div class="section__head">
-      <h2 id="h-perda">O que você deixou de vender sem perceber</h2>
+      <h2 id="h-perda">Quanto a prateleira vazia custou</h2>
       <p class="section__note">
         Quando o produto acaba na prateleira, o caixa registra zero — mas havia
         cliente querendo comprar. Essa venda não aparece em relatório nenhum.
@@ -1670,7 +1730,7 @@ details.rules > summary:hover { color: var(--green-deep); }
         <p class="figure__meta" id="ruptura-meta"></p>
       </div>
       <div>
-        <p class="figure__label">Quanto disso é estimativa</p>
+        <p class="figure__label">Dias que precisaram ser estimados</p>
         <p class="figure__value num" id="reconstruida-valor">–</p>
         <p class="figure__meta" id="reconstruida-meta"></p>
       </div>
@@ -2042,6 +2102,22 @@ function renderResumo(agg) {
   el("total-meta").innerHTML =
     `<b>${fmtInt(agg.skus)}</b> produtos · <b>${agg.rupturas}</b> em falta · ` +
     `<b>${agg.criticos}</b> quase acabando`;
+
+  // Escala. Sem isto, "R$ 259.577,64" parece absurdo para o dono: ele nao
+  // compra isso numa semana. O numero so faz sentido comparado ao que a
+  // loja vende no mesmo periodo. 259 mil e 46% de uma semana de venda das
+  // tres lojas - e reposicao normal, nao um pedido gigante.
+  const receita = DADOS.receita_mes.find((r) => r.loja_id === estado.loja)
+    || DADOS.receita_mes.find((r) => r.loja_id === 0);
+  if (receita && receita.receita_mes > 0) {
+    const semana = receita.receita_mes / 4.33;
+    const pct = (agg.cent / 100) / semana * 100;
+    el("total-escala").innerHTML =
+      `Equivale a <b>${fmtPct(pct, 0)}</b> do que essas lojas vendem em uma semana ` +
+      `(${fmtBRL(semana)}). É reposição, não compra extra.`;
+  } else {
+    el("total-escala").textContent = "";
+  }
 }
 
 function renderDelta(agg) {
@@ -2173,44 +2249,117 @@ function renderLista(linhas) {
     return;
   }
 
+  /* A lista inteira tem 137 produtos em tres estados. Mostrar os tres com
+     o mesmo peso obriga o dono a ler tudo para descobrir o que e urgente.
+     A ordem passa a ser: o que ACABOU (ele perde venda agora), o que esta
+     QUASE (perde nos proximos dias) e o resto, que pode ser comprado sem
+     pressa fica recolhido atras de um botao. */
+
+  const GRUPOS = [
+    { chave: "RUPTURA", rotulo: "Acabou — compre primeiro", classes: ["RUPTURA"] },
+    { chave: "CRITICO", rotulo: "Quase acabando", classes: ["CRITICO"] },
+    { chave: "RESTO", rotulo: "O resto da lista", classes: ["REPOR", "OK"] },
+  ];
+
   const agrupar = estado.loja === 0;
   const ids = agrupar
     ? DADOS.lojas.map((l) => l.loja_id).filter((id) => linhas.some((l) => l.loja_id === id))
     : [null];
 
-  for (const id of ids) {
-    if (agrupar) {
-      const cab = document.createElement("li");
-      cab.className = "lista__loja";
-      cab.textContent = lojaNome(id);
-      ul.appendChild(cab);
+  function itemLista(l) {
+    const li = document.createElement("li");
+    li.className = "lista__item" + (l.situacao === "RUPTURA" ? " lista__item--acabou" : "");
+
+    const box = document.createElement("span");
+    box.className = "lista__check";
+    box.setAttribute("aria-hidden", "true");
+
+    const nome = document.createElement("span");
+    nome.className = "lista__nome";
+    nome.textContent = l.nome;
+
+    const qtd = document.createElement("span");
+    qtd.className = "lista__qtd";
+    qtd.textContent = fmtInt(l.qtd);
+    // A unidade sempre aparece, inclusive UN. "Queijo Sabor Real 119"
+    // nao diz se sao 119 pacotes, 119 quilos ou 119 caixas - e o dono
+    // precisa disso para pedir. Antes so mostrava quando != UN.
+    const un = document.createElement("span");
+    un.className = "lista__un";
+    un.textContent = l.unidade || "UN";
+    // O nome do produto ja traz o tamanho da embalagem ("Bolo 1L") e a
+    // unidade aqui e COMO SE COMPRA ("38 CX" = 38 caixas). Sem esta
+    // explicacao, "Bolo 1L 38 KG" parece erro de cadastro - o leigo
+    // levantou exatamente essa duvida.
+    un.title = `Unidade de compra: ${l.unidade || "UN"}`;
+    qtd.appendChild(un);
+
+    li.append(box, nome, qtd);
+    return li;
+  }
+
+  for (const g of GRUPOS) {
+    // Agrupa por urgencia PRIMEIRO, loja depois. Antes era loja primeiro,
+    // o que repetia "Acabou — compre primeiro" uma vez por loja: o dono
+    // lia o mesmo titulo tres vezes e nao sabia qual urgencia olhar
+    // primeiro. A urgencia e o criterio de acao; a loja e detalhe.
+    const fatiaGlobal = linhas.filter((l) => g.classes.includes(l.situacao));
+    if (!fatiaGlobal.length) continue;
+
+    const recolhido = g.chave === "RESTO" && linhas.some(
+      (l) => l.situacao === "RUPTURA" || l.situacao === "CRITICO");
+
+    if (g.chave === "RESTO") {
+      const det = document.createElement("li");
+      det.className = "lista__resto";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "lista__toggle";
+      btn.setAttribute("aria-expanded", String(!recolhido));
+      btn.textContent = `${g.rotulo} (${fatiaGlobal.length} ${fatiaGlobal.length === 1 ? "produto" : "produtos"})`;
+      det.appendChild(btn);
+
+      const sub = document.createElement("ul");
+      sub.className = "lista__sub";
+      sub.hidden = recolhido;
+      for (const id of ids) {
+        const doGrupo = id === null ? fatiaGlobal : fatiaGlobal.filter((l) => l.loja_id === id);
+        if (!doGrupo.length) continue;
+        if (agrupar) {
+          const cab = document.createElement("li");
+          cab.className = "lista__loja";
+          cab.textContent = lojaNome(id);
+          sub.appendChild(cab);
+        }
+        for (const l of doGrupo) sub.appendChild(itemLista(l));
+      }
+      det.appendChild(sub);
+
+      btn.addEventListener("click", () => {
+        const aberto = !sub.hidden;
+        sub.hidden = aberto;
+        btn.setAttribute("aria-expanded", String(!aberto));
+      });
+
+      ul.appendChild(det);
+      continue;
     }
 
-    const doGrupo = id === null ? linhas : linhas.filter((l) => l.loja_id === id);
-    for (const l of doGrupo) {
-      const li = document.createElement("li");
-      li.className = "lista__item" + (l.situacao === "RUPTURA" ? " lista__item--acabou" : "");
+    const cab = document.createElement("li");
+    cab.className = "lista__grupo";
+    cab.textContent = `${g.rotulo} (${fatiaGlobal.length})`;
+    ul.appendChild(cab);
 
-      const box = document.createElement("span");
-      box.className = "lista__check";
-      box.setAttribute("aria-hidden", "true");
-
-      const nome = document.createElement("span");
-      nome.className = "lista__nome";
-      nome.textContent = l.nome;
-
-      const qtd = document.createElement("span");
-      qtd.className = "lista__qtd";
-      qtd.textContent = fmtInt(l.qtd);
-      if (l.unidade && l.unidade !== "UN") {
-        const un = document.createElement("span");
-        un.className = "lista__un";
-        un.textContent = l.unidade;
-        qtd.appendChild(un);
+    for (const id of ids) {
+      const doGrupo = id === null ? fatiaGlobal : fatiaGlobal.filter((l) => l.loja_id === id);
+      if (!doGrupo.length) continue;
+      if (agrupar) {
+        const sub = document.createElement("li");
+        sub.className = "lista__loja";
+        sub.textContent = lojaNome(id);
+        ul.appendChild(sub);
       }
-
-      li.append(box, nome, qtd);
-      ul.appendChild(li);
+      for (const l of doGrupo) ul.appendChild(itemLista(l));
     }
   }
 }
@@ -2428,12 +2577,12 @@ function renderTabela(agg) {
     // diferentes. Sem isto o comprador nao sabe o que pedir, e um
     // SKU medido em KG vendido em caixa muda o volume em 12x.
     tdQtd.textContent = fmtInt(l.qtd);
-    if (l.unidade && l.unidade !== "UN") {
-      const suf = document.createElement("span");
-      suf.className = "unidade";
-      suf.textContent = " " + l.unidade;
-      tdQtd.appendChild(suf);
-    }
+    // Idem lista: a unidade sempre aparece. Na tabela a coluna se chama
+    // "Comprar" e um numero solto ali e ambiguo.
+    const suf = document.createElement("span");
+    suf.className = "unidade";
+    suf.textContent = " " + (l.unidade || "UN");
+    tdQtd.appendChild(suf);
 
     const tdVal = document.createElement("td");
     tdVal.className = "c-num num";
@@ -2960,7 +3109,7 @@ function textoDoPedido(escopo) {
   const fornecedores = Array.from(new Set(linhas.map((l) => l.fornecedor))).sort();
   const out = [];
   out.push("*PEDIDO GIRO*");
-  out.push(`Referência ${fmtData(DADOS.referencia.fim)} · entrega em até ${lead} dias`);
+  out.push(`Vendas até ${fmtData(DADOS.referencia.fim)} · entrega em até ${lead} dias`);
   out.push(`Loja: ${estado.loja ? lojaNome(estado.loja) : "todas as lojas"}`);
   if (fornecedores.length > 1) out.push(`Fornecedores: ${fornecedores.length}`);
   out.push("");
