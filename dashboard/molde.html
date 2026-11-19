@@ -80,6 +80,14 @@ button, input, select { font: inherit; color: inherit; }
   border-radius: 0;
 }
 
+/* Sobre o masthead verde, o anel verde tem contraste 1:1 e o foco fica
+   invisivel. Medido: outline rgb(11,79,60) sobre fundo rgb(11,79,60),
+   zero pixel alterado ao focar. Aqui o anel vai para o papel. */
+.masthead :where(select, button, input, summary, [tabindex]):focus-visible {
+  outline-color: var(--paper);
+  outline-offset: 2px;
+}
+
 /* ---------------------------------------------------------------------
    Diálogo de cópia manual e aviso de JavaScript desligado.
    --------------------------------------------------------------------- */
@@ -736,11 +744,34 @@ dialog#dlg-copia form { text-align: right; }
   border-bottom: 1px dotted var(--rule);
   font-size: var(--step-0);
 }
+/* Checkbox real: 20px de lado, alvo de 44px via padding no item. */
 .lista__check {
-  width: .875rem;
-  height: .875rem;
-  border: 1px solid var(--rule-2);
+  width: 1.125rem;
+  height: 1.125rem;
+  margin: 0;
+  accent-color: var(--green);
   align-self: center;
+  cursor: pointer;
+}
+.lista__rotulo { min-width: 0; cursor: pointer; }
+.lista__item--feito .lista__nome {
+  text-decoration: line-through;
+  color: var(--ink-3);
+}
+.lista__item--feito .lista__qtd { color: var(--ink-3); }
+/* Aviso de loja sem confianca, na lista: antes o rotulo so aparecia na
+   tabela, e o dono lia "0 UN" como "nao precisa comprar". */
+.lista__aviso {
+  display: inline-block;
+  margin-left: .5em;
+  padding: .05em .3em;
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--paper);
+  background: var(--ink-2);
+  vertical-align: baseline;
 }
 .lista__nome { min-width: 0; }
 .lista__qtd {
@@ -773,6 +804,12 @@ dialog#dlg-copia form { text-align: right; }
   .modos { display: none; }
   .lista { columns: 2; column-gap: 2rem; }
   #picking-tabela-wrap { display: none !important; }
+  /* A lista tem de imprimir mesmo quando o usuario esta na aba
+     "Conferir a conta". Antes, `#picking-tabela-wrap{display:none}`
+     escondia a tabela, mas a lista continuava com [hidden] do modo
+     tabela: o PDF saia com ZERO produtos e quatro paginas em branco. */
+  #picking-lista { display: block !important; }
+  #picking-lista[hidden] { display: block !important; }
   /* No papel nao existe clique: o grupo recolhido precisa sair aberto,
      senao a folha impressa diz "31 produtos" e nao mostra nenhum. */
   .lista__sub { display: block !important; }
@@ -1666,7 +1703,7 @@ details.rules > summary:hover { color: var(--green-deep); }
         Lista de compras
       </button>
       <button class="modos__btn" id="modo-tabela" role="tab"
-              aria-selected="false" aria-controls="tabela" type="button">
+              aria-selected="false" aria-controls="picking-tabela-wrap" type="button">
         Conferir a conta
       </button>
     </div>
@@ -1675,8 +1712,8 @@ details.rules > summary:hover { color: var(--green-deep); }
       <div class="picking__head">
         <h2 class="picking__title" id="picking-title">—</h2>
         <div class="picking__actions">
-          <button class="btn btn--primary" id="copiar" type="button">Copiar pedido</button>
-          <button class="btn" id="copiar-todos" type="button">Copiar todos</button>
+          <button class="btn btn--primary" id="copiar" type="button">Copiar deste fornecedor</button>
+          <button class="btn" id="copiar-todos" type="button">Copiar pedido completo</button>
           <button class="btn" id="imprimir" type="button">Imprimir</button>
         </div>
       </div>
@@ -1706,7 +1743,8 @@ details.rules > summary:hover { color: var(--green-deep); }
       O navegador bloqueou a cópia automática. O texto está selecionado
       abaixo: use <kbd>Ctrl</kbd>+<kbd>C</kbd> para copiar.
     </p>
-    <textarea id="dlg-copia-texto" rows="12" readonly></textarea>
+    <textarea id="dlg-copia-texto" rows="12" readonly
+              aria-labelledby="dlg-copia-titulo"></textarea>
     <form method="dialog">
       <button class="btn btn--primary" type="submit">Fechar</button>
     </form>
@@ -1929,7 +1967,7 @@ const Z_POR_NIVEL = {
   95: 1.65, 96: 1.7507, 97: 1.8808, 98: 2.0537, 99: 2.3263,
 };
 
-const estado = { loja: 0, fornecedor: null, nivel: 95, ordem: "urgencia" };
+const estado = { loja: 0, fornecedor: null, nivel: 95, ordem: "urgencia", separados: new Set() };
 
 const el = (id) => document.getElementById(id);
 const lojaNome = (id) => (DADOS.lojas.find((l) => l.loja_id === id) || {}).nome || "–";
@@ -2276,13 +2314,41 @@ function renderLista(linhas) {
     const li = document.createElement("li");
     li.className = "lista__item" + (l.situacao === "RUPTURA" ? " lista__item--acabou" : "");
 
-    const box = document.createElement("span");
+    // Checkbox de verdade. Antes era um <span> decorativo de 14x14 com
+    // aria-hidden: parecia controle, nao recebia foco, nao fazia nada, e
+    // um usuario de leitor de tela nao tinha como marcar item separado.
+    // O id junta loja e produto; o estado vive no sprite do navegador.
+    const box = document.createElement("input");
+    box.type = "checkbox";
     box.className = "lista__check";
-    box.setAttribute("aria-hidden", "true");
+    box.id = `sep-${l.loja_id}-${l.produto_id}`;
+    box.checked = estado.separados?.has(box.id) || false;
+    box.addEventListener("change", () => {
+      if (!estado.separados) estado.separados = new Set();
+      if (box.checked) estado.separados.add(box.id);
+      else estado.separados.delete(box.id);
+      li.classList.toggle("lista__item--feito", box.checked);
+    });
+    li.classList.toggle("lista__item--feito", box.checked);
+
+    const rotulo = document.createElement("label");
+    rotulo.className = "lista__rotulo";
+    rotulo.htmlFor = box.id;
 
     const nome = document.createElement("span");
     nome.className = "lista__nome";
     nome.textContent = l.nome;
+    // Loja com selo abaixo de 85%: a quantidade vai a zero (calcular()),
+    // mas na LISTA a linha aparecia como "0 UN" sem explicacao - o dono
+    // lia como "nao precisa comprar". O aviso so existia na tabela.
+    if (l.bloqueada) {
+      const aviso = document.createElement("span");
+      aviso.className = "lista__aviso";
+      aviso.textContent = "NÃO CONFIAVEL";
+      aviso.title = `A contagem desta loja está com ${fmtPct(l.confianca, 1)} de acerto. ` +
+        "Corrija o inventário antes de usar a sugestão.";
+      nome.appendChild(aviso);
+    }
 
     const qtd = document.createElement("span");
     qtd.className = "lista__qtd";
@@ -2300,7 +2366,8 @@ function renderLista(linhas) {
     un.title = `Unidade de compra: ${l.unidade || "UN"}`;
     qtd.appendChild(un);
 
-    li.append(box, nome, qtd);
+    rotulo.append(nome);
+    li.append(box, rotulo, qtd);
     return li;
   }
 
@@ -2623,24 +2690,33 @@ function renderTabela(agg) {
   sub.textContent = `  ${contagem} · entrega em ${(agregarDoFornecedor(linhas) || {}).lead || 0} dias`;
   titulo.appendChild(sub);
 
+  const aggCent = agg.cent;
   const cent = linhas.reduce((s, l) => s + l.valorCent, 0);
   // Volume por unidade de medida (KG + UN + PCT nao formam um numero
   // fisico). A funcao e compartilhada com o cabecalho de grupo.
   const volume = resumirUnidades(linhas);
 
+  // TODO TOTAL PRECISA DE ESCOPO. Havia dois numeros grandes na tela -
+  // R$ 259.577,64 no topo (6 fornecedores) e R$ 68.315,59 aqui (1
+  // fornecedor) - sem nada dizendo de quem era cada um. O dono lia o
+  // rodape como se fosse o pedido todo.
+  const escopo = estado.fornecedor
+    ? `${estado.fornecedor} · ${fmtPct(100 * cent / (aggCent || cent), 0)} do pedido`
+    : "todos os fornecedores";
+
   el("picking-total").innerHTML =
-    `${fmtBRLcents(cent)}<small>${volume} em ${fmtInt(nomes)} produtos</small>`;
+    `${fmtBRLcents(cent)}<small>${volume} em ${fmtInt(linhas.length)} produtos · ${escopo}</small>`;
 
   el("picking-hint").textContent =
     !linhas.length
-      ? "Nenhum SKU deste fornecedor precisa de compra neste nível."
+      ? "Nenhum produto deste fornecedor precisa de compra nesta margem."
       : agrupar
-        ? "Ordenado por urgência dentro de cada loja. Clique num título de coluna para reordenar."
-        : "Ordenado por urgência. Clique num título de coluna para reordenar.";
+        ? "Ordenado por urgência dentro de cada loja. Abra “Conferir a conta” para reordenar."
+        : "Ordenado por urgência. Abra “Conferir a conta” para reordenar.";
 
   el("tabela-caption").textContent =
     !linhas.length
-      ? "Lista de compra vazia: nenhum SKU deste fornecedor precisa de compra neste nível."
+      ? "Lista de compra vazia: nenhum produto deste fornecedor precisa de compra nesta margem."
       : `Lista de compra de ${estado.fornecedor || "fornecedor"}, ` +
         (agrupar ? `${fmtInt(nomes)} produtos em ${grupos.length} lojas, ` : `${fmtInt(linhas.length)} produtos, `) +
         `total ${fmtBRLcents(cent)}.`;
@@ -2742,14 +2818,18 @@ function renderChart() {
 
   const axis = el("chart-axis");
   axis.textContent = "";
-  for (let i = 0; i < serie.length; i++) {
+  // Só cria span nos meses que vao ser rotulados. Antes criava 24 spans
+  // e escrevia em 8: cada um ficava com 1/24 da largura (~28px em 768)
+  // e o texto precisava de 38px - saia "nov/2", "fev/2". Os 16 spans
+  // vazios roubavam o espaco dos 8 que tinham conteudo.
+  const passo = 3;
+  for (let i = 0; i < serie.length; i += passo) {
     const s = document.createElement("span");
     const [ano, mes] = serie[i].ano_mes.split("-");
-    // Um rotulo a cada 3 meses, sempre com o ano: "nov" sozinho aparece
-    // duas vezes numa serie de 24 meses e o eixo fica ambiguo.
-    if (i % 3 === 0) {
-      s.textContent = `${MES[Number(mes) - 1]}/${ano.slice(2)}`;
-    }
+    s.textContent = `${MES[Number(mes) - 1]}/${ano.slice(2)}`;
+    // Cada span ocupa exatamente um passo do eixo, para o rotulo cair
+    // sob o mes certo.
+    s.style.flex = `0 0 calc(${passo * 100 / serie.length}% - 2px)`;
     axis.appendChild(s);
   }
 
@@ -2996,10 +3076,18 @@ function renderConfianca() {
     const score = document.createElement("span");
     score.className = "seal__score num";
     score.textContent = fmtPct(s.pior_dimensao_pct, 2);
+
+    // O selo e derivado do NUMERO, nao lido do banco. Antes usava s.selo
+    // direto: se a pior dimensao mudasse (o gate forca 84% para testar),
+    // o numero virava 84,00% e a etiqueta continuava "DÁ PARA CONFIAR" -
+    // um semaforo verde ao lado de um dado vermelho.
+    const grau = s.pior_dimensao_pct >= 95 ? "CONFIAVEL"
+      : s.pior_dimensao_pct >= 85 ? "ATENCAO"
+      : "NAO_CONFIAVEL";
     const tag = document.createElement("span");
     tag.className = "seal__tag";
-    tag.dataset.selo = s.selo;
-    tag.textContent = SELA_ROTULO[s.selo] || s.selo.replace("_", " ");
+    tag.dataset.selo = grau;
+    tag.textContent = SELA_ROTULO[grau];
     const fraca = document.createElement("span");
     fraca.className = "seal__weak";
     fraca.textContent = `Ponto mais fraco: ${rotuloDimensao(pior.dimensao)} (${fmtPct(pior.score, 2)})`;
@@ -3168,7 +3256,7 @@ async function copiar(escopo) {
   // Rotulo fixo, nao lido do DOM: ler textContent capturava o estado
   // anterior ("Nao foi possivel copiar") numa segunda tentativa e o
   // botao nunca voltava ao normal.
-  const rotulo = escopo === "todos" ? "Copiar todos" : "Copiar pedido";
+  const rotulo = escopo === "todos" ? "Copiar pedido completo" : "Copiar deste fornecedor";
   const texto = textoDoPedido(escopo);
   let copiou = false;
 
@@ -3281,6 +3369,10 @@ function render(de = null) {
   renderTabela(agg);
   renderPerda(agg);
   renderCapital(linhas);
+  // O painel de selos depende do mesmo numero que calcular() usa para
+  // bloquear. Sem esta chamada, forcamos 84% e o selo continuava
+  // "DÁ PARA CONFIAR" ate alguem recarregar a pagina.
+  renderConfianca();
 
   if (focoEraFaixa) {
     const alvo = [...el("band").querySelectorAll(".band__seg")]
