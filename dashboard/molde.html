@@ -773,6 +773,12 @@ dialog#dlg-copia form { text-align: right; }
   .modos { display: none; }
   .lista { columns: 2; column-gap: 2rem; }
   #picking-tabela-wrap { display: none !important; }
+  /* No papel nao existe clique: o grupo recolhido precisa sair aberto,
+     senao a folha impressa diz "31 produtos" e nao mostra nenhum. */
+  .lista__sub { display: block !important; }
+  .lista__sub[hidden] { display: block !important; }
+  .lista__toggle { pointer-events: none; }
+  .lista__toggle::before { content: ""; }
 }
 
 .picking__wrap {
