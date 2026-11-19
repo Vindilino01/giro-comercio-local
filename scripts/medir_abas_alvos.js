@@ -58,11 +58,19 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
       ...ratio(el),
     }));
 
+    // Checkbox dentro de <label> conta pela area do label: o alvo real
+    // de toque e o rotulo, nao o quadradinho de 18px. Sem esta excecao o
+    // medidor acusa 106 falsos positivos.
     const pequenos = [...document.querySelectorAll('button, select, input, summary, .band__seg')]
       .map((el) => {
-        const r = el.getBoundingClientRect();
+        let alvo = el;
+        if (el.type === 'checkbox') {
+          const lab = el.labels && el.labels[0];
+          if (lab) alvo = lab;
+        }
+        const r = alvo.getBoundingClientRect();
         return {
-          el: el.tagName + (el.id ? '#' + el.id : ''),
+          el: el.tagName + (el.id ? '#' + el.id.slice(0, 14) : '') + (alvo !== el ? ' (via label)' : ''),
           w: Math.round(r.width),
           h: Math.round(r.height),
         };
