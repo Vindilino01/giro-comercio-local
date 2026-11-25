@@ -97,10 +97,17 @@ PADRAO_NAO_E = re.compile(
 )
 
 # ---------------------------------------------------------------------
-# Numero sem unidade. Pega "8,62%" solto bem, mas cobra contexto quando o
-# numero aparece sozinho como valor de uma metrica.
+# Numero sem unidade. Nao cobra toda porcentagem: cobra a que aparece
+# solta, sem qualificador por perto. "91,38% das linhas" tem contexto
+# ("das linhas"); "8,62%" sozinho no meio da frase nao tem.
 # ---------------------------------------------------------------------
-PADRAO_PORCENTAGEM_SOLTA = re.compile(r"(?<![\w.])\d{1,3},\d{1,2}%(?!\s*\()")
+CONTEXTO_NUMERO = re.compile(
+    r"\b(?:d[eo]s?|d[ao]|em|no|na|nos|nas|entre|acima|abaixo|contra|para|"
+    r"taxa|indice|índice|media|média|total|janela|meses|dias|linhas|casos|"
+    r"itens|produtos|lojas|vendas|falta|falhas|recorde|minimo|mínimo|maximo|máximo)\b",
+    re.IGNORECASE,
+)
+PADRAO_PORCENTAGEM = re.compile(r"(?<![\w.])\d{1,3},\d{1,2}%")
 
 # Isencoes: dentro de tabela, de bloco de codigo e de link, o numero nao
 # precisa de contexto - a coluna ja da o contexto.
@@ -204,9 +211,10 @@ def _checar_linha(texto: str, linha: int, saida: list) -> None:
     if m:
         saida.append((linha, "nao-e-mas-e", m.group(0)[:60]))
 
-    # 5. porcentagem solta
-    for m in PADRAO_PORCENTAGEM_SOLTA.finditer(texto):
-        saida.append((linha, "numero-sem-contexto", m.group(0)))
+    # 5. porcentagem solta: so cobra quando nao ha qualificador na frase
+    if not CONTEXTO_NUMERO.search(texto):
+        for m in PADRAO_PORCENTAGEM.finditer(texto):
+            saida.append((linha, "numero-sem-contexto", m.group(0)))
 
 
 def main() -> int:
