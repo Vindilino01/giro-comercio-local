@@ -32,7 +32,6 @@ const p = require('puppeteer-core');
       id: b.id,
       aria: b.getAttribute('aria-label') || '',
     })));
-
   let falhas = 0;
 
   // 1. todo checkbox tem aria-label

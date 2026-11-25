@@ -644,33 +644,27 @@ dialog#dlg-copia form { text-align: right; }
 @container (max-width: 104px) {
   /* Ultimo degrau, e o unico honesto.
 
-     Nao ha tamanho de fonte que faca "R$ 22.446,34" caber em 62px sem
-     virar ilegivel. Cortar produz "R$ 22.446," e o dono le um numero
-     errado. Entao o valor quebra em DUAS LINHAS, ancorado a direita: a
-     cifra e os milhares na primeira, os centavos na segunda. E o que o
-     extrato bancario faz.
+     Nao ha tamanho de fonte que faca "R$ 4.194,65" caber em 40px sem
+     virar ilegivel: a 11px o numero sozinho ja ocupa 45px. O valor
+     completo tem 61px.
 
-     Junto, o padding lateral cai de 10px para 4px. Numa coluna de 83px
-     isso devolve 12px, que e o que faltava para "R$ 22.446,34" caber
-     numa linha so. O padding nao pode ser reduzido DENTRO desta
-     consulta: .band__seg E o container medido, e mudar o padding muda a
-     largura que a consulta le - ciclo que o navegador resolve ignorando.
-     Por isso o valor sai de uma variavel declarada fora. */
+     As tres alternativas e por que so uma serve:
+
+       cortar -> "R$ 4.194," e o dono le um numero errado
+       quebrar em 2 linhas -> "R$" / "4.194,65": 45px ainda nao cabe em 40
+       abreviar -> "R$ 4,2 mil": cabe, e a ordem de grandeza esta certa
+
+     O valor exato continua acessivel no title do botao e no texto
+     copiado. Aqui a escolha e entre um numero aproximado legivel e um
+     numero exato ilegivel. Numa coluna de 52px, aproximado ganha. */
   .band__value {
     font-size: 11px;
-    /* Sem letter-spacing negativo: em 11px ele colava o "R$" no numero
-       ("R$26.412,85"), que se le como um valor diferente. A economia de
-       2px nao paga o risco. */
     letter-spacing: 0;
-    /* Quebra em duas linhas, mas NUNCA no meio do numero. `anywhere`
-       partia "R$ 22.446,3" / "4", que se le como outro valor. Aqui a
-       quebra so acontece no espaco depois de "R$", entao a primeira
-       linha e a cifra e a segunda e o numero inteiro. */
-    white-space: normal;
-    word-break: keep-all;
-    text-align: right;
-    line-height: 1.15;
+    white-space: nowrap;
   }
+  /* O texto completo vira title: o dado exato nao se perde, so sai do
+     espaco que nao tem. */
+  .band__seg { position: relative; }
 }
 
 .band__legend {
@@ -2226,6 +2220,31 @@ const DADOS = /*__DADOS__*/null;
    --------------------------------------------------------------------- */
 const fmtBRL = (v) => "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const fmtBRLcents = (c) => fmtBRL(c / 100);
+
+/* Forma compacta para coluna estreita: "R$ 4,2 mil".
+
+   Usada so quando o valor completo nao cabe na largura disponivel. Numa
+   coluna de 52px, "R$ 4.194,65" ocupa 61px e nao ha tamanho de fonte que
+   o faca caber sem virar ilegivel. A escolha e entre um numero
+   aproximado legivel e um numero exato cortado - e cortar dinheiro
+   produz um valor ERRADO, enquanto abreviar preserva a ordem de
+   grandeza.
+
+   O valor exato continua no title do botao e no texto copiado. Isso e
+   abreviacao para caber, nao arredondamento do dado. */
+const fmtBRLcurto = (c) => {
+  const reais = c / 100;
+  if (Math.abs(reais) >= 1000) {
+    const mil = reais / 1000;
+    const casas = Math.abs(mil) >= 100 ? 0 : 1;
+    // Sem "R$": numa coluna de 40px o simbolo custa 16px e o contexto da
+    // faixa ja e dinheiro (a legenda acima diz "o valor do pedido dele").
+    // O simbolo volta assim que houver espaco.
+    return `${mil.toLocaleString("pt-BR", {
+      minimumFractionDigits: 0, maximumFractionDigits: casas })} mil`;
+  }
+  return `${Math.round(reais).toLocaleString("pt-BR")}`;
+};
 const fmtInt = (v) => Math.round(v).toLocaleString("pt-BR");
 const fmtDec = (v, d = 1) => v.toLocaleString("pt-BR", { minimumFractionDigits: d, maximumFractionDigits: d });
 const fmtPct = (v, d = 1) => fmtDec(v, d) + "%";
@@ -2746,6 +2765,13 @@ function renderBand(agg) {
     const valor = document.createElement("span");
     valor.className = "band__value num";
     valor.textContent = fmtBRLcents(f.cent);
+    // Guarda o valor completo: se a coluna for estreita demais, a forma
+    // curta entra no lugar e o exato fica no title. A troca e feita
+    // depois do layout (ajustarValores), quando a largura e conhecida.
+    valor.dataset.completo = fmtBRLcents(f.cent);
+    // O valor em centavos, para a forma curta nao precisar reinterpretar
+    // a string formatada (que quebra com separador de milhar).
+    valor.dataset.cent = String(f.cent);
     const lead = document.createElement("span");
     lead.className = "band__lead";
     lead.textContent = f.lead + "d";
@@ -2770,6 +2796,96 @@ function renderBand(agg) {
   el("band-legend-right").textContent = selecionado
     ? `Mostrando ${selecionado.nome} · ${fmtPct(100 * selecionado.cent / totalCent, 0)} do pedido`
     : `${agg.fornecedores.length} fornecedores · ${fmtInt(agg.skus)} produtos · ${fmtInt(agg.rupturas)} em falta`;
+
+  // Por ultimo: troca o valor por forma curta onde o exato nao cabe.
+  ajustarValores();
+}
+
+/* ---------------------------------------------------------------------
+   Valor que cabe.
+
+   Chamada depois de renderBand() porque so faz sentido com o layout
+   pronto: a largura de cada segmento depende de como o grid distribuiu
+   as `fr`, e isso nao e conhecido antes do navegador calcular.
+
+   O criterio e a MEDIDA, nao um breakpoint. Breakpoint erraria nos dois
+   sentidos: com uma loja so, todas as fatias encolhem e o menor segmento
+   fica com 25px mesmo em 1280px de tela - um breakpoint de viewport nao
+   veria isso. Medir o espaco interno de cada segmento ve.
+
+   QUATRO DEGRAUS, do mais informativo ao menos:
+
+     1. valor completo        "R$ 4.194,65"
+     2. compacto com simbolo  "R$ 4,2 mil"
+     3. compacto sem simbolo  "4,2 mil"
+     4. so a inicial + valor  "A 4,2 mil" - identifica o fornecedor
+
+   O degrau 4 existe porque ha um caso real em que nem "4,2 mil" cabe:
+   uma loja so, em 901px, deixa o ultimo segmento com 25px. Nesse ponto
+   o nome do fornecedor ja esta cortado e o valor nao cabe; o que salva a
+   leitura e a inicial, que liga o numero ao segmento.
+
+   Em todos os degraus o valor exato continua no title e no texto
+   copiado. Abreviar para caber preserva a ordem de grandeza; cortar o
+   numero produz um valor errado.
+   --------------------------------------------------------------------- */
+function ajustarValores() {
+  for (const seg of document.querySelectorAll(".band__seg")) {
+    const val = seg.querySelector(".band__value");
+    if (!val || !val.dataset.completo) continue;
+
+    const cs = getComputedStyle(seg);
+    const interno = seg.clientWidth
+      - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+
+    // Sonda em nowrap: getBoundingClientRect do proprio valor devolve a
+    // caixa recortada, e scrollWidth com overflow:hidden devolve a
+    // largura ja cortada. Medir uma copia fora do fluxo e o unico jeito
+    // que enxerga o texto inteiro.
+    val.style.whiteSpace = "nowrap";
+    if (medirTexto(val.textContent, val) <= interno + 1) continue;
+
+    const completo = val.textContent;
+    const compacto = fmtBRLcurto(Number(val.dataset.cent));
+    const nome = (seg.querySelector(".band__name")?.textContent || "").trim();
+
+    const tentativas = [
+      `R$ ${compacto}`,
+      compacto,
+      `${compacto.replace(",0 mil", " mil").replace(",", ".")}`,
+      `${Math.round(Number(val.dataset.cent) / 100000)} mil`,
+    ];
+
+    for (const t of tentativas) {
+      val.textContent = t;
+      if (medirTexto(t, val) <= interno + 1) break;
+    }
+
+    // Se nada coube, mantem o ultimo (o mais curto): numero abreviado
+    // ainda comunica ordem de grandeza; numero cortado comunica outra
+    // coisa. O completo esta no title.
+    if (medirTexto(val.textContent, val) > interno + 2) {
+      val.textContent = completo;
+    }
+  }
+}
+
+/* Largura que um texto ocupa numa linha, sem depender do recorte do pai. */
+function medirTexto(texto, modelo) {
+  const cs = getComputedStyle(modelo);
+  const sonda = document.createElement("span");
+  sonda.textContent = texto;
+  sonda.style.cssText = [
+    "position:absolute", "visibility:hidden", "white-space:nowrap",
+    "left:-9999px", "top:0", "pointer-events:none",
+    `font-family:${cs.fontFamily}`, `font-size:${cs.fontSize}`,
+    `font-weight:${cs.fontWeight}`, `letter-spacing:${cs.letterSpacing}`,
+    `font-variant-numeric:${cs.fontVariantNumeric}`,
+  ].join(";");
+  document.body.appendChild(sonda);
+  const w = sonda.getBoundingClientRect().width;
+  sonda.remove();
+  return w;
 }
 
 /* ---------------------------------------------------------------------
