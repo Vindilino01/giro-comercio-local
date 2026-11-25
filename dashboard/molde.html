@@ -925,7 +925,14 @@ dialog#dlg-copia form { text-align: right; }
   letter-spacing: -.01em;
 }
 .picking__title span { color: var(--ink-2); font-family: var(--sans); font-size: var(--step-1); font-weight: 500; }
-.picking__actions { display: flex; gap: .5rem; }
+.picking__actions {
+  display: flex;
+  gap: .5rem;
+  /* Sem flex-wrap, os tres botoes nao cabiam em 360px e #imprimir saia
+     9px fora da tela (medido). O .picking__head ja quebra linha; este
+     container tambem precisa. */
+  flex-wrap: wrap;
+}
 
 .btn {
   appearance: none;
@@ -1632,7 +1639,13 @@ details.rules > summary:hover { color: var(--green-deep); }
   .picking__wrap { margin-top: .25rem; }
   .picking__head { padding: .125rem 0; align-items: center; }
   .picking__title { font-size: var(--step-1); }
-  .btn { padding: .3125rem .625rem; min-height: 40px; }
+  /* 44px de alvo, nao 40. A versao anterior reduzia para 40 para ganhar
+     altura, e media 3 botoes abaixo do piso de toque no aparelho nomeado
+     no PRODUCT.md (1366x657). O padding vertical sai, a altura nao: o
+     texto fica centrado no mesmo espaco, e a linha nao cresce - o botao
+     ja era o elemento mais alto da faixa de acoes. */
+  .btn { padding: 0 .625rem; min-height: 44px; display: inline-flex;
+         align-items: center; justify-content: center; }
   table.picking thead th { font-size: var(--step--1); letter-spacing: .02em; padding: .3125rem .375rem; }
 }
 
@@ -2827,6 +2840,19 @@ function renderModo() {
   tabela.hidden = ehLista;
   bLista.setAttribute("aria-selected", String(ehLista));
   bTabela.setAttribute("aria-selected", String(!ehLista));
+
+  /* Padrao APG de abas: roving tabindex.
+
+     Com role="tab", o teclado espera UM tab stop por grupo de abas, e
+     setas para navegar entre elas. As duas estavam com tabindex=0 e sem
+     handler de seta: o leitor de tela anunciava "tab 1 de 2" e a seta
+     nao fazia nada. A faixa de fornecedores ja implementava o padrao
+     correto - era inconsistencia dentro da mesma pagina.
+
+     tabindex=-1 nao remove do leitor de tela: remove so da ordem de Tab.
+     Quem chega pelo Tab cai na aba ativa; setas trocam de aba. */
+  bLista.tabIndex = ehLista ? 0 : -1;
+  bTabela.tabIndex = ehLista ? -1 : 0;
 }
 
 /* Troca de modo por acao do usuario: move o foco para o painel que
@@ -3924,6 +3950,34 @@ function iniciar() {
   // MESMO array de linhas, entao nao ha estado de dados a sincronizar.
   el("modo-lista").addEventListener("click", () => trocarModo("lista"));
   el("modo-tabela").addEventListener("click", () => trocarModo("tabela"));
+
+  // Setas nas abas: previsto pelo padrao ARIA de tablist. Home/End vao
+  // aos extremos, como na faixa de fornecedores.
+  const tablist = document.querySelector(".modos");
+  if (tablist) {
+    tablist.addEventListener("keydown", (ev) => {
+      const abas = [el("modo-lista"), el("modo-tabela")];
+      const atual = abas.indexOf(document.activeElement);
+      if (atual < 0) return;
+
+      let destino = null;
+      if (ev.key === "ArrowRight" || ev.key === "ArrowDown") {
+        destino = (atual + 1) % abas.length;
+      } else if (ev.key === "ArrowLeft" || ev.key === "ArrowUp") {
+        destino = (atual - 1 + abas.length) % abas.length;
+      } else if (ev.key === "Home") {
+        destino = 0;
+      } else if (ev.key === "End") {
+        destino = abas.length - 1;
+      }
+      if (destino === null) return;
+
+      ev.preventDefault();
+      const alvo = abas[destino];
+      trocarModo(destino === 0 ? "lista" : "tabela");
+      alvo.focus();
+    });
+  }
 
   renderModo();
   render();

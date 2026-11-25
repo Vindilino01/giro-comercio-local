@@ -504,6 +504,17 @@ def fonte_base64(nome: str) -> str:
 
 
 def bloco_fontes() -> str:
+    """Fontes embutidas em base64.
+
+    Duas faces, nao tres. A Piazzolla italica estava embutida (43 KB em
+    base64) e nunca renderizava: medido no navegador, os unicos tres
+    elementos com font-style:italic sao <i> vazios de legenda, e herdam
+    Archivo. O documento nao tem uma palavra em italico na serifa.
+
+    Embutir fonte nao usada custa download, memoria e uma afirmacao
+    falsa ("tres fontes embutidas") num projeto que se vende por
+    rastreabilidade.
+    """
     return f"""
 @font-face {{
   font-family: 'Piazzolla';
@@ -511,13 +522,6 @@ def bloco_fontes() -> str:
   font-weight: 400 700;
   font-display: block;
   src: url(data:font/woff2;base64,{fonte_base64("piazzolla-latin.woff2")}) format('woff2');
-}}
-@font-face {{
-  font-family: 'Piazzolla';
-  font-style: italic;
-  font-weight: 400 700;
-  font-display: block;
-  src: url(data:font/woff2;base64,{fonte_base64("piazzolla-italic-latin.woff2")}) format('woff2');
 }}
 @font-face {{
   font-family: 'Archivo';
