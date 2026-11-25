@@ -66,26 +66,26 @@ incluindo "um unico h1").
 ## O que a pesquisa de referência acrescentou
 
 Comparado com o **Afresh** (o concorrente mais próximo, ver
-`referencias-ux.md`), o Giro tem uma lacuna de posicionamento, não de
-layout:
+`referencias-ux.md`), eu esperava encontrar uma lacuna de enquadramento.
+O Afresh escreve o pedido pronto. O Giro parecia abrir numa tabela de 140
+linhas para o dono montar.
 
-| Afresh | Giro |
-|---|---|
-| "Escrevemos o pedido para você" | "Aqui está a lista, monte o pedido" |
-| Lista curta de conferência | Lista completa de 140 linhas |
-| "Count less and trust more" | "Confira tudo" |
+**Medi antes de afirmar, e a hipótese estava errada.** O painel já faz o
+agrupamento certo:
 
-O Giro tem o número certo. O pedido já vem calculado. Mas apresenta como
-tabela para auditar, não como pedido para aceitar. **A correção é de
-enquadramento.** O estado inicial deve ser "o pedido está pronto, revise o
-que fugiu do padrão". Não "aqui estão 140 linhas".
+| Grupo | Linhas | Estado inicial |
+|---|---|---|
+| Acabou — compre primeiro | 23 | visível |
+| Quase acabando | 83 | visível |
+| O resto da lista | 31 | recolhido atrás de botão |
 
-A correção é de enquadramento, e é pequena. O estado inicial deve dizer
-"o pedido está pronto, revise o que fugiu do padrão". Hoje ele diz "aqui
-estão 140 linhas".
+São 106 linhas visíveis de 137, ordenadas por urgência, com o resto
+recolhido. É o mesmo padrão do Afresh, obtido por agrupamento em vez de
+frase de marketing.
 
-A diferença se resolve com uma frase e uma ordenação nova. Os 23 itens em
-ruptura vêm primeiro. O resto fica atrás de "ver os outros 117".
+Fica uma diferença de vocabulário, não de arquitetura de informação. O
+Giro nunca diz "o pedido está pronto"; o dono deduz. Uma frase acima da
+lista resolveria. É P2, não a reestruturação que eu supunha.
 
 ## O que continua em aberto
 
