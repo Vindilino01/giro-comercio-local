@@ -546,6 +546,14 @@ dialog#dlg-copia form { text-align: right; }
   padding: .875rem .75rem;
   margin: 0;
 }
+/* Padding lateral menor quando a faixa tem 6 fornecedores (o caso real).
+   Com 6 colunas num viewport de 901-1024px, o segmento mais estreito fica
+   com 83-97px, e 10px de padding em cada lado comem o espaco que o valor
+   precisa. 4px devolve 12px. :has() e seguro aqui porque o numero de
+   segmentos e estrutural, nao muda com o dado do dia. */
+.band:has(.band__seg:nth-child(6):last-child) { --band-pad: .375rem; }
+.band:has(.band__seg:nth-child(5):last-child) { --band-pad: .5rem; }
+
 .band__seg {
   min-width: 0;
   container-type: inline-size;
@@ -553,7 +561,13 @@ dialog#dlg-copia form { text-align: right; }
   flex-direction: column;
   gap: .375rem;
   justify-content: space-between;
-  padding: .6875rem .75rem .625rem;
+  /* O padding lateral vem de uma variavel, e nao de valor fixo, para
+     poder encolher no segmento estreito sem cair no ciclo do container:
+     .band__seg E o container consultado, entao uma regra @container que
+     mudasse o proprio padding mudaria a largura que ela mede, e o
+     navegador descarta. Com a variavel, o valor e herdado do pai e a
+     consulta continua valida. */
+  padding: .6875rem var(--band-pad, .75rem) .625rem;
   border: 0;
   border-right: 1px solid var(--rule);
   background: transparent;
@@ -566,13 +580,15 @@ dialog#dlg-copia form { text-align: right; }
 
 /* Em colunas estreitas o valor precisa caber inteiro: dinheiro cortado
    e pior que dinheiro pequeno. O tamanho do valor nao muda por coluna,
-   porque a faixa e uma comparacao e tipos desiguais atrapalham a leitura. */
+   porque a faixa e uma comparacao e tipos desiguais atrapalham a leitura.
+
+   ATENCAO A ORDEM. Regra dentro de @container tem a MESMA especificidade
+   de uma regra solta. Quem vence e a que aparece depois no arquivo. Estes
+   dois blocos ficavam ANTES de `.band__value` e `.band__name`, e por isso
+   nunca se aplicavam: o valor continuava em 14px e era cortado em 36px
+   na largura de 901px. Medido. Eles precisam vir DEPOIS. */
 @container (max-width: 172px) {
   .band__lead { display: none; }
-}
-@container (max-width: 126px) {
-  .band__name { -webkit-line-clamp: 3; }
-  .band__value { font-size: var(--step-0); letter-spacing: -.02em; }
 }
 .band__seg:hover { background: var(--paper-3); }
 .band__seg[aria-pressed="true"] {
@@ -612,6 +628,50 @@ dialog#dlg-copia form { text-align: right; }
   white-space: nowrap;
 }
 .band__seg[aria-pressed="true"] .band__lead { color: #c8d3cb; }
+
+/* Container queries DEPOIS das regras que elas ajustam. A ordem importa:
+   mesma especificidade, vence a ultima. Ver o comentario acima. */
+@container (max-width: 126px) {
+  .band__name { -webkit-line-clamp: 3; }
+  .band__value { font-size: var(--step-0); letter-spacing: -.02em; }
+}
+/* Valor em uma linha exige ~84px com o "R$ " separado. Abaixo de 90px
+   internos o numero colava na cifra, e "R$26.412,85" se le como outro
+   valor. Este degrau entra antes do de 104 para o caso de 90-104px. */
+@container (max-width: 118px) {
+  .band__value { font-size: 11px; letter-spacing: 0; }
+}
+@container (max-width: 104px) {
+  /* Ultimo degrau, e o unico honesto.
+
+     Nao ha tamanho de fonte que faca "R$ 22.446,34" caber em 62px sem
+     virar ilegivel. Cortar produz "R$ 22.446," e o dono le um numero
+     errado. Entao o valor quebra em DUAS LINHAS, ancorado a direita: a
+     cifra e os milhares na primeira, os centavos na segunda. E o que o
+     extrato bancario faz.
+
+     Junto, o padding lateral cai de 10px para 4px. Numa coluna de 83px
+     isso devolve 12px, que e o que faltava para "R$ 22.446,34" caber
+     numa linha so. O padding nao pode ser reduzido DENTRO desta
+     consulta: .band__seg E o container medido, e mudar o padding muda a
+     largura que a consulta le - ciclo que o navegador resolve ignorando.
+     Por isso o valor sai de uma variavel declarada fora. */
+  .band__value {
+    font-size: 11px;
+    /* Sem letter-spacing negativo: em 11px ele colava o "R$" no numero
+       ("R$26.412,85"), que se le como um valor diferente. A economia de
+       2px nao paga o risco. */
+    letter-spacing: 0;
+    /* Quebra em duas linhas, mas NUNCA no meio do numero. `anywhere`
+       partia "R$ 22.446,3" / "4", que se le como outro valor. Aqui a
+       quebra so acontece no espaco depois de "R$", entao a primeira
+       linha e a cifra e a segunda e o numero inteiro. */
+    white-space: normal;
+    word-break: keep-all;
+    text-align: right;
+    line-height: 1.15;
+  }
+}
 
 .band__legend {
   display: flex;
@@ -1121,6 +1181,24 @@ table.picking tbody tr:last-child td { border-bottom: 0; }
 }
 .picking__hint { font-size: var(--step-0); color: var(--ink-3); }
 
+/* Escopo do pedido no titulo: quanto do total esta lista representa.
+   Fica no titulo, e nao na legenda da faixa, porque a legenda some
+   abaixo de 860px de altura - e o notebook do persona e 1366x657.
+   Cor de fundo + palavra: nao depende de distinguir o verde. */
+.picking__escopo {
+  display: inline-block;
+  margin-left: .5rem;
+  padding: .125rem .375rem;
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--green-deep);
+  background: var(--green-wash);
+  border: 1px solid var(--rule);
+  vertical-align: middle;
+}
+
 /* Progresso da separacao. Fica entre o total e a dica, e so aparece
    quando ha item marcado. O botao de limpar e menor que .btn padrao
    porque e acao secundaria e nao deve competir com "Copiar pedido". */
@@ -1542,7 +1620,11 @@ details.rules > summary:hover { color: var(--green-deep); }
   .poster__meta { margin-top: .25rem; }
   .poster__escala { margin-top: .25rem; }
   .band { min-height: 3.5rem; }
-  .band__seg { padding: .375rem .625rem; }
+  /* Usa a variavel, nao valor fixo: a media query de altura vencia o
+     padding declarado em .band__seg e ignorava o ajuste do segmento
+     estreito. Foi assim que o valor continuou cortado em 901px mesmo
+     depois do :has() acima. */
+  .band__seg { padding: .375rem var(--band-pad, .625rem); }
   /* A legenda da faixa sai: o title de cada botao e o aria-label ja
      explicam, e ela custava 20px antes do primeiro produto. */
   .band__legend { display: none; }
@@ -3061,6 +3143,28 @@ function renderTabela(agg) {
     : `${fmtInt(linhas.length)} produtos`;
   sub.textContent = `  ${contagem} · entrega em ${(agregarDoFornecedor(linhas) || {}).lead || 0} dias`;
   titulo.appendChild(sub);
+
+  /* ------------------------------------------------------------------
+     ESCOPO VISIVEL NO CABECALHO DO PEDIDO.
+
+     A legenda da faixa carrega a mesma informacao (".band__legend"), mas
+     a media query de altura a esconde abaixo de 860px - e o notebook do
+     PRODUCT.md e 1366x657. Ou seja: a indicacao de que a lista esta
+     filtrada por fornecedor existia, e estava invisivel exatamente no
+     aparelho do persona.
+
+     Aqui ela vive no titulo do pedido, que e visivel em todas as
+     alturas. Uma etiqueta curta, nao uma frase: o titulo ja carrega
+     nome e contagem, e o olho nao deve tropecar em tres informacoes.
+     ------------------------------------------------------------------ */
+  const totalCent = agg.cent || 1;
+  if (estado.fornecedor && linhas.length) {
+    const fatia = Math.round(100 * (linhas.reduce((s, l) => s + l.valorCent, 0)) / totalCent);
+    const etq = document.createElement("span");
+    etq.className = "picking__escopo";
+    etq.textContent = `${fatia}% do pedido`;
+    titulo.appendChild(etq);
+  }
 
   const aggCent = agg.cent;
   const cent = linhas.reduce((s, l) => s + l.valorCent, 0);
