@@ -133,7 +133,8 @@ do Teorema CAP estão em
 | [`docs/08-declaracao-ia.md`](docs/08-declaracao-ia.md) | uso de IA declarado, o que foi revisado |
 | [`docs/dicionario-de-dados.md`](docs/dicionario-de-dados.md) | todos os campos, gerado do catálogo do banco |
 | [`docs/pitch-roteiro.md`](docs/pitch-roteiro.md) | roteiro de 10 minutos com 7 falantes |
-| [`docs/relatorio-final.pdf`](docs/relatorio-final.pdf) | relatório consolidado |
+| [`docs/relatorio-final.docx`](docs/relatorio-final.docx) | relatório consolidado, editável no Word |
+| [`docs/relatorio-final.pdf`](docs/relatorio-final.pdf) | o mesmo relatório em PDF, para leitura |
 | [`docs/pitch.pdf`](docs/pitch.pdf) | slides |
 
 ---
@@ -238,12 +239,17 @@ restaurável, não apenas gerado: **RTO medido de 7,5 min** para 3,1 GB.
 Dois passos que o código **não** pode fazer sozinho:
 
 1. **Preencher `docs/integrantes.md`** com nome e RA dos sete integrantes.
-   O `relatorio_pdf.py` lê essa tabela e imprime na capa. Sem ela, a capa sai
-   com "integrantes não informados".
+   O gerador lê essa tabela e imprime na capa. Sem ela, a capa sai com
+   "integrantes não informados".
 
    ```powershell
-   python src/relatorio_pdf.py
+   python src/relatorio_docx.py
+   pwsh scripts/atualizar_sumario.ps1
    ```
+
+   O primeiro comando gera `docs/relatorio-final.docx`. O segundo abre o
+   arquivo no Word, atualiza o sumário e informa a contagem de páginas.
+   Para o PDF, exporte pelo próprio Word (Arquivo → Salvar como → PDF).
 
 2. **Anexar a autorização da professora** para o grupo de 7. Salve como
    `docs/autorizacao-grupo.pdf` (ou `.png`). Se o arquivo existir, ele entra

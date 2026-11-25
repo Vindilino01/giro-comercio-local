@@ -639,7 +639,7 @@ def renderizar_slide(s: dict) -> str:
         # docs/integrantes.md ainda estiver com os marcadores, a capa nao
         # imprime lista vazia nem placeholder - apenas omite o bloco.
         try:
-            from src.relatorio_pdf import ler_integrantes
+            from src.integrantes import ler_integrantes
             nomes = " · ".join(n for n, _ in ler_integrantes())
         except Exception:  # noqa: BLE001
             nomes = ""

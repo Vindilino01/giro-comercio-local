@@ -50,6 +50,15 @@ from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Mm, Pt, RGBColor
 
+# Import com fallback: o arquivo roda tanto como `python src/relatorio_docx.py`
+# (sem pacote, "src" nao esta no sys.path) quanto via `-m src.relatorio_docx`.
+try:
+    from src.integrantes import ler_integrantes
+except ModuleNotFoundError:  # pragma: no cover - depende de como foi chamado
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from src.integrantes import ler_integrantes
+
 RAIZ = Path(__file__).parent.parent
 
 # =====================================================================
@@ -619,23 +628,6 @@ def numeros_do_resumo() -> dict[str, str]:
 # Partes do documento
 # =====================================================================
 
-def ler_integrantes() -> list[tuple[str, str]]:
-    """Le docs/integrantes.md e devolve [(nome, ra)], ignorando placeholders."""
-    caminho = RAIZ / "docs" / "integrantes.md"
-    if not caminho.exists():
-        return []
-    out: list[tuple[str, str]] = []
-    for linha in caminho.read_text(encoding="utf-8").splitlines():
-        m = re.match(r"^\|\s*\d+\s*\|\s*(.+?)\s*\|\s*(.+?)\s*\|\s*$", linha)
-        if not m:
-            continue
-        nome, ra = m.group(1), m.group(2)
-        if "preencher" in nome.lower() or "preencher" in ra.lower():
-            continue
-        out.append((nome, ra))
-    return out
-
-
 def montar_capa(doc) -> None:
     for _ in range(3):
         doc.add_paragraph()
@@ -918,6 +910,39 @@ def montar_apendice(doc) -> None:
     )
 
 
+def montar_anexo_autorizacao(doc) -> str | None:
+    """Pagina final com a autorizacao da professora, se o arquivo existir.
+
+    Aceita imagem (png/jpg). PDF nao entra: python-docx nao embute pagina
+    de PDF, e converter exigiria dependencia externa. Quando o arquivo e
+    PDF, a funcao avisa e nao insere nada, em vez de falhar em silencio -
+    quem gera precisa saber que a pagina ficou de fora.
+
+    Devolve o nome do arquivo inserido, ou None.
+    """
+    for nome in ("autorizacao-grupo.png", "autorizacao-grupo.jpg",
+                 "autorizacao-grupo.jpeg"):
+        caminho = RAIZ / "docs" / nome
+        if not caminho.exists():
+            continue
+
+        cab = doc.add_heading("Anexo — autorização do grupo", level=1)
+        cab.paragraph_format.page_break_before = True
+        p = doc.add_paragraph()
+        escrever_inline(
+            p,
+            "Documento da professora autorizando a composição do grupo "
+            "com sete integrantes.")
+        doc.add_picture(str(caminho), width=LARGURA_UTIL)
+        return nome
+
+    if (RAIZ / "docs" / "autorizacao-grupo.pdf").exists():
+        print("  aviso: docs/autorizacao-grupo.pdf existe, mas o gerador "
+              "Word nao embute PDF.")
+        print("         Converta para .png ou anexe a pagina pelo Word.")
+    return None
+
+
 def montar_referencias(doc) -> None:
     caminho = RAIZ / "docs" / "referencias.md"
     if not caminho.exists():
@@ -1030,6 +1055,7 @@ def gerar(saida: Path) -> Path:
     montar_declaracao(doc)
     montar_apendice(doc)
     montar_referencias(doc)
+    montar_anexo_autorizacao(doc)
 
     saida.parent.mkdir(parents=True, exist_ok=True)
     doc.save(saida)

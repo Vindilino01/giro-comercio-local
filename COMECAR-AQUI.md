@@ -43,7 +43,7 @@ Não é um diagrama — é uma tela que responde "o que comprar hoje".
 
 ## 2. O relatório (10 min) — a leitura
 
-Abra **`docs/relatorio-final.pdf`** (66 páginas).
+Abra **`docs/relatorio-final.docx`** (45 páginas) ou o PDF ao lado dele.
 
 Não leia tudo. Leia nesta ordem:
 
@@ -145,7 +145,7 @@ daquela loja** do total. É a funcionalidade que o relatório promete na seção
 | O painel abre em branco | Use Edge ou Chrome. Firefox antigo não suporta os recursos de CSS usados. |
 | `pg_isready` diz que não está no ar | `.\scripts\pg.ps1 start` |
 | Quer regerar o painel | `python dashboard/gerar.py` |
-| Quer regerar o PDF | Preencha `docs/integrantes.md` antes, e rode `python src\relatorio_pdf.py` |
+| Quer regerar o Word | Preencha `docs/integrantes.md` antes, e rode `python src\relatorio_docx.py` |
 | Quer tudo do zero | `python run_all.py --reset` (cerca de 30 minutos) |
 
 ---
@@ -160,6 +160,7 @@ daquela loja** do total. É a funcionalidade que o relatório promete na seção
 Depois disso:
 
 ```powershell
-python src\relatorio_pdf.py
+python src\relatorio_docx.py
+pwsh scripts\atualizar_sumario.ps1
 python scripts\checklist.py
 ```
