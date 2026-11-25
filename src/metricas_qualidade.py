@@ -79,30 +79,30 @@ class MetricaRegra:
 # pipeline.
 OBSERVACOES: dict[str, str] = {
     "DQ006": (
-        "Defeito afeta 2 registros (par de EANs iguais); a dedupe mantem "
+        "Defeito afeta 2 registros, um par de EANs iguais. A dedupe mantem "
         "1 e rejeita 1, como deve ser. Recall de 50% aqui e o resultado "
-        "correto: rejeitar os dois descartaria o produto em vez de "
+        "correto. Rejeitar os dois descartaria o produto em vez de "
         "deduplicar."
     ),
     "DQ008": (
         "Alguns itens adulterados foram rejeitados ANTES por outra regra "
-        "(quantidade invalida, duplicidade), entao a regra de consistencia "
-        "de valor nao chegou a avalia-los. A validacao final confirma que "
+        "(quantidade invalida, duplicidade). A regra de consistencia de "
+        "valor nao chegou a avalia-los. A validacao final confirma que "
         "nenhum item com soma incoerente entrou na tabela."
     ),
     "DQ020": (
         "Cancelamento e um evento LEGITIMO do PDV, nao um defeito. A "
-        "precisao baixa reflete isso: a regra registra todos os cupons "
-        "cancelados sem data, e a maioria e operacao normal, nao "
-        "corrupcao injetada."
+        "precisao baixa reflete isso. A regra registra todos os cupons "
+        "cancelados sem data, e a maioria e operacao normal, nao corrupcao "
+        "injetada."
     ),
     "DQ007": (
         "PRECEDENCIA DE REGRAS. Um registro so pode ser rejeitado uma vez, "
         "pela primeira regra que o captura. Parte das vendas com total "
-        "adulterado tambem recebeu data invalida ou futura no mesmo lote, "
-        "e foi capturada por DQ001/DQ013 antes de chegar ao teste de total. "
-        "O numero real de vendas com total incoerente que entrou na tabela "
-        "e ZERO - verificado pelo teste de integridade I02."
+        "adulterado tambem recebeu data invalida ou futura no mesmo lote. "
+        "Foram capturadas por DQ001/DQ013 antes do teste de total. O numero "
+        "real de vendas com total incoerente na tabela e ZERO, verificado "
+        "pelo teste I02."
     ),
     "DQ013": (
         "PRECEDENCIA DE REGRAS. Das 27 vendas com data futura, algumas "
@@ -111,15 +111,15 @@ OBSERVACOES: dict[str, str] = {
         "com data futura entrou na tabela."
     ),
     "DQ001": (
-        "A precisao abaixo de 100% vem do dataset sintetico: vendas do dia "
+        "A precisao abaixo de 100% vem do dataset sintetico. Vendas do dia "
         "que perdeu a carga (D14) tambem aparecem sem data valida no "
         "staging. Sao rejeicoes corretas, mas nao foram injetadas como D01."
     ),
     "DQ005": (
-        "O injetor duplica itens em pares; a dedupe remove as N-1 copias "
-        "de cada grupo. O numero de rejeitadas e maior que o de injetadas "
-        "porque os itens duplicados arrastam consigo registros que "
-        "compartilham a mesma chave."
+        "O injetor duplica itens em pares, e a dedupe remove as N-1 copias "
+        "de cada grupo. O numero de rejeitadas supera o de injetadas porque "
+        "os itens duplicados arrastam registros que compartilham a mesma "
+        "chave."
     ),
 }
 
