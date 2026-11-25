@@ -90,9 +90,14 @@ MULETAS = [
 
 # ---------------------------------------------------------------------
 # "Nao e X, e Y" - a construcao mais reconhecivel de texto gerado.
+#
+# A regra exige que a segunda parte comece por "e", "e sim" ou "mas".
+# Sem isso, ela pegava negacao legitima como "a consulta nao e janela
+# deslizante, brilha em media de 5 minutos" - que e uma negacao normal,
+# nao o padrao retorico.
 # ---------------------------------------------------------------------
 PADRAO_NAO_E = re.compile(
-    r"\b(?:n[ãa]o|N[ãa]o)\s+(?:é|e)\s+[^.,;]{2,40}[,.]?\s*(?:é|e|mas|e sim)\s+",
+    r"\b(?:n[ãa]o|N[ãa]o)\s+(?:é|e)\s+[^.,;]{2,40}[,.]?\s*(?:é|e sim)\s+",
     re.IGNORECASE,
 )
 
