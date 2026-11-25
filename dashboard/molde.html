@@ -1632,9 +1632,15 @@ details.rules > summary:hover { color: var(--green-deep); }
      estreito. Foi assim que o valor continuou cortado em 901px mesmo
      depois do :has() acima. */
   .band__seg { padding: .375rem var(--band-pad, .625rem); }
-  /* A legenda da faixa sai: o title de cada botao e o aria-label ja
-     explicam, e ela custava 20px antes do primeiro produto. */
-  .band__legend { display: none; }
+  /* A legenda NAO sai mais inteira. Sai so a metade direita (contagem de
+     fornecedores/produtos), que e redundante com o titulo do pedido.
+     O que fica e a unica frase que explica a codificacao da faixa:
+     "a largura de cada fornecedor e o valor do pedido dele". Ela custa
+     16px e e a tese da pagina - esconder a explicacao da assinatura no
+     aparelho nomeado no PRODUCT.md (1366x657) deixava o elemento mais
+     original do projeto sem legenda justamente onde ele e lido. */
+  .band__legend { padding-top: 0; margin-top: 0; font-size: 11px; line-height: 1.3; }
+  #band-legend-right { display: none; }
   .modos { margin-top: .25rem; }
   .picking__wrap { margin-top: .25rem; }
   .picking__head { padding: .125rem 0; align-items: center; }
@@ -2533,12 +2539,22 @@ function renderResumo(agg) {
     return;
   }
 
+  /* A lede nao repete o total.
+
+     O poster logo abaixo ja diz R$ 259.577,64 em 41px, e a lede dizia o
+     mesmo numero 20px acima em corpo de texto. A duplicacao custava uma
+     linha inteira e enfraquecia o poster: quando o mesmo dado aparece
+     duas vezes em escalas diferentes, nenhuma das duas le como "o"
+     numero.
+
+     Fica o que so a lede informa: o escopo e o custo da falta. Duas
+     linhas em vez de tres. */
   el("lede").innerHTML =
-    `Esta semana você precisa comprar <b>${fmtBRLcents(agg.cent)}</b> ` +
-    `de ${agg.fornecedores.length} ${agg.fornecedores.length === 1 ? "fornecedor" : "fornecedores"}` +
+    `Pedido de ${agg.fornecedores.length} ` +
+    `${agg.fornecedores.length === 1 ? "fornecedor" : "fornecedores"}` +
     `${estado.loja ? " para " + lojaNome(estado.loja) : " para as " + DADOS.lojas.length + " lojas"}. ` +
-    `No último ano, produto em falta custou <b data-tone="red">${fmtBRL(perda.receita)}</b> ` +
-    `— venda que o caixa não registrou porque não havia na prateleira.`;
+    `No último ano, a falta custou <b data-tone="red">${fmtBRL(perda.receita)}</b> ` +
+    `em venda que o caixa não registrou.`;
 
   el("total-pedido").textContent = fmtBRLcents(agg.cent);
   el("total-meta").innerHTML =
