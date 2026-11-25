@@ -1120,6 +1120,29 @@ table.picking tbody tr:last-child td { border-bottom: 0; }
 }
 .picking__hint { font-size: var(--step-0); color: var(--ink-3); }
 
+/* Progresso da separacao. Fica entre o total e a dica, e so aparece
+   quando ha item marcado. O botao de limpar e menor que .btn padrao
+   porque e acao secundaria e nao deve competir com "Copiar pedido". */
+.picking__progresso {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  font-size: var(--step-0);
+  color: var(--ink-2);
+  margin-top: .25rem;
+}
+.picking__progresso-txt strong {
+  font-weight: 700;
+  color: var(--green-deep);
+  font-variant-numeric: tabular-nums;
+}
+.btn--mini {
+  min-height: 32px;
+  padding: .25rem .5rem;
+  font-size: var(--step--1);
+}
+
 /* =====================================================================
    8. A perda
    ===================================================================== */
@@ -1817,7 +1840,8 @@ details.rules > summary:hover { color: var(--green-deep); }
         </table>
       </div>
       <div class="picking__foot">
-        <p class="picking__total" id="picking-total">–</p>
+        <p class="picking__total" id="picking-total">-</p>
+        <p class="picking__progresso" id="picking-progresso" hidden></p>
         <p class="picking__hint" id="picking-hint"></p>
       </div>
     </div>
@@ -2100,6 +2124,112 @@ const Z_POR_NIVEL = {
 };
 
 const estado = { loja: 0, fornecedor: null, nivel: 95, ordem: "urgencia", separados: new Set() };
+
+/* ---------------------------------------------------------------------
+   Memoria de sessao.
+
+   POR QUE ISTO EXISTE
+   -------------------
+   O Nelson trabalha na sala dos fundos, entre o fechamento do caixa e a
+   saida do ultimo funcionario. O PRODUCT.md diz que a tela tem que
+   resolver em cinco minutos. Cinco minutos e exatamente o intervalo em
+   que alguem e interrompido numa loja: chega cliente no balcao, chega
+   entrega, o telefone toca.
+
+   Antes disto, `estado` vivia so na memoria da aba. Medido: marquei 5
+   itens da lista de separacao, recarreguei a pagina, 0 continuavam
+   marcados. Metade da mercadoria separada, uma interrupcao, e o trabalho
+   sumia - e a resposta racional do dono era voltar para a planilha de
+   2009, que nao perde nada porque e um arquivo.
+
+   O QUE E GRAVADO
+   ---------------
+   Loja, fornecedor, disponibilidade, modo (lista/tabela), ordem da
+   tabela e os itens ja separados. Nao e preferencia de usuario: e o
+   estado do trabalho em andamento.
+
+   O QUE NAO E GRAVADO
+   -------------------
+   Nada que venha do banco. `DADOS` e regenerado a cada carga, e um
+   cache velho mostraria numero que o banco nao sustenta - o oposto da
+   tese do projeto.
+
+   A CHAVE TEM VERSAO
+   ------------------
+   Se o formato mudar, a chave muda e o estado antigo e ignorado em vez
+   de quebrar a leitura. `giro.painel.v1`.
+   --------------------------------------------------------------------- */
+const CHAVE_ESTADO = "giro.painel.v1";
+
+function salvarEstado() {
+  try {
+    localStorage.setItem(CHAVE_ESTADO, JSON.stringify({
+      loja: estado.loja,
+      fornecedor: estado.fornecedor,
+      nivel: estado.nivel,
+      ordem: estado.ordem,
+      modo: modoPedido,
+      separados: [...estado.separados],
+    }));
+  } catch (_) {
+    // Modo privado, cota cheia ou politica que bloqueia storage. Nao e
+    // razao para quebrar o painel: segue sem memoria, como antes.
+  }
+}
+
+function restaurarEstado() {
+  let bruto;
+  try {
+    bruto = localStorage.getItem(CHAVE_ESTADO);
+  } catch (_) {
+    return;
+  }
+  if (!bruto) return;
+
+  let salvo;
+  try {
+    salvo = JSON.parse(bruto);
+  } catch (_) {
+    localStorage.removeItem(CHAVE_ESTADO);
+    return;
+  }
+
+  // Cada campo e validado contra o dado atual. Um id de loja que sumiu
+  // do banco, ou um nivel que nao e mais oferecido, faria o painel abrir
+  // filtrado para nada - pior que abrir no padrao.
+  if (Number.isInteger(salvo.loja)
+      && (salvo.loja === 0 || DADOS.lojas.some((l) => l.loja_id === salvo.loja))) {
+    estado.loja = salvo.loja;
+  }
+  if (typeof salvo.fornecedor === "string" || salvo.fornecedor === null) {
+    estado.fornecedor = salvo.fornecedor;
+  }
+  if (typeof salvo.nivel === "number" && Z_POR_NIVEL[salvo.nivel]) {
+    estado.nivel = salvo.nivel;
+  }
+  // A ordenacao e validada contra as colunas que existem hoje. Aceitar
+  // uma chave desconhecida deixaria a tabela sem ordem definida.
+  const ORDENS = ["urgencia", "situacao", "nome", "dep", "estoque",
+    "demanda", "cobertura", "ponto", "qtd", "valorCent", "lead"];
+  if (typeof salvo.ordem === "string" && ORDENS.includes(salvo.ordem)) {
+    estado.ordem = salvo.ordem;
+  }
+  if (salvo.modo === "lista" || salvo.modo === "tabela") {
+    modoPedido = salvo.modo;
+  }
+  if (Array.isArray(salvo.separados)) {
+    // So aceita chave que ainda existe no pedido de hoje. Produto que
+    // saiu da sugestao nao pode reaparecer marcado se voltar depois.
+    estado.separados = new Set(
+      salvo.separados.filter((id) => typeof id === "string"));
+  }
+}
+
+function limparEstado() {
+  try {
+    localStorage.removeItem(CHAVE_ESTADO);
+  } catch (_) { /* idem */ }
+}
 
 const el = (id) => document.getElementById(id);
 const lojaNome = (id) => (DADOS.lojas.find((l) => l.loja_id === id) || {}).nome || "–";
@@ -2469,6 +2599,12 @@ function renderLista(linhas) {
       if (box.checked) estado.separados.add(box.id);
       else estado.separados.delete(box.id);
       li.classList.toggle("lista__item--feito", box.checked);
+      // Cada marca e progresso de trabalho. Gravar aqui e o que faz a
+      // selecao sobreviver a interrupcao. O renderProgresso() e chamado
+      // logo em seguida porque sem ele o contador so aparecia no proximo
+      // render inteiro - e marcar uma caixa nao redesenha a lista.
+      salvarEstado();
+      renderProgresso();
     });
     li.classList.toggle("lista__item--feito", box.checked);
 
@@ -2597,12 +2733,74 @@ function renderModo() {
   bTabela.setAttribute("aria-selected", String(!ehLista));
 }
 
-/* Troca de modo por acao do usuario: move o foco para o painel. */
+/* Troca de modo por acao do usuario: move o foco para o painel que
+   apareceu e grava a escolha, para a proxima abertura respeitar. */
 function trocarModo(novo) {
   modoPedido = novo;
+  salvarEstado();
   renderModo();
+  renderProgresso();
   const alvo = el(novo === "lista" ? "picking-lista" : "picking-tabela-wrap");
   if (alvo) alvo.focus();
+}
+
+/* ---------------------------------------------------------------------
+   Progresso da separacao.
+
+   O dono marca caixa por caixa na folha de separacao. Antes disto ele nao
+   tinha nenhum sinal de quanto ja fez: precisava contar a mao as linhas
+   riscadas, e a unica memoria de progresso era o papel.
+
+   Fica aqui, e nao dentro de renderTabela(), porque precisa aparecer nos
+   DOIS modos: a lista e onde ele realmente marca, e a tabela e onde ele
+   confere. Deixar dentro de renderTabela() fazia o contador sumir
+   justamente no modo de uso principal.
+
+   O botao de limpar so aparece quando ha algo marcado: controle
+   permanente para acao rara ocupa espaco na primeira tela sem servir.
+   --------------------------------------------------------------------- */
+function renderProgresso() {
+  const prog = el("picking-progresso");
+  if (!prog) return;
+
+  // Mesmo conjunto que a lista e a tabela mostram: o pedido calculado,
+  // filtrado pelo fornecedor selecionado. `ativos` ja exclui loja cujo
+  // selo bloqueou a sugestao - e essas linhas nao estao na tela, entao
+  // nao podem entrar na conta de progresso.
+  const agg = agregar(calcular());
+  const linhas = estado.fornecedor
+    ? agg.ativos.filter((l) => l.fornecedor === estado.fornecedor)
+    : agg.ativos;
+
+  const total = linhas.length;
+  const feitos = linhas.filter(
+    (l) => estado.separados.has(`sep-${l.loja_id}-${l.produto_id}`)).length;
+
+  if (!feitos) {
+    prog.hidden = true;
+    prog.innerHTML = "";
+    return;
+  }
+
+  prog.hidden = false;
+  // "linhas", nao "produtos": a lista de separacao tem uma linha por par
+  // (loja, produto). Chamar de "produto" aqui reintroduziria a segunda
+  // contagem que o titulo acabou de unificar.
+  prog.innerHTML =
+    `<span class="picking__progresso-txt">` +
+    `<strong>${fmtInt(feitos)}</strong> de ${fmtInt(total)} ` +
+    `${total === 1 ? "linha separada" : "linhas separadas"}</span>` +
+    `<button class="btn btn--mini" id="limpar-separados" type="button">` +
+    `Limpar seleção</button>`;
+
+  const btn = el("limpar-separados");
+  if (btn) {
+    btn.addEventListener("click", () => {
+      estado.separados.clear();
+      salvarEstado();
+      render();
+    });
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -2679,12 +2877,14 @@ function renderTabela(agg) {
       th.appendChild(marca);
       th.addEventListener("click", () => {
         estado.ordem = estado.ordem === c.k ? "urgencia" : c.k;
+        salvarEstado();
         render();
       });
       th.addEventListener("keydown", (ev) => {
         if (ev.key === "Enter" || ev.key === " ") {
           ev.preventDefault();
           estado.ordem = estado.ordem === c.k ? "urgencia" : c.k;
+          salvarEstado();
           render();
         }
       });
@@ -2822,11 +3022,28 @@ function renderTabela(agg) {
   const titulo = el("picking-title");
   titulo.textContent = estado.fornecedor || "–";
   const sub = document.createElement("span");
-  const nomes = new Set(linhas.map((l) => l.nome)).size;
-  // Sob "todas as lojas" a linha e um par (loja, SKU): dizer "162 SKUs"
-  // seria contar a mesma peca tres vezes.
+
+  /* ------------------------------------------------------------------
+     UMA DEFINICAO DE "PRODUTO", EM TODA A TELA.
+
+     Havia duas contagens diferentes com o mesmo rotulo, na mesma tela:
+     o titulo dizia "70 produtos" (SKUs distintos) e o rodape dizia
+     "137 produtos" (pares loja x SKU). As duas estavam certas pela sua
+     propria definicao, e juntas faziam o dono desconfiar do numero que
+     estava lendo - numa pagina que se vende por rastreabilidade.
+
+     Definicao adotada: quando o escopo e uma loja, "produto" e a linha
+     (1 produto x 1 loja). Quando o escopo e a rede, o mesmo produto
+     aparece uma vez por loja, entao a contagem nomeada e de SKUs
+     distintos, e o titulo diz "em N lojas" para deixar claro que a
+     linha e um par.
+
+     `distintos` e a contagem de nomes; `linhas.length` e a contagem de
+     linhas. Cada uma e usada onde o numero significa o que ela mede.
+     ------------------------------------------------------------------ */
+  const distintos = new Set(linhas.map((l) => l.nome)).size;
   const contagem = agrupar
-    ? `${fmtInt(nomes)} produtos em ${grupos.length} lojas`
+    ? `${fmtInt(distintos)} produtos em ${grupos.length} lojas`
     : `${fmtInt(linhas.length)} produtos`;
   sub.textContent = `  ${contagem} · entrega em ${(agregarDoFornecedor(linhas) || {}).lead || 0} dias`;
   titulo.appendChild(sub);
@@ -2846,7 +3063,8 @@ function renderTabela(agg) {
     : "todos os fornecedores";
 
   el("picking-total").innerHTML =
-    `${fmtBRLcents(cent)}<small>${volume} em ${fmtInt(linhas.length)} produtos · ${escopo}</small>`;
+    `${fmtBRLcents(cent)}<small>${volume} em ${fmtInt(linhas.length)} ` +
+    `${linhas.length === 1 ? "linha" : "linhas"} · ${escopo}</small>`;
 
   el("picking-hint").textContent =
     !linhas.length
@@ -2859,7 +3077,7 @@ function renderTabela(agg) {
     !linhas.length
       ? "Lista de compra vazia: nenhum produto deste fornecedor precisa de compra nesta margem."
       : `Lista de compra de ${estado.fornecedor || "fornecedor"}, ` +
-        (agrupar ? `${fmtInt(nomes)} produtos em ${grupos.length} lojas, ` : `${fmtInt(linhas.length)} produtos, `) +
+        (agrupar ? `${fmtInt(distintos)} produtos em ${grupos.length} lojas, ` : `${fmtInt(linhas.length)} produtos, `) +
         `total ${fmtBRLcents(cent)}.`;
 
   // ------------------------------------------------------------------
@@ -3508,6 +3726,7 @@ function render(de = null) {
   renderDelta(agg);
   renderBand(agg);
   renderTabela(agg);
+  renderProgresso();
   renderPerda(agg);
   renderCapital(linhas);
   // O painel de selos depende do mesmo numero que calcular() usa para
@@ -3523,6 +3742,11 @@ function render(de = null) {
 }
 
 function iniciar() {
+  // Restaura o trabalho em andamento ANTES de renderizar: loja,
+  // fornecedor, disponibilidade, ordem, modo e itens ja separados. Sem
+  // isto, uma interrupcao de meio minuto apagava meia separacao.
+  restaurarEstado();
+
   renderLojas();
   renderDateline();
   renderConfianca();
@@ -3530,6 +3754,7 @@ function iniciar() {
   el("loja").addEventListener("change", (ev) => {
     estado.loja = Number(ev.target.value);
     estado.fornecedor = null;
+    salvarEstado();
     render();
   });
 
@@ -3539,6 +3764,7 @@ function iniciar() {
     disp.addEventListener("change", (ev) => {
       if (ev.target.name !== "nivel") return;
       estado.nivel = Number(ev.target.value);
+      salvarEstado();
       render();
     });
   }
@@ -3547,6 +3773,7 @@ function iniciar() {
     const b = ev.target.closest(".band__seg");
     if (!b) return;
     estado.fornecedor = b.dataset.fornecedor;
+    salvarEstado();
     render();
     const head = el("picking-title");
     if (head) head.scrollIntoView({ block: "nearest", behavior: "smooth" });

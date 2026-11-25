@@ -51,6 +51,12 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
       offenders: document.querySelectorAll('#offenders-body tr').length,
       headH1: document.querySelectorAll('h1').length,
       unidade: document.querySelectorAll('.unidade').length,
+      // Contagens com rotulo. O titulo e o rodape usavam a MESMA palavra
+      // "produtos" para numeros diferentes (SKUs distintos no titulo,
+      // pares loja x SKU no rodape): 70 contra 137 na mesma tela. O dono
+      // lia dois numeros e desconfiava de ambos.
+      tituloContagem: document.querySelector('#picking-title span')?.textContent || '',
+      totalContagem: document.querySelector('#picking-total small')?.textContent || '',
       slider: sl ? { l: sl.left, w: sl.width } : null,
       // O slider de 10 posicoes virou escolha de 3 opcoes. O que se testa
       // agora: existem 3 radios, o de 95 vem marcado, todos com 44px.
@@ -78,6 +84,21 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
   check('perda calculada', d.perdaReceita.startsWith('R$'), d.perdaReceita);
   check('selo por loja', d.selos === 3, `${d.selos}`);
   check('um unico h1', d.headH1 === 1, `${d.headH1}`);
+
+  // A mesma palavra nao pode nomear dois numeros diferentes na mesma
+  // tela. Quando o escopo e a rede, o titulo conta SKUs distintos ("70
+  // produtos em 3 lojas") e o rodape conta linhas ("137 linhas"). Se os
+  // dois voltarem a dizer "produtos", o dono ve 70 e 137 e nao sabe qual
+  // e o pedido.
+  const tituloFalaProdutos = /produtos em \d+ lojas/.test(d.tituloContagem);
+  const rodapeFalaLinhas = /linhas/.test(d.totalContagem);
+  check('titulo conta produtos distintos', tituloFalaProdutos,
+    d.tituloContagem.trim().slice(0, 48));
+  check('rodape conta linhas, nao produtos', rodapeFalaLinhas,
+    d.totalContagem.trim().slice(0, 48));
+  check('as duas contagens nao usam a mesma palavra',
+    !(/produtos/.test(d.totalContagem) && /produtos/.test(d.tituloContagem)),
+    `titulo="${d.tituloContagem.trim().slice(0, 26)}" rodape="${d.totalContagem.trim().slice(0, 26)}"`);
   check('unidade visivel na tabela', d.unidade > 0, `${d.unidade}`);
   check('sem overflow horizontal', d.overflowX <= d.viewport + 1,
         `${d.overflowX} vs ${d.viewport}`);
