@@ -122,3 +122,47 @@ Usado na validação automática dos PDFs gerados.
 
 **MICROSOFT.** *Microsoft Edge — command-line options.* 2025.
 Base da geração de PDF via `--headless --print-to-pdf`.
+
+## Interface e experiência de uso
+
+Estas fontes sustentam as decisões de tela do painel. O relatório é
+avaliado por banco e modelagem; a interface existe para provar que o
+modelo sustenta uma decisão. As decisões de tela têm fonte própria.
+
+**AFRESH.** *Store Ordering.* Plataforma de IA para varejo alimentar.
+Disponível em: <https://www.afresh.com/solutions/store-ordering>.
+É o concorrente mais próximo do Giro: escreve o pedido de reposição item
+a item a partir da demanda prevista. Três padrões foram comparados com a
+implementação do painel:
+
+- o sistema escreve, e o humano revisa;
+- a conferência é uma lista curta, não o inventário inteiro;
+- o sucesso se mede por conferir menos.
+
+Ver `docs/referencias-ux.md`.
+
+**LAUBHEIMER, P.** *Data Tables: Four Major User Tasks.* Nielsen Norman
+Group, 2022. Disponível em:
+<https://www.nngroup.com/articles/data-tables/>.
+As quatro tarefas que uma tabela precisa suportar: encontrar, comparar,
+ver uma linha e agir sobre registros. Base da ordem das colunas e do
+cabeçalho fixo.
+
+**SCHADE, A.** *Mobile Tables: Comparisons and Other Data Tables.*
+Nielsen Norman Group, 2017. Disponível em:
+<https://www.nngroup.com/articles/mobile-tables/>.
+Cabeçalho e primeira coluna fixos, indicação de rolagem e agrupamento
+por acordeão. Base do comportamento do painel em tela estreita.
+
+**KAPLAN, K.** *8 Design Guidelines for Complex Applications.* Nielsen
+Norman Group, 2020. Disponível em:
+<https://www.nngroup.com/articles/complex-application-design/>.
+As oito diretrizes, com destaque para a quarta: ajudar o usuário a
+rastrear o que já fez. É a origem da persistência do progresso de
+separação, que antes se perdia ao recarregar.
+
+**NIELSEN, J.** *Progressive Disclosure.* Nielsen Norman Group, 2006.
+Disponível em: <https://www.nngroup.com/articles/progressive-disclosure/>.
+Define os dois erros de divulgação progressiva: divisão errada entre o
+inicial e o secundário, e progressão não óbvia. Base do agrupamento da
+lista em "acabou / quase / resto" e dos ajustes dentro de `details`.
