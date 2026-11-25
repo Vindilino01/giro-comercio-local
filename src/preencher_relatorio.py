@@ -220,10 +220,10 @@ def bloco_resultados() -> str:
     return f"""### Resultados reais (dataset completo)
 
 Execução sobre **{num(linhas_carga)} linhas** em {num(total_seg, 1)} segundos.
-**Zero linhas rejeitadas**; 3.290 cupons cancelados passaram por correção
-automática (DQ020) e ficaram registrados na quarentena — a soma em
-`gov.lote_carga` é 6.362.320 porque inclui as 420 faixas de preço histórico,
-carga criada depois do JSON de evidência.
+**Zero linhas rejeitadas.** Além disso, 3.290 cupons cancelados passaram por
+correção automática (DQ020) e ficaram na quarentena. A soma em `gov.lote_carga`
+chega a 6.362.320. A diferença são as 420 faixas de preço histórico, carga
+criada depois do JSON de evidência.
 
 | Consulta | Resultado |
 |---|---|
@@ -471,8 +471,8 @@ def bloco_tempos() -> str:
         f"**{len(rapidas)} consultas abaixo de 500 ms; "
         f"{len(lentas)} acima** "
         f"({', '.join(c['numero'] for c in lentas)}). "
-        "O padrão não é acidente: as rápidas leem view materializada ou "
-        "tabela pequena; as lentas varrem o fato de 4,1 milhões de linhas.",
+        "O padrão tem explicação. As rápidas leem view materializada ou "
+        "tabela pequena. As lentas varrem o fato de 4,1 milhões de linhas.",
     ]
     return "\n".join(linhas)
 

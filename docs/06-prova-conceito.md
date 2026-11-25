@@ -2,20 +2,19 @@
 
 ## O que foi construído
 
-Não é mockup nem protótipo descartável. É o banco real, com o modelo real,
-carregado com 6,36 milhões de linhas e respondendo às perguntas de negócio.
+O banco real, com o modelo real, carregado com 6,36 milhões de linhas. Ele responde
+às perguntas de negócio.
 
 | Item | Quantidade |
 |---|---|
-| Tabelas lógicas | 28 (15 prata + 8 ouro + 5 gov) |
-| Colunas | ver dicionário |
+| Tabelas lógicas | 28 (15 prata, 8 ouro, 5 gov) |
 | Índices (definições no DDL) | 38 |
 | Partições mensais | 43 por tabela particionada |
-| Domínios e funções | 6 domínios + 6 funções |
-| Constraints nomeadas | 311 (41 CHECK, 30 FK, 26 PK, 9 UNIQUE, 1 EXCLUDE) + 204 NOT NULL |
+| Domínios e funções | 6 domínios e 6 funções |
+| Constraints nomeadas | 311 (41 CHECK, 30 FK, 26 PK, 9 UNIQUE, 1 EXCLUDE) e 204 NOT NULL |
 | Views materializadas | 5 |
-| Consultas de negócio | 11 (Q01–Q10 + Q02b) |
-| Testes de constraint | 22 |
+| Consultas de negócio | 11 (Q01–Q10 e Q02b) |
+| Testes de constraint | 23 |
 | Testes de integridade | 25 |
 
 ## Como reproduzir
@@ -31,19 +30,21 @@ python -m pip install -r requirements.txt
 python run_all.py --reset
 ```
 
-O comando acima:
-1. cria o banco `giro`;
-2. aplica as 12 migrations (8 de prata/gov, 2 da ouro, grants e auditoria);
-3. gera 6,36M de linhas sintéticas calibradas (~2 min);
-4. injeta 17 tipos de defeito em um segundo dataset;
-5. carrega o dataset limpo no banco de negócio (0 linhas rejeitadas;
-   3.290 cupons cancelados corrigidos e registrados em quarentena, DQ020);
-6. carrega o dataset sujo em `giro_qualidade` e mede a detecção;
-7. constrói o star schema e materializa as views;
-8. roda 22 + 25 testes;
-9. exporta todas as evidências em `docs/evidencias/`.
+O comando acima faz nove coisas.
 
-Tempo total: **~30 minutos** em um notebook comum (as duas cargas de 6,3M linhas dominam o tempo).
+1. Cria o banco `giro`.
+2. Aplica as 12 migrations: 8 de prata e gov, 2 da ouro, grants e auditoria.
+3. Gera 6,36M de linhas sintéticas calibradas, em cerca de 2 minutos.
+4. Injeta 17 tipos de defeito num segundo dataset.
+5. Carrega o dataset limpo no banco de negócio. Zero linhas rejeitadas, 3.290
+   cupons cancelados corrigidos e registrados (DQ020).
+6. Carrega o dataset sujo em `giro_qualidade` e mede a detecção.
+7. Constrói o star schema e materializa as views.
+8. Roda 23 e 25 testes.
+9. Exporta as evidências em `docs/evidencias/`.
+
+Tempo total: cerca de 30 minutos num notebook comum. As duas cargas de 6,3M
+linhas dominam o tempo.
 
 ## Estrutura do banco
 
@@ -59,37 +60,34 @@ giro
 
 ## As 11 consultas de negócio
 
-Cada consulta é um arquivo em `db/queries/`, com o SQL comentado explicando a
-pergunta e as decisões. Todas têm resultado exportado em `docs/evidencias/`.
+Cada consulta é um arquivo em `db/queries/`, com o SQL comentado. Todas têm
+resultado exportado em `docs/evidencias/`.
 
-| # | Consulta | Pergunta | Técnica principal |
+| # | Consulta | Pergunta | Técnica |
 |---|---|---|---|
-| **Q01** | `ruptura_demanda_perdida` | Quanto deixei de vender? | CTE + `FILTER` |
-| **Q02** | `sugestao_compra` | O que comprar hoje? | Agregação sobre view materializada |
-| **Q02b** | `lista_compra` | Quais SKUs priorizar? | `ORDER BY` com `CASE` |
-| **Q03** | `curva_abc` | Quais 20% fazem 80%? | **Window function** `SUM() OVER` |
-| **Q04** | `giro_cobertura` | Onde o dinheiro está parado? | `DISTINCT ON` + agregação |
-| **Q05** | `risco_vencimento` | O que vai vencer? | agregação `max(data_ref)` |
-| **Q06** | `acuracidade_inventario` | Posso confiar no estoque? | `percentile_cont` |
-| **Q07** | `sazonalidade` | Quando eu vendo mais? | Agregação por dia da semana |
-| **Q08** | `otif_fornecedores` | Qual fornecedor falha? | `FILTER` + `stddev_samp` |
-| **Q09** | `lift_promocao` | A promoção valeu a pena? | `FILTER` por condição |
-| **Q10** | `painel_qualidade` | Posso confiar nos números? | 4 blocos em `UNION` |
+| **Q01** | `ruptura_demanda_perdida` | quanto deixei de vender? | CTE e `FILTER` |
+| **Q02** | `sugestao_compra` | o que comprar hoje? | agregação sobre view materializada |
+| **Q02b** | `lista_compra` | quais SKUs priorizar? | `ORDER BY` com `CASE` |
+| **Q03** | `curva_abc` | quais 20% fazem 80%? | window function `SUM() OVER` |
+| **Q04** | `giro_cobertura` | onde o dinheiro está parado? | `DISTINCT ON` |
+| **Q05** | `risco_vencimento` | o que vai vencer? | agregação `max(data_ref)` |
+| **Q06** | `acuracidade_inventario` | posso confiar no estoque? | `percentile_cont` |
+| **Q07** | `sazonalidade` | quando eu vendo mais? | agregação por dia da semana |
+| **Q08** | `otif_fornecedores` | qual fornecedor falha? | `FILTER` e `stddev_samp` |
+| **Q09** | `lift_promocao` | a promoção valeu a pena? | `FILTER` por condição |
+| **Q10** | `painel_qualidade` | posso confiar nos números? | 4 blocos em `UNION` |
 
-O edital pede **no mínimo 5**. Entregamos 11.
-
-Cada resultado abaixo foi extraído de `docs/evidencias/q*.md`. Os números são do
-dataset de 6,36 milhões de linhas.
+O edital pede no mínimo 5. Entregamos 11.
 
 <!-- RESULTADOS_INICIO -->
 
 ### Resultados reais (dataset completo)
 
 Execução sobre **6.361.900 linhas** em 683,7 segundos.
-**Zero linhas rejeitadas**; 3.290 cupons cancelados passaram por correção
-automática (DQ020) e ficaram registrados na quarentena — a soma em
-`gov.lote_carga` é 6.362.320 porque inclui as 420 faixas de preço histórico,
-carga criada depois do JSON de evidência.
+**Zero linhas rejeitadas.** Além disso, 3.290 cupons cancelados passaram por
+correção automática (DQ020) e ficaram na quarentena. A soma em `gov.lote_carga`
+chega a 6.362.320. A diferença são as 420 faixas de preço histórico, carga
+criada depois do JSON de evidência.
 
 | Consulta | Resultado |
 |---|---|
@@ -122,10 +120,9 @@ mesma execução que gerou os resultados acima.
 
 ## As três consultas que provam o modelo
 
-Se o professor só puder ver três, estas são as que demonstram os dois eixos da
-rubrica.
+Se a banca só puder ver três, são estas: elas cobrem os dois eixos da rubrica.
 
-### Q01 — ruptura e demanda perdida (prova o diferencial)
+### Q01 — ruptura e demanda perdida
 
 <!-- Q01_INICIO -->
 
@@ -165,13 +162,15 @@ SELECT
 
 <!-- Q01_FIM -->
 
-**O que prova:** o banco não só registra venda — ele quantifica a venda que
-**não aconteceu**. A `mv_rupturas` usa a média histórica em dias sem ruptura para
-estimar a demanda truncada. A janela é ancorada em `max(data_venda)`, não em
-`CURRENT_DATE`: num dataset histórico, o relógio devolveria janela vazia (foi o
-bug da primeira versão — 0 rupturas).
+**O que prova.** O banco não registra só a venda. Ele quantifica a venda que não
+aconteceu. A `mv_rupturas` usa a média histórica em dias sem ruptura para estimar
+a demanda truncada.
 
-### Q02 — sugestão de compra (prova a utilidade)
+A janela é ancorada em `max(data_venda)`, não em `CURRENT_DATE`. Num dataset
+histórico, o relógio devolveria janela vazia. Foi o bug da primeira versão: zero
+rupturas.
+
+### Q02 — sugestão de compra
 
 ```sql
 SELECT situacao, count(*) AS skus,
@@ -181,11 +180,11 @@ SELECT situacao, count(*) AS skus,
  GROUP BY situacao;
 ```
 
-**O que prova:** a view materializada combina previsão (EWMA + sazonalidade),
-lead time do fornecedor, estoque de segurança (z = 1,65) e lote mínimo. É a
-decisão de negócio, não a estatística.
+**O que prova.** A view materializada combina previsão, lead time do fornecedor,
+estoque de segurança (z = 1,65) e lote mínimo. É a decisão de negócio, não a
+estatística isolada.
 
-### Q03 — curva ABC (prova a modelagem)
+### Q03 — curva ABC
 
 ```sql
 WITH acumulado AS (
@@ -203,22 +202,23 @@ SELECT CASE WHEN pct_acumulado <= 0.80 THEN 'A'
   FROM acumulado GROUP BY 1 ORDER BY 1;
 ```
 
-**O que prova:** a window function acumula receita em uma única varredura, sem
-self-join. Num fato de 4,1M de linhas, é a diferença entre **1,27 s** (medido) e
-os vários segundos que a versão com self-join levava.
+**O que prova.** A window function acumula receita em uma varredura, sem
+self-join. Num fato de 4,1M de linhas, a diferença é grande: 1,27 s medido contra
+vários segundos da versão com self-join.
 
 ## Evidências de execução
 
-### Testes de constraint (23/23)
+### Testes de constraint (23 de 23)
 
-`tests/test_constraints.py` prova que o banco **rejeita** dado inválido. Cada
-caso afirma o SQLSTATE esperado — não basta "deu erro".
+`tests/test_constraints.py` prova que o banco rejeita dado inválido. Cada caso
+afirma o SQLSTATE esperado. "Deu erro" não bastaria: o teste precisa provar qual
+regra barrou o dado.
 
 | Caso | O que testa | SQLSTATE | Resultado |
 |---|---|---|---|
 | C01 | EAN com dígito verificador errado | 23514 | OK |
 | C02 | Perecível sem validade | 23514 | OK |
-| C03 | Não-perecível com validade | 23514 | OK |
+| C03 | Não perecível com validade | 23514 | OK |
 | C04 | EAN duplicado | 23505 | OK |
 | C05 | Unidade de medida inválida | 23514 | OK |
 | C06 | UF inexistente (`XX`) | 23514 | OK |
@@ -233,66 +233,63 @@ caso afirma o SQLSTATE esperado — não basta "deu erro".
 | C15 | Faixas de preço sobrepostas | **23P01** | OK |
 | C16 | Venda com quantidade positiva | 23514 | OK |
 | C17 | Dois fornecedores preferenciais | 23505 | OK |
-| C18 | `horas_sem_estoque` > 24 | 23514 | OK |
+| C18 | `horas_sem_estoque` acima de 24 | 23514 | OK |
 | C19 | Previsão antes do pedido | 23514 | OK |
 | C20 | Entrega 2× acima do pedido | 23514 | OK |
 | C21 | Valor monetário negativo | 23514 | OK |
-| C22 | Percentual > 100 | 23514 | OK |
+| C22 | Percentual acima de 100 | 23514 | OK |
 | C23 | RLS: gerente não vê item de outra loja | — | OK (retorna 0) |
 
-**O caso C11 é o mais importante do conjunto.** Ele revelou que a `UNIQUE`
-padrão do PostgreSQL trata `NULL` como distinto, permitindo dois cupons idênticos
-com `serie_cupom` NULL — o que **duplicaria receita em silêncio**. A correção
-(`NULLS NOT DISTINCT`) está documentada no DDL.
+**C11 é o caso mais importante.** Ele revelou que a `UNIQUE` padrão trata `NULL`
+como distinto. Dois cupons idênticos com `serie_cupom` NULL passavam, duplicando
+receita em silêncio. A correção (`NULLS NOT DISTINCT`) está no DDL.
 
 ### Testes de integridade (25)
 
-`tests/test_integridade.py` verifica o **conteúdo** carregado:
+`tests/test_integridade.py` verifica o conteúdo carregado.
 
 | Código | Verificação |
 |---|---|
-| I01 | Toda venda tem ao menos um item |
-| I02 | Soma dos itens = total do cupom |
-| I03 | Equação de estoque fecha |
-| I04 | Nenhum estoque negativo |
-| I05 | Nenhum item sem produto |
-| I06 | Todo produto tem fornecedor |
-| I07 | Um fornecedor preferencial por SKU |
-| I08 | Uma faixa de preço aberta por SKU |
-| I09 | Faixas de preço não se sobrepõem |
-| I10 | Nenhum cupom duplicado (incluindo NULL) |
-| I11 | Toda venda tem loja |
-| I12 | Data de venda existe no calendário |
-| I13 | Nenhum EAN inválido |
-| I14 | Item de pedido tem pedido |
-| I15 | Soma do pedido confere |
-| I16 | Cancelada não entra no fato |
-| I17 | Star schema íntegro |
-| I18 | Demanda reconstruída ≥ vendida |
-| I19 | Previsão existe para todo SKU ativo |
-| I20 | Sugestão só para SKU com previsão |
-| I21 | Quarentena sempre tem motivo |
-| I22 | Contabilidade do lote fecha |
-| I23 | Valores monetários ≥ 0 |
-| I24 | Quantidades de venda > 0 |
-| I25 | Volume carregado é plausível |
+| I01 | toda venda tem ao menos um item |
+| I02 | soma dos itens = total do cupom |
+| I03 | equação de estoque fecha |
+| I04 | nenhum estoque negativo |
+| I05 | nenhum item sem produto |
+| I06 | todo produto tem fornecedor |
+| I07 | um fornecedor preferencial por SKU |
+| I08 | uma faixa de preço aberta por SKU |
+| I09 | faixas de preço não se sobrepõem |
+| I10 | nenhum cupom duplicado, incluindo NULL |
+| I11 | toda venda tem loja |
+| I12 | data de venda existe no calendário |
+| I13 | nenhum EAN inválido |
+| I14 | item de pedido tem pedido |
+| I15 | soma do pedido confere |
+| I16 | cancelada não entra no fato |
+| I17 | star schema íntegro |
+| I18 | demanda reconstruída ≥ vendida |
+| I19 | previsão existe para todo SKU ativo |
+| I20 | sugestão só para SKU com previsão |
+| I21 | quarentena sempre tem motivo |
+| I22 | contabilidade do lote fecha |
+| I23 | valores monetários ≥ 0 |
+| I24 | quantidades de venda > 0 |
+| I25 | volume carregado é plausível |
 
-### Plano de execução (`EXPLAIN ANALYZE`)
+### Planos de execução
 
-Cada consulta tem o plano exportado em `docs/evidencias/q*.plan.txt`. O que se
-verifica:
+Cada consulta tem o plano exportado em `docs/evidencias/q*.plan.txt`.
 
-- **Q01** lê `mv_rupturas` (view materializada) com `Bitmap Index Scan` em `ix_mv_rupturas_loja_data`.
+- **Q01** lê `mv_rupturas` com `Bitmap Index Scan` em `ix_mv_rupturas_loja_data`.
 - **Q03** usa `Index Only Scan` em `ouro.ix_fato_vendas_produto`, que carrega
   `quantidade` e `valor_liquido` no próprio índice.
-- **Q05** faz `Parallel Seq Scan` na tabela de estoque (precisa de todas as
-  linhas para achar a última data por SKU) e `Index Scan` na PK
-  `fato_estoque_diario_pkey` para buscar as linhas dessa data. A versão
-  anterior usava `row_number()` sobre 921 mil linhas e **derramava para
-  disco** (`temp read=11298`); a troca por agregação com `max(data_ref)`
-  cortou o tempo em cerca de 7×.
-- Consultas com filtro de data mostram **partition pruning** (só as partições
-  necessárias aparecem no plano).
+- **Q05** faz `Parallel Seq Scan` no estoque (precisa de todas as linhas para
+  achar a última data por SKU) e `Index Scan` na PK para buscar essas linhas. A
+  versão anterior usava `row_number()` sobre 921 mil linhas e derramava para
+  disco (`temp read=11298`). A troca por `max(data_ref)` cortou o tempo em cerca
+  de 7×.
+- Consultas com filtro de data mostram partition pruning. Só as partições
+  necessárias aparecem no plano.
 
 ### Tempo de execução medido
 
@@ -312,19 +309,19 @@ verifica:
 | Q09 | 3.559 ms | duas agregações sobre o fato |
 | Q10 | 53 ms | tabela de métricas |
 
-**7 consultas abaixo de 500 ms; 4 acima** (Q03, Q04, Q07, Q09). O padrão não é acidente: as rápidas leem view materializada ou tabela pequena; as lentas varrem o fato de 4,1 milhões de linhas.
+**7 consultas abaixo de 500 ms; 4 acima** (Q03, Q04, Q07, Q09). O padrão tem explicação. As rápidas leem view materializada ou tabela pequena. As lentas varrem o fato de 4,1 milhões de linhas.
 
 <!-- TEMPOS_FIM -->
 
-**As consultas que leem view materializada** (Q01, Q02, Q02b) ficam em
-milissegundos. **As que varrem o fato inteiro** (Q03, Q04, Q07, Q09) ficam na
-casa dos segundos — é a diferença entre ler 4,1 milhões de linhas e ler 1.260,
-e é a razão de a camada ouro existir. A Q08 é rápida por outro motivo: o fato
-de compras tem 37 mil linhas, não 4 milhões.
+As consultas que leem view materializada (Q01, Q02, Q02b) ficam em
+milissegundos. As que varrem o fato inteiro (Q03, Q04, Q07, Q09) ficam na casa
+dos segundos. Ler 4,1 milhões de linhas custa caro; ler 1.260 custa pouco. É a
+razão de a camada ouro existir. A Q08 é rápida por outro motivo: o fato de
+compras tem 37 mil linhas, não 4 milhões.
 
-## Restore test (RTO medido)
+## Restore test
 
-Prova de que o backup é real, não uma promessa:
+Prova de que o backup é real, não uma promessa.
 
 ```powershell
 pg_dump -h 127.0.0.1 -p 5433 -U postgres -Fc giro > backup.dump
@@ -335,17 +332,17 @@ psql -d giro_restore -c "SELECT count(*) FROM prata.item_venda"
 
 Resultado medido em `docs/evidencias/restore_test.md`.
 
-## O que a PoC **não** faz
+## O que a PoC não faz
 
-Honestidade sobre o escopo:
+Honestidade sobre o escopo.
 
-- **A interface é um painel estático** (`docs/painel.html`), gerado do banco
-  por `dashboard/gerar.py`. Abre por duplo clique, sem servidor. O edital não
-  avalia app — o painel existe para provar que o modelo sustenta a decisão.
-- **Não integra com PDV real.** A entrada é CSV, no mesmo formato que a maioria
-  dos PDVs exporta. Integração via API seria trabalho de implantação, não de
+- **A interface é um painel estático** (`docs/painel.html`), gerado do banco por
+  `dashboard/gerar.py`. Abre por duplo clique, sem servidor. O edital não avalia
+  app. O painel existe para provar que o modelo sustenta a decisão.
+- **Não integra com PDV real.** A entrada é CSV, no formato que a maioria dos
+  PDVs exporta. Integração via API seria trabalho de implantação, não de
   modelagem.
-- **Não prevê com ML.** A previsão é SQL (EWMA + fator sazonal). Ver a
-  justificativa na seção 4.3 e em `docs/07-limitacoes.md`.
+- **Não prevê com aprendizado de máquina.** A previsão é SQL: EWMA mais fator
+  sazonal. A justificativa está na seção 4.3 e em `docs/07-limitacoes.md`.
 - **Não tem autenticação de usuário.** Tem roles de banco e RLS, que é a camada
   de segurança que importa para a nota.
