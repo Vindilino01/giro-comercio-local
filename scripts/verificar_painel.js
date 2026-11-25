@@ -60,6 +60,9 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
       // A legenda da faixa deve NOMEAR o fornecedor filtrado, nao so
       // pinta-lo de verde. Estado nao pode ser so cor.
       legendaFaixa: document.querySelector('#band-legend-right')?.textContent?.trim() || '',
+      // Etiqueta de escopo no titulo do pedido: a legenda acima some em
+      // telas de menos de 860px de altura, que e o caso do persona.
+      escopo: document.querySelector('.picking__escopo')?.textContent?.trim() || '',
       slider: sl ? { l: sl.left, w: sl.width } : null,
       // O slider de 10 posicoes virou escolha de 3 opcoes. O que se testa
       // agora: existem 3 radios, o de 95 vem marcado, todos com 44px.
@@ -109,6 +112,14 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
     d.legendaFaixa.slice(0, 48));
   check('legenda diz quanto do pedido', /% do pedido/.test(d.legendaFaixa),
     d.legendaFaixa.slice(-22));
+
+  /* A legenda da faixa some abaixo de 860px de altura, e o notebook do
+     PRODUCT.md e 1366x657. A informacao de escopo precisa existir nos
+     DOIS lugares: a legenda para telas altas, a etiqueta no titulo do
+     pedido para o aparelho real. Testar so a legenda daria verde com a
+     informacao invisivel. */
+  check('etiqueta de escopo no titulo', /% do pedido/.test(d.escopo),
+    d.escopo || '(ausente)');
   check('unidade visivel na tabela', d.unidade > 0, `${d.unidade}`);
   check('sem overflow horizontal', d.overflowX <= d.viewport + 1,
         `${d.overflowX} vs ${d.viewport}`);
