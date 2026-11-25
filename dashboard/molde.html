@@ -2542,8 +2542,21 @@ function renderBand(agg) {
     band.appendChild(b);
   }
 
-  el("band-legend-right").textContent =
-    `${agg.fornecedores.length} fornecedores · ${fmtInt(agg.skus)} produtos · ${fmtInt(agg.rupturas)} em falta`;
+  /* A legenda dizia so o total da rede ("6 fornecedores · 259 produtos"),
+     nunca qual estava selecionado. O filtro existia apenas como cor no
+     segmento - e o DESIGN.md promete "estado nunca so por cor". Quem tem
+     dificuldade de distinguir o verde do fundo nao sabia que estava
+     vendo um sexto do pedido, e podia mandar esse pedido achando que era
+     o total.
+
+     Agora a legenda nomeia a selecao e diz quanto ela representa. A
+     porcentagem e a mesma que o rodape usa, para nao criar um terceiro
+     numero. */
+  const totalCent = agg.cent || 1;
+  const selecionado = agg.fornecedores.find((f) => f.nome === estado.fornecedor);
+  el("band-legend-right").textContent = selecionado
+    ? `Mostrando ${selecionado.nome} · ${fmtPct(100 * selecionado.cent / totalCent, 0)} do pedido`
+    : `${agg.fornecedores.length} fornecedores · ${fmtInt(agg.skus)} produtos · ${fmtInt(agg.rupturas)} em falta`;
 }
 
 /* ---------------------------------------------------------------------

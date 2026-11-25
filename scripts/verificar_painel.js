@@ -57,6 +57,9 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
       // lia dois numeros e desconfiava de ambos.
       tituloContagem: document.querySelector('#picking-title span')?.textContent || '',
       totalContagem: document.querySelector('#picking-total small')?.textContent || '',
+      // A legenda da faixa deve NOMEAR o fornecedor filtrado, nao so
+      // pinta-lo de verde. Estado nao pode ser so cor.
+      legendaFaixa: document.querySelector('#band-legend-right')?.textContent?.trim() || '',
       slider: sl ? { l: sl.left, w: sl.width } : null,
       // O slider de 10 posicoes virou escolha de 3 opcoes. O que se testa
       // agora: existem 3 radios, o de 95 vem marcado, todos com 44px.
@@ -99,6 +102,13 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
   check('as duas contagens nao usam a mesma palavra',
     !(/produtos/.test(d.totalContagem) && /produtos/.test(d.tituloContagem)),
     `titulo="${d.tituloContagem.trim().slice(0, 26)}" rodape="${d.totalContagem.trim().slice(0, 26)}"`);
+
+  // O filtro de fornecedor existia apenas como cor no segmento. Quem nao
+  // distingue o verde nao sabia que estava vendo um sexto do pedido.
+  check('legenda nomeia o fornecedor filtrado', /^Mostrando /.test(d.legendaFaixa),
+    d.legendaFaixa.slice(0, 48));
+  check('legenda diz quanto do pedido', /% do pedido/.test(d.legendaFaixa),
+    d.legendaFaixa.slice(-22));
   check('unidade visivel na tabela', d.unidade > 0, `${d.unidade}`);
   check('sem overflow horizontal', d.overflowX <= d.viewport + 1,
         `${d.overflowX} vs ${d.viewport}`);
