@@ -136,17 +136,43 @@ Mercadinho da Familia".
 
 ## O que continua em aberto na revisão de design
 
-- **Impressão em 8 páginas**, das quais 3 são material de banca, não
-  lista de separação. O botão diz "Imprimir" dentro do cabeçalho do
-  pedido, então promete lista e entrega relatório. As páginas 2–4 não
-  têm cabeçalho corrente com fornecedor, loja, data e número.
-- **Ordem da lista no papel** é por urgência, não por seção. Quem separa
-  mercadoria anda a loja inteira para trás e para frente.
+- **Ordem da lista no papel** é por urgência dentro de cada loja, não por
+  seção. Quem separa mercadoria ainda anda a loja para trás e para frente.
 - **"Limpar seleção"** apaga 137 marcações com um clique, sem desfazer.
 - **O mesmo produto em três fornecedores** com três preços, sem dizer se
   é o mesmo item físico.
 - **Gráfico de cobertura** com trilhos a 1,48:1 — os meses anteriores
   quase não aparecem.
+- **Impressão em papel real** não foi verificada: só por emulação de
+  mídia e leitura do PDF.
+
+## A folha impressa, reconstruída
+
+O Assessment A tinha razão. O botão "Imprimir" fica dentro do cabeçalho
+do pedido, então promete uma lista. Entregava 8 páginas, das quais 3 eram
+material de banca. As páginas 2 a 5 saíam sem loja, fornecedor, data ou
+número.
+
+| Antes | Agora |
+|---|---|
+| 8 páginas | 4 páginas |
+| 3 de análise | só a lista |
+| p2–p5 sem identificação | cabeçalho corrente em todas |
+| p3 começava no meio de uma loja | cada loja abre a própria página |
+| ordem urgência → loja (9 blocos) | ordem loja → urgência (3 blocos) |
+
+O detalhe que exigiu mais trabalho: **duas ordens, uma para cada mídia**.
+Na tela a hierarquia é urgência → loja, porque o dono quer ver primeiro o
+que acabou. No papel precisa ser loja → urgência, porque quem separa
+recebe três entregas diferentes. Com urgência primeiro, as 9 combinações
+viravam 9 páginas de 39 palavras.
+
+CSS não reordena DOM. Então a lista é montada duas vezes, e cada versão
+aparece em uma mídia. As duas compartilham o mesmo estado de checkbox —
+marcar numa reflete na outra.
+
+`scripts/verificar_impressao.js` faz 10 checagens. A que mais importa: a
+lista do papel tem a mesma contagem da tela (137 = 137).
 
 ## Hipóteses que a medição derrubou
 
