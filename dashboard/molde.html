@@ -314,10 +314,10 @@ dialog#dlg-copia form { text-align: right; }
 /* A lede usa o degrau 18px da escala fixa. Em 21px ela ocupava tres
    linhas e empurrava a primeira linha da lista para fora do viewport do
    notebook de 1366x768 - o aparelho em que o dono le a pagina. */
-.lede { padding: 1rem 0 0; }
+.lede { padding: .625rem 0 0; }
 .lede p {
-  font-size: var(--step-3);
-  line-height: 1.45;
+  font-size: var(--step-2);
+  line-height: 1.4;
   max-width: 72ch;
   color: var(--ink-2);
 }
@@ -371,7 +371,7 @@ dialog#dlg-copia form { text-align: right; }
   align-items: flex-end;
   gap: 2.5rem;
   flex-wrap: wrap;
-  padding-bottom: 1.25rem;
+  padding-bottom: .75rem;
 }
 
 .poster { min-width: 0; }
@@ -385,7 +385,7 @@ dialog#dlg-copia form { text-align: right; }
 .poster__value {
   font-family: var(--serif);
   font-weight: 500;
-  font-size: clamp(2.75rem, 4.55vw, 4.125rem);
+  font-size: clamp(2.5rem, 4.1vw, 3.75rem);
   line-height: .96;
   letter-spacing: -.028em;
   color: var(--green-deep);
@@ -402,16 +402,20 @@ dialog#dlg-copia form { text-align: right; }
 .poster__escala {
   margin-top: .375rem;
   font-size: var(--step--1);
-  line-height: 1.45;
+  line-height: 1.35;
   color: var(--ink-2);
-  max-width: 40ch;
+  /* 58ch cabe em uma linha a 1366; com 40ch quebrava em duas e custava
+     22px da primeira dobra. */
+  max-width: 58ch;
 }
 .poster__escala b { color: var(--ink); font-weight: 600; }
 .poster__delta {
   margin-top: .25rem;
   font-size: var(--step-1);
   color: var(--ochre);
-  min-height: 1.35em;
+  /* Sem min-height: o delta fica vazio em 95% (a escolha padrao), e manter
+     a reserva de linha custava 19px de altura da primeira dobra por nada. */
+  min-height: 0;
 }
 
 .service {
@@ -641,7 +645,9 @@ dialog#dlg-copia form { text-align: right; }
 .modos {
   display: flex;
   gap: 0;
-  margin-top: 1.5rem;
+  /* 8px em vez de 24: entre a faixa de fornecedores e as abas nao ha
+     conteudo, e a margem empurrava a lista para fora da dobra em 657px. */
+  margin-top: .5rem;
   border-bottom: 1px solid var(--rule-2);
 }
 .modos__btn {
@@ -674,8 +680,10 @@ dialog#dlg-copia form { text-align: right; }
 }
 .lista__loja {
   break-inside: avoid;
-  margin: .75rem 0 .25rem;
-  padding-top: .5rem;
+  /* Compacto: grupo + loja somavam 72px antes do primeiro produto, e num
+     notebook de 657px isso empurrava a lista para fora da dobra. */
+  margin: .375rem 0 .125rem;
+  padding-top: .25rem;
   border-top: 1px solid var(--rule);
   font-family: var(--sans);
   font-size: var(--step--1);
@@ -689,8 +697,8 @@ dialog#dlg-copia form { text-align: right; }
 .lista__grupo {
   break-inside: avoid;
   column-span: all;
-  margin: .875rem 0 .25rem;
-  padding: .3rem 0 .25rem;
+  margin: .25rem 0 .0625rem;
+  padding: .25rem 0 .0625rem;
   border-top: 1px solid var(--ink);
   font-family: var(--sans);
   font-size: var(--step--1);
@@ -742,8 +750,11 @@ dialog#dlg-copia form { text-align: right; }
   gap: .625rem;
   /* 44px de altura de linha: a area de toque inclui o checkbox e o
      rotulo, entao mirar no texto tambem marca. Antes eram 35px. */
+  /* box-sizing: border-box para o min-height incluir a borda de 1px;
+     sem isso o li media 45px e a primeira linha nao cabia em 657. */
+  box-sizing: border-box;
   min-height: 44px;
-  padding: .25rem 0;
+  padding: 0;
   border-bottom: 1px dotted var(--rule);
   font-size: var(--step-0);
 }
@@ -759,11 +770,13 @@ dialog#dlg-copia form { text-align: right; }
 .lista__rotulo {
   min-width: 0;
   cursor: pointer;
-  /* Preenche a altura da linha: clicar em qualquer ponto do nome marca. */
+  /* Preenche a altura da linha: clicar em qualquer ponto do nome marca.
+     43px em vez de 44 porque o li ja tem 1px de borda: a soma fecha os
+     44px de alvo sem estourar a altura da linha. */
   align-self: stretch;
   display: flex;
   align-items: center;
-  min-height: 44px;
+  min-height: 43px;
 }
 .lista__item--feito .lista__nome {
   text-decoration: line-through;
@@ -838,12 +851,12 @@ dialog#dlg-copia form { text-align: right; }
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  padding: .75rem 0 .5rem;
+  padding: .25rem 0 .25rem;
   flex-wrap: wrap;
 }
 .picking__title {
   font-family: var(--serif);
-  font-size: var(--step-3);
+  font-size: var(--step-2);
   font-weight: 600;
   letter-spacing: -.01em;
 }
@@ -988,6 +1001,96 @@ table.picking tbody tr:last-child td { border-bottom: 0; }
 }
 .bar--ruptura { background: var(--red); }
 .bar--critico { background: var(--ochre); }
+
+/* ---------------------------------------------------------------------
+   Ajustes do cenário
+
+   Fechado por padrão: é parâmetro, não tarefa. Aberto, mostra a escolha de
+   disponibilidade em três opções — cada uma com a consequência escrita em
+   português, não em porcentagem solta.
+   --------------------------------------------------------------------- */
+.ajustes {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--rule);
+  padding-top: .75rem;
+}
+.ajustes > summary {
+  cursor: pointer;
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  padding: .5rem 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.ajustes > summary:hover { color: var(--ink); }
+.ajustes__body { padding: .75rem 0 1rem; }
+
+.disp { border: 0; padding: 0; margin: 0; }
+.disp__label {
+  font-family: var(--sans);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  padding: 0;
+  margin-bottom: .375rem;
+  display: block;
+}
+.disp__help {
+  font-size: var(--step-0);
+  color: var(--ink);
+  margin-bottom: .75rem;
+  max-width: 48ch;
+}
+.disp__opcoes {
+  display: flex;
+  gap: .625rem;
+  flex-wrap: wrap;
+  margin-bottom: .75rem;
+}
+.disp__opt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  border: 1px solid var(--rule-2);
+  padding: .625rem .875rem;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: var(--step-0);
+}
+.disp__opt:hover { border-color: var(--ink-2); }
+.disp__opt input {
+  accent-color: var(--green);
+  width: 1.0625rem;
+  height: 1.0625rem;
+  margin: 0;
+  cursor: pointer;
+}
+.disp__opt span { display: flex; flex-direction: column; line-height: 1.25; }
+.disp__opt small {
+  font-size: var(--step--1);
+  color: var(--ink-3);
+  font-weight: 400;
+}
+/* Selecionado: borda e fundo, não só o radio — o olho acha o ativo. */
+.disp__opt:has(input:checked) {
+  border-color: var(--green);
+  background: var(--paper-2);
+  box-shadow: inset 0 0 0 1px var(--green);
+}
+.disp__nota {
+  font-size: var(--step--1);
+  line-height: 1.45;
+  color: var(--ink-2);
+  max-width: 52ch;
+}
 
 .picking__foot {
   display: flex;
@@ -1401,29 +1504,26 @@ details.rules > summary:hover { color: var(--green-deep); }
   /* A faixa de data fica: ela carrega a prova que a banca le (linhas de
      venda, SKUs ativos, janela). O que encolhe e o respiro, nao a prova. */
   .dateline__inner { padding-top: .25rem; padding-bottom: .25rem; }
-  .lede { padding-top: .75rem; }
+  .lede { padding-top: .5rem; }
   .lede p { max-width: none; }
-  .section { padding-top: 1.5rem; }
-  .section__head { padding-bottom: .3125rem; margin-bottom: .625rem; }
+  .section { padding-top: 1rem; }
+  .section__head { padding-bottom: .25rem; margin-bottom: .5rem; }
   .section__note { font-size: var(--step-0); line-height: 1.4; max-width: 76ch; }
-  .order__top { padding-bottom: .625rem; }
-  .poster__value { font-size: clamp(2.25rem, 3.3vw, 2.875rem); }
-  /* O bloco de nivel de servico e o mais alto da dobra: aqui a nota
-     encolhe para o degrau 12px e o trilho do slider encurta. Nada de
-     conteudo sai, so o respiro. */
-  .service { padding-top: .5rem; }
-  /* Mantem 44px de area de toque: encolher para 20px economizava 24px de
-     altura e custava o alvo do dedo. O trilho continua fino; o que cresce
-     e a area clicavel. */
-  .service input[type="range"] { height: 20px; padding: 12px 0; margin-top: 0; }
-  .service__note { font-size: var(--step--1); line-height: 1.35; max-width: 52ch; margin-top: .25rem; }
-  .band { min-height: 4rem; }
-  .band__seg { padding: .5rem .625rem; }
+  .order__top { padding-bottom: .5rem; }
+  .poster__value { font-size: clamp(2rem, 3vw, 2.625rem); }
+  .poster__label { margin-bottom: .125rem; }
+  .poster__meta { margin-top: .25rem; }
+  .poster__escala { margin-top: .25rem; }
+  .band { min-height: 3.5rem; }
+  .band__seg { padding: .375rem .625rem; }
+  /* A legenda da faixa sai: o title de cada botao e o aria-label ja
+     explicam, e ela custava 20px antes do primeiro produto. */
   .band__legend { display: none; }
-  .picking__wrap { margin-top: .5rem; }
-  .picking__head { padding: .375rem 0 .25rem; align-items: center; }
-  .picking__title { font-size: var(--step-2); }
-  .btn { padding: .3125rem .625rem; }
+  .modos { margin-top: .25rem; }
+  .picking__wrap { margin-top: .25rem; }
+  .picking__head { padding: .125rem 0; align-items: center; }
+  .picking__title { font-size: var(--step-1); }
+  .btn { padding: .3125rem .625rem; min-height: 40px; }
   table.picking thead th { font-size: var(--step--1); letter-spacing: .02em; padding: .3125rem .375rem; }
 }
 
@@ -1668,33 +1768,6 @@ details.rules > summary:hover { color: var(--green-deep); }
         <p class="poster__escala" id="total-escala"></p>
         <p class="poster__delta" id="total-delta" role="status" aria-live="polite"></p>
       </div>
-
-      <div class="service">
-        <div class="service__head">
-          <span class="service__label" id="nivel-label">Margem de segurança</span>
-          <output class="service__out num" id="nivel-out" for="nivel">95%</output>
-        </div>
-        <input type="range" id="nivel" min="90" max="99" step="1" value="95"
-               aria-labelledby="nivel-label" aria-describedby="nivel-nota"
-               aria-valuetext="95% — margem de segurança">
-        <!-- Escala da margem de segurança.
-             O trilho tem 10 posições (90..99). Cada rótulo cai na
-             posição REAL do seu valor: (valor - 90) / 9 * 100%.
-             São 5 rótulos, não 6: com "98%" e "99%" a 11% de distância
-             em ~260px, os dois se sobrepõem (~26px cada, 28px de
-             espaço). O último valor continua acessível pelo controle. -->
-        <div class="service__scale" aria-hidden="true">
-          <span style="--pos:0%">90%</span>
-          <span style="--pos:22.222%">92%</span>
-          <span style="--pos:44.444%">94%</span>
-          <span style="--pos:66.667%">96%</span>
-          <span style="--pos:100%">99%</span>
-        </div>
-        <p class="service__note" id="nivel-nota">
-          95% aceita faltar 5 vezes em 100. Subir para 99% quase acaba com a
-          falta, mas enche o estoque e trava dinheiro.
-        </p>
-      </div>
     </div>
 
     <div class="band" id="band" role="toolbar" aria-label="Fornecedores do pedido"></div>
@@ -1745,6 +1818,51 @@ details.rules > summary:hover { color: var(--green-deep); }
         <p class="picking__hint" id="picking-hint"></p>
       </div>
     </div>
+
+    <!-- ------------------------------------------------------------------
+         AJUSTES DO CENÁRIO
+
+         O controle de disponibilidade saiu do meio do pedido. Ele ocupava
+         130px da primeira dobra — mais que o próprio total — e empurrava a
+         lista para fora da tela. É um parâmetro que se define uma vez, não
+         a cada pedido.
+
+         O nome mudou de "margem de segurança" para "disponibilidade
+         desejada". "Margem" em comércio significa margem de lucro: o dono
+         lia como preço, não como probabilidade. E o controle virou escolha
+         de três opções em vez de slider contínuo, porque 95% contra 96% não
+         é uma diferença que ele consiga avaliar.
+         ------------------------------------------------------------------ -->
+    <details class="ajustes" id="ajustes">
+      <summary id="ajustes-summary">Ajustes do cenário</summary>
+      <div class="ajustes__body">
+        <fieldset class="disp">
+          <legend class="disp__label">Disponibilidade desejada</legend>
+          <p class="disp__help" id="disp-help">
+            Em <b>95 de 100 semanas</b> o produto está na prateleira. Nas outras
+            5, pode faltar.
+          </p>
+          <div class="disp__opcoes" role="radiogroup" aria-labelledby="disp-help">
+            <label class="disp__opt">
+              <input type="radio" name="nivel" value="90" id="nivel-90">
+              <span><b>90 de 100</b><small>gasta menos</small></span>
+            </label>
+            <label class="disp__opt">
+              <input type="radio" name="nivel" value="95" id="nivel-95" checked>
+              <span><b>95 de 100</b><small>equilíbrio</small></span>
+            </label>
+            <label class="disp__opt">
+              <input type="radio" name="nivel" value="99" id="nivel-99">
+              <span><b>99 de 100</b><small>quase nunca falta</small></span>
+            </label>
+          </div>
+          <p class="disp__nota">
+            Quanto mais alto, menos falta — e mais dinheiro parado no estoque.
+            É o mesmo dilema de sempre: faltar ou sobrar.
+          </p>
+        </fieldset>
+      </div>
+    </details>
   </section>
 
   <!-- Diálogo de último recurso quando o clipboard é bloqueado. -->
@@ -2200,13 +2318,22 @@ function renderDelta(agg) {
 }
 
 function renderNivel() {
-  el("nivel").value = String(estado.nivel);
-  const z = Z_POR_NIVEL[estado.nivel];
-  // 95% imprime "1,65" para bater com a migration 011; os outros niveis
-  // usam a inversa real da normal e precisam das tres casas.
-  el("nivel-out").innerHTML =
-    `${estado.nivel}%`;
-  el("nivel").setAttribute("aria-valuetext", `${estado.nivel}% — margem de segurança`);
+  // Marca o radio correspondente. O controle agora e uma escolha de tres
+  // opcoes, nao um slider: 95% contra 96% nao e uma diferenca que o dono
+  // consiga avaliar, e o slider ocupava 130px da primeira dobra.
+  for (const v of [90, 95, 99]) {
+    const r = el(`nivel-${v}`);
+    if (r) r.checked = (v === estado.nivel);
+  }
+
+  // A frase de ajuda acompanha a escolha: "95 de 100" e verificavel, "z 1,65"
+  // nao e.
+  const help = el("disp-help");
+  if (help) {
+    help.innerHTML =
+      `Em <b>${estado.nivel} de 100 semanas</b> o produto está na prateleira. ` +
+      `Nas outras ${100 - estado.nivel}, pode faltar.`;
+  }
 }
 
 /* ---------------------------------------------------------------------
@@ -2220,8 +2347,8 @@ function renderBand(agg) {
   if (!agg.fornecedores.length) {
     const vazio = document.createElement("p");
     vazio.className = "picking__hint";
-    vazio.textContent = "Nenhum SKU precisa de compra neste nível de serviço. " +
-      "Baixe o nível de serviço para ver o que entraria com menos proteção.";
+    vazio.textContent = "Nenhum produto precisa de compra agora. " +
+      "Se quiser mais segurança contra falta, abra os ajustes do cenário.";
     band.dataset.vazio = "true";
     band.style.gridTemplateColumns = "";
     // display precisa voltar a block: o render normal deixa "grid"
@@ -3403,10 +3530,15 @@ function iniciar() {
     render();
   });
 
-  el("nivel").addEventListener("input", (ev) => {
-    estado.nivel = Number(ev.target.value);
-    render();
-  });
+  // Escolha de disponibilidade: tres radios, um evento so no container.
+  const disp = document.querySelector(".disp__opcoes");
+  if (disp) {
+    disp.addEventListener("change", (ev) => {
+      if (ev.target.name !== "nivel") return;
+      estado.nivel = Number(ev.target.value);
+      render();
+    });
+  }
 
   el("band").addEventListener("click", (ev) => {
     const b = ev.target.closest(".band__seg");

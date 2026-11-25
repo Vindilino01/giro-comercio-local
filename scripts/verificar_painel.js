@@ -52,13 +52,15 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
       headH1: document.querySelectorAll('h1').length,
       unidade: document.querySelectorAll('.unidade').length,
       slider: sl ? { l: sl.left, w: sl.width } : null,
-      // Centro de cada rótulo: é o que representa o valor. A borda
-      // esquerda não serve - os extremos são alinhados por dentro.
-      escala: Array.from(document.querySelectorAll('.service__scale span'))
-        .map((s) => {
-          const r = s.getBoundingClientRect();
-          return { t: s.textContent, c: r.left + r.width / 2 };
-        }),
+      // O slider de 10 posicoes virou escolha de 3 opcoes. O que se testa
+      // agora: existem 3 radios, o de 95 vem marcado, todos com 44px.
+      radios: Array.from(document.querySelectorAll('input[name=nivel]')).map((r) => {
+        const lab = r.closest('.disp__opt');
+        const box = lab.getBoundingClientRect();
+        return { v: r.value, marcado: r.checked, h: Math.round(box.height) };
+      }),
+      ajudaDisp: txt('#disp-help'),
+      ajustesFechado: document.getElementById('ajustes')?.open === false,
       perdaReceita: txt('#perda-receita'),
       selos: document.querySelectorAll('.seal').length,
       overflowX: document.documentElement.scrollWidth,
@@ -80,27 +82,17 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
   check('sem overflow horizontal', d.overflowX <= d.viewport + 1,
         `${d.overflowX} vs ${d.viewport}`);
 
-  // Escala do slider: o CENTRO de cada rotulo deve cair na posicao real
-  // do seu valor dentro do trilho. O valor 90% fica na borda esquerda,
-  // 99% na direita; os intermediarios distribuem linearmente.
-  let posOk = true;
-  let pior = 0;
-  if (d.slider && d.slider.w > 0) {
-    for (const s of d.escala) {
-      const v = parseFloat(s.t);
-      const esperado = (v - 90) / 9;
-      const real = (s.c - d.slider.l) / d.slider.w;
-      // O primeiro e o ultimo sao alinhados por dentro; a tolerancia
-      // cobre o deslocamento de meio rotulo (~13px).
-      const tol = 0.075;
-      const diff = Math.abs(real - esperado);
-      pior = Math.max(pior, diff);
-      if (diff > tol) posOk = false;
-    }
-  } else {
-    posOk = false;
-  }
-  check('escala do slider alinhada', posOk, `pior desvio ${(pior * 100).toFixed(1)}%`);
+  // Disponibilidade: tres opcoes, a de 95 marcada, todas com 44px de alvo.
+  // O slider de 10 posicoes nao existe mais: 95% contra 96% nao era uma
+  // diferenca que o dono conseguisse avaliar.
+  const temTres = d.radios.length === 3;
+  const marcado95 = d.radios.some((r) => r.v === '95' && r.marcado);
+  const alvosOk = d.radios.every((r) => r.h >= 44);
+  check('disponibilidade tem 3 opcoes', temTres, `${d.radios.length}`);
+  check('95 vem marcado', marcado95, d.radios.map((r) => r.v + (r.marcado ? '*' : '')).join(' '));
+  check('opcoes com alvo de 44px', alvosOk, d.radios.map((r) => r.h + 'px').join(' '));
+  check('ajuda fala em semanas', /95 de 100 semanas/.test(d.ajudaDisp), d.ajudaDisp.slice(0, 46));
+  check('ajustes comeca fechado', d.ajustesFechado, String(d.ajustesFechado));
 
   await page.close();
 
