@@ -1163,6 +1163,30 @@ table.picking tbody tr:last-child td { border-bottom: 0; }
   max-width: 52ch;
 }
 
+/* Consequencia da escolha, ao lado da escolha.
+
+   Antes o unico feedback ficava no topo da pagina, a ~3.200px daqui. A
+   borda esquerda nao e decoracao: ela liga a frase ao controle acima, e a
+   1px respeita a regra do DESIGN.md (nenhuma barra colorida acima de
+   1px). O tom muda com o sentido do efeito, mas o texto sempre diz o
+   mesmo - cor nunca carrega significado sozinha. */
+.disp__efeito {
+  font-size: var(--step-0);
+  line-height: 1.45;
+  color: var(--ink-2);
+  max-width: 56ch;
+  margin-top: .5rem;
+  padding-left: .625rem;
+  border-left: 1px solid var(--rule-2);
+}
+.disp__efeito b {
+  color: var(--green-deep);
+  font-variant-numeric: tabular-nums;
+}
+.disp__efeito[data-tone="mais"] { border-left-color: var(--ochre); }
+.disp__efeito[data-tone="menos"] { border-left-color: var(--green); }
+.disp__efeito:empty { display: none; }
+
 .picking__foot {
   display: flex;
   align-items: baseline;
@@ -1989,6 +2013,18 @@ details.rules > summary:hover { color: var(--green-deep); }
             Quanto mais alto, menos falta — e mais dinheiro parado no estoque.
             É o mesmo dilema de sempre: faltar ou sobrar.
           </p>
+          <!-- Feedback onde a acao acontece.
+
+               O delta do pedido era renderizado no topo da pagina, a
+               ~3.200px deste controle. Quem mudava a disponibilidade via
+               o radio mudar de estado e mais nada: o numero que deveria
+               reagir estava fora da tela. Um controle que remapeia o
+               modelo inteiro parecia morto.
+
+               Aqui, a consequencia aparece ao lado da escolha. O delta do
+               topo continua existindo - e o segundo lugar, para quem
+               estiver olhando o poster. -->
+          <p class="disp__efeito" id="disp-efeito" role="status" aria-live="polite"></p>
         </fieldset>
       </div>
     </details>
@@ -2587,6 +2623,8 @@ function renderDelta(agg) {
     return a.cent;
   })();
   const d = agg.cent - base;
+  const efeito = el("disp-efeito");
+
   if (estado.nivel === 95) {
     // 1,65 e o valor que a migration 011 aplica. Dizer 1,645 aqui
     // contradizia o proprio controle logo acima.
@@ -2594,12 +2632,36 @@ function renderDelta(agg) {
     // explica o que 95% significa. Repetir era dizer a mesma frase duas
     // vezes em duas linhas seguidas.
     el("total-delta").textContent = "";
+    if (efeito) {
+      efeito.textContent = `Padrão do Giro: ${fmtBRL(base / 100)} de pedido.`;
+      efeito.dataset.tone = "neutro";
+    }
     return;
   }
   const sinal = d >= 0 ? "+" : "−";
+  const leitura = d >= 0
+    ? "mais segurança contra falta, mais dinheiro parado"
+    : "menos dinheiro parado, mais risco de faltar";
   el("total-delta").textContent =
-    `${sinal}${fmtBRL(Math.abs(d) / 100)} em relação ao padrão · ` +
-    `${d >= 0 ? "mais segurança contra falta, mais dinheiro parado" : "menos dinheiro parado, mais risco de faltar"}`;
+    `${sinal}${fmtBRL(Math.abs(d) / 100)} em relação ao padrão · ${leitura}`;
+
+  /* O mesmo numero, ao lado do controle.
+
+     O delta acima vive no topo da pagina. Quem muda a disponibilidade
+     dentro de "Ajustes do cenario" esta a ~3.200px de distancia, entao o
+     efeito da escolha mais consequente do produto nao aparecia onde a
+     escolha era feita - parecia um controle morto.
+
+     A frase mostra o antes e o depois, nao so a diferenca: quem acabou de
+     clicar em "99 de 100" precisa ver o novo total, nao calcular de
+     cabeca. */
+  if (efeito) {
+    efeito.innerHTML =
+      `<b>${fmtBRL(agg.cent / 100)}</b> de pedido ` +
+      `(${sinal}${fmtBRL(Math.abs(d) / 100)} vs. os ${fmtBRL(base / 100)} do padrão). ` +
+      `${leitura}.`;
+    efeito.dataset.tone = d >= 0 ? "mais" : "menos";
+  }
 }
 
 function renderNivel() {

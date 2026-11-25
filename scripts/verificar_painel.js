@@ -63,6 +63,9 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
       // Etiqueta de escopo no titulo do pedido: a legenda acima some em
       // telas de menos de 860px de altura, que e o caso do persona.
       escopo: document.querySelector('.picking__escopo')?.textContent?.trim() || '',
+      // A consequencia de mudar a disponibilidade tem que aparecer AO
+      // LADO do controle, nao a 3.200px no topo da pagina.
+      efeitoDisp: document.getElementById('disp-efeito')?.textContent?.trim() || '',
       slider: sl ? { l: sl.left, w: sl.width } : null,
       // O slider de 10 posicoes virou escolha de 3 opcoes. O que se testa
       // agora: existem 3 radios, o de 95 vem marcado, todos com 44px.
@@ -120,6 +123,14 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
      informacao invisivel. */
   check('etiqueta de escopo no titulo', /% do pedido/.test(d.escopo),
     d.escopo || '(ausente)');
+
+  /* A escolha de disponibilidade remapeia o pedido inteiro. Se a
+     consequencia so aparecer no topo da pagina, quem esta dentro de
+     "Ajustes do cenario" muda o modelo e nao ve nada acontecer - le como
+     controle morto. */
+  check('efeito da disponibilidade aparece no controle',
+    /R\$/.test(d.efeitoDisp) && /pedido/.test(d.efeitoDisp),
+    d.efeitoDisp.slice(0, 64) || '(vazio)');
   check('unidade visivel na tabela', d.unidade > 0, `${d.unidade}`);
   check('sem overflow horizontal', d.overflowX <= d.viewport + 1,
         `${d.overflowX} vs ${d.viewport}`);
