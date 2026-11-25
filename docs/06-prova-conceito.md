@@ -108,14 +108,6 @@ criada depois do JSON de evidência.
 | **Recall global** | **96,61%** |
 | Registros em quarentena | 177.394 |
 | Regras com recall de 100% | 11 de 17 |
-
-#### Tempos de execução
-
-Tempos lidos de `docs/evidencias/indice_consultas.json`, produzidos pela
-mesma execução que gerou os resultados acima.
-
-| Consulta | Tempo | Estratégia |
-|---|---|---|
 <!-- RESULTADOS_FIM -->
 
 ## As três consultas que provam o modelo
