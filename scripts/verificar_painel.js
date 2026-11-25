@@ -160,14 +160,18 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
   const pint = await p2.evaluate(() => {
     const seg = document.querySelector('.band__seg');
     const after = seg ? getComputedStyle(seg, '::after') : null;
-    const hb = document.querySelector('.hbar__fill');
-    const bar = document.querySelector('.bar');
+    const bar = document.querySelector('.bar-m');
+    const capital = document.getElementById('capital');
+    const perda = document.getElementById('perda');
     return {
       bandBorder: after ? after.borderTopWidth : null,
       bandWidth: after ? parseFloat(after.width) : 0,
       bandAdjust: after ? after.printColorAdjust : null,
-      hbarWidth: hb ? hb.getBoundingClientRect().width : 0,
-      hbarAdjust: hb ? getComputedStyle(hb).printColorAdjust : null,
+      // O histograma vive na secao "capital", que NAO imprime mais. O
+      // que se verifica agora e o contrario do que se verificava antes:
+      // que a analise fique de fora da folha de separacao.
+      capitalImprime: capital ? getComputedStyle(capital).display !== 'none' : null,
+      perdaImprime: perda ? getComputedStyle(perda).display !== 'none' : null,
       barAdjust: bar ? getComputedStyle(bar).printColorAdjust : null,
       barW: bar ? bar.getBoundingClientRect().width : 0,
     };
@@ -175,8 +179,10 @@ const PAINEL = 'file:///' + path.join(RAIZ, 'docs', 'painel.html').replace(/\\/g
 
   check('faixa imprime com proporcao', pint.bandBorder === '3px' && pint.bandWidth > 10,
         `border ${pint.bandBorder}, largura ${pint.bandWidth.toFixed(0)}px`);
-  check('histograma imprime com largura', pint.hbarWidth > 5,
-        `${pint.hbarWidth.toFixed(0)}px`);
+  check('secao de capital nao imprime', pint.capitalImprime === false,
+        String(pint.capitalImprime));
+  check('secao de perda nao imprime', pint.perdaImprime === false,
+        String(pint.perdaImprime));
   check('barras de perda com exact', pint.barAdjust === 'exact',
         String(pint.barAdjust));
 

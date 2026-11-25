@@ -28,7 +28,9 @@ const p = require('puppeteer-core');
   await new Promise((r) => setTimeout(r, 800));
 
   const nomes = await pg.evaluate(() =>
-    [...document.querySelectorAll('.lista__check')].map((b) => ({
+    // So a lista da TELA. A lista do papel existe no DOM (mesmos itens,
+    // outra ordem) e faria cada produto contar duas vezes.
+    [...document.querySelectorAll('#picking-lista .lista__check')].map((b) => ({
       id: b.id,
       aria: b.getAttribute('aria-label') || '',
     })));

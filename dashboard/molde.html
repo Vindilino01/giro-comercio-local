@@ -735,6 +735,9 @@ dialog#dlg-copia form { text-align: right; }
   columns: 2;
   column-gap: 2.5rem;
 }
+/* A lista do papel so existe na impressao. Na tela e display:none para
+   nao duplicar 137 checkboxes na ordem de Tab. */
+.lista--papel { display: none; }
 .lista__loja {
   break-inside: avoid;
   /* Compacto: grupo + loja somavam 72px antes do primeiro produto, e num
@@ -826,8 +829,7 @@ dialog#dlg-copia form { text-align: right; }
 }
 .lista__rotulo {
   min-width: 0;
-  cursor: pointer;
-  /* Preenche a altura da linha: clicar em qualquer ponto do nome marca.
+  cursor: pointer;  /* Preenche a altura da linha: clicar em qualquer ponto do nome marca.
      44px exatos no label, e o li leva box-sizing: border-box com a borda
      de 1px dentro da conta. Antes eram 43px porque a borda do li ficava
      FORA do min-height, e o alvo media 43 - 1px abaixo do piso. */
@@ -892,12 +894,148 @@ dialog#dlg-copia form { text-align: right; }
      tabela: o PDF saia com ZERO produtos e quatro paginas em branco. */
   #picking-lista { display: block !important; }
   #picking-lista[hidden] { display: block !important; }
+  /* Na impressao quem aparece e a lista do papel (loja -> urgencia), e a
+     lista da tela (urgencia -> loja) sai. Sem esta troca, as duas
+     imprimiriam e o documento teria 274 linhas em vez de 137. */
+  #picking-lista { display: none !important; }
+  .lista--papel { display: block !important; columns: 2; column-gap: 2rem; }
   /* No papel nao existe clique: o grupo recolhido precisa sair aberto,
      senao a folha impressa diz "31 produtos" e nao mostra nenhum. */
   .lista__sub { display: block !important; }
   .lista__sub[hidden] { display: block !important; }
   .lista__toggle { pointer-events: none; }
   .lista__toggle::before { content: ""; }
+
+  /* ------------------------------------------------------------------
+     CADA LOJA COMECA EM PAGINA NOVA.
+
+     Medido no PDF anterior: a pagina 3 comecava com oito linhas de
+     produto e SO DEPOIS o cabecalho "MERCADO BOM PRECO". Quem separa
+     recebe tres entregas diferentes; uma folha que comeca no meio de
+     uma loja e uma folha que nao da para usar.
+
+     `break-before: page` no cabecalho da loja garante que o nome venha
+     sempre no topo, junto com as linhas que ele nomeia.
+     ------------------------------------------------------------------ */
+  .lista__loja {
+    break-before: page;
+    break-after: avoid;
+  }
+  /* A primeira loja nao precisa de quebra: ela ja vem depois do
+     cabecalho do pedido, e uma quebra ali deixaria a primeira folha
+     quase vazia. */
+  .lista__loja:first-of-type { break-before: auto; }
+
+  /* Cada grupo de urgencia comeca com o nome da loja acima dele.
+
+     O problema medido: quando a lista da primeira loja transbordava para
+     a pagina 2, a folha nova comecava em "Bolo Vale Mais 1L / 38 KG",
+     sem dizer de que loja era. A pagina 2 e a continuacao de uma loja
+     que comecou na pagina 1.
+
+     `break-inside: avoid` no bloco inteiro da loja resolveria, mas
+     forcaria a loja com 47 linhas a caber numa folha so - ela ocupa
+     duas. Entao a loja pode continuar, mas o NOME precisa reaparecer.
+
+     O caminho e o cabecalho de loja ser `break-after: avoid` (ja e) e
+     cada grupo repetir a loja no inicio. Como nao da para saber onde o
+     navegador vai quebrar, a solucao e o cabecalho fixo - que ja existe
+     e ja nomeia a loja do escopo. Falta ele nomear a loja da PAGINA. */
+  .lista--papel .lista__loja {
+    break-before: page;
+    break-after: avoid;
+    /* O nome da loja vira uma tarja que nao se separa do primeiro item. */
+    break-inside: avoid;
+  }
+  /* Continuacao: a mesma loja repetida no inicio de outro grupo. NAO
+     quebra pagina - ela existe justamente para nomear o bloco depois de
+     uma quebra que o navegador ja fez. */
+  .lista--papel .lista__loja--continuacao {
+    break-before: auto;
+    font-size: 8pt;
+    color: var(--ink-2);
+  }
+  .lista--papel .lista__loja--continuacao::before {
+    content: "↳ ";
+  }
+
+  /* O cabecalho de urgencia tambem nao deve ficar orfao no pe da folha. */
+  .lista__grupo, .lista__resto {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  /* A linha do item nunca parte entre duas folhas: metade de um produto
+     nao se separa. */
+  .lista__item {
+    break-inside: avoid;
+    /* 44px de alvo de toque na tela; no papel, a linha pode ser mais
+       baixa porque nao ha dedo. */
+    min-height: 0;
+  }
+  .lista__rotulo { min-height: 0; }
+
+  /* ------------------------------------------------------------------
+     AS TRES PAGINAS DE ANALISE NAO IMPRIMEM.
+
+     O botao "Imprimir" fica DENTRO do cabecalho do pedido. Ele promete
+     uma folha de separacao. A versao anterior imprimia tambem a perda,
+     o capital parado e o selo de confianca - tres paginas de material
+     de banca que ninguem leva para o estoque.
+
+     Medido antes: 8 paginas, das quais 5 de lista e 3 de analise. O
+     DESIGN.md ja dizia "no papel so a lista sai"; o CSS nao cumpria.
+
+     Quem quiser a analise no papel usa o proprio navegador (Imprimir >
+     paginas), ou o relatorio em Word, que existe para isso.
+     ------------------------------------------------------------------ */
+  #perda, #capital, #confianca { display: none !important; }
+
+  /* O bloco de ajustes e o rodape do site tambem nao sao folha de
+     separacao. O rodape diz "dados simulados" e nomeia o gerador - isso
+     pertence ao relatorio, nao a folha que vai para o estoque.
+     Medido: os dois apareciam na ultima pagina. */
+  .ajustes, .foot { display: none !important; }
+
+  /* ------------------------------------------------------------------
+     CABECALHO CORRENTE EM TODA PAGINA.
+
+     Sem ele, as paginas 2 a 5 saiam com numeros e nomes de produto e
+     NENHUMA identificacao: quem recebia a folha 3 nao sabia de que loja
+     era, de que fornecedor, nem de que data. Medido no PDF anterior:
+     p2, p3 e p4 sem cabecalho.
+
+     `position: running()` nao funciona em todo navegador; o caminho
+     seguro e o cabecalho do documento, que o motor de impressao repete
+     sozinho em cada folha.
+     ------------------------------------------------------------------ */
+  .print-header {
+    display: block !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    font-size: 8pt;
+    color: var(--ink-2);
+    border-bottom: .5pt solid var(--rule);
+    padding-bottom: .1875rem;
+    margin-bottom: .25rem;
+    background: #fff;
+    z-index: 10;
+    /* Sem altura fixa, o motor de impressao pode sobrepor a primeira
+       linha do conteudo ao cabecalho. 9mm cabe duas linhas de 8pt com
+       folga. */
+    min-height: 9mm;
+  }
+  .print-header__linha {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .print-header b { color: var(--ink); font-weight: 600; }
+  /* Reserva o espaco do cabecalho fixo, senao ele cobre a primeira
+     linha de cada pagina. */
+  body { padding-top: 11mm; }
 }
 
 .picking__wrap {
@@ -1724,6 +1862,18 @@ details.rules > summary:hover { color: var(--green-deep); }
   .field, .service, .picking__actions, .tag, .chart__legend,
   .masthead__meta .field, .picking__hint, .band__legend { display: none; }
 
+  /* Elementos que so fazem sentido na tela interativa:
+     - a etiqueta de escopo ("26% do pedido") repete a legenda da faixa,
+       que no papel ja virou barra de proporcao;
+     - o contador de progresso ("5 de 137 separados") descreve o estado de
+       uma sessao, e o papel e uma folha em branco para marcar a mao;
+     - o botao de limpar selecao nao existe no papel. */
+  .picking__escopo, .picking__progresso { display: none !important; }
+  /* A porcentagem do fornecedor no rodape do total tambem e leitura de
+     tela: no papel a barra de proporcao ja diz isso, e a frase "26% do
+     pedido" sozinha, sem a barra ao lado, nao informa nada. */
+  .escopo__pct { display: none; }
+
   .dateline__inner { padding: .375rem 0; }
 
   .lede { padding-top: 1rem; }
@@ -1844,6 +1994,19 @@ details.rules > summary:hover { color: var(--green-deep); }
 </head>
 <body>
 
+<!-- =====================================================================
+     CABECALHO DE IMPRESSAO
+
+     Visivel so no papel, e repetido em cada folha pelo motor de
+     impressao (`position: fixed`). Sem ele, as paginas 2 a 5 da lista de
+     separacao saiam sem loja, sem fornecedor, sem data e sem numero de
+     pagina: quem recebia a folha 3 nao sabia do que ela era.
+
+     O conteudo e preenchido por renderPrintHeader() com o escopo que
+     esta na tela naquele momento - trocar de loja muda o cabecalho.
+     ===================================================================== -->
+<div class="print-header" id="print-header" aria-hidden="true"></div>
+
 <header class="masthead">
   <div class="masthead__inner">
     <div class="brand">
@@ -1950,6 +2113,12 @@ details.rules > summary:hover { color: var(--green-deep); }
 
       <ul class="lista" id="picking-lista" role="tabpanel" tabindex="0"
           aria-labelledby="modo-lista"></ul>
+
+      <!-- A mesma lista, na ordem do papel: loja primeiro, urgencia
+           dentro dela. Existe porque CSS nao reordena o DOM, e a folha
+           impressa precisa comecar cada loja com o nome dela. Visivel so
+           na impressao; na tela e display:none. -->
+      <ul class="lista lista--papel" id="picking-lista-papel" aria-hidden="true"></ul>
 
       <div class="table-scroll" id="picking-tabela-wrap" role="tabpanel"
            tabindex="0" aria-labelledby="modo-tabela" hidden>
@@ -2924,6 +3093,129 @@ function renderLista(linhas) {
     ? DADOS.lojas.map((l) => l.loja_id).filter((id) => linhas.some((l) => l.loja_id === id))
     : [null];
 
+  /* ------------------------------------------------------------------
+     DUAS ORDENS, UMA PARA CADA MIDIA.
+
+     Na TELA a hierarquia e urgencia -> loja: o dono quer ver primeiro o
+     que acabou, e a loja e detalhe.
+
+     No PAPEL a hierarquia precisa ser loja -> urgencia. Quem separa
+     recebe tres entregas diferentes, e a folha de cada loja tem que
+     comecar com o nome dela. Com urgencia primeiro, cada uma das 9
+     combinacoes (3 urgencias x 3 lojas) virava um bloco que comecava
+     pagina nova: medido, 9 paginas com folhas de 39 palavras.
+
+     Nao da para reordenar o DOM por CSS. Entao a lista e montada duas
+     vezes, e cada versao aparece em uma midia: `.lista--tela` na tela,
+     `.lista--papel` na impressao. As duas usam o mesmo itemLista(), os
+     mesmos ids de checkbox e o mesmo estado - marcar numa reflete na
+     outra porque o estado vive em `estado.separados`, nao no DOM.
+     ------------------------------------------------------------------ */
+  const ulPapel = el("picking-lista-papel");
+
+  function montarPorUrgencia(alvo) {
+    for (const g of GRUPOS) {
+      const fatiaGlobal = linhas.filter((l) => g.classes.includes(l.situacao));
+      if (!fatiaGlobal.length) continue;
+
+      const recolhido = g.chave === "RESTO" && linhas.some(
+        (l) => l.situacao === "RUPTURA" || l.situacao === "CRITICO");
+
+      if (g.chave === "RESTO") {
+        const det = document.createElement("li");
+        det.className = "lista__resto";
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "lista__toggle";
+        btn.setAttribute("aria-expanded", String(!recolhido));
+        btn.textContent = `${g.rotulo} (${fatiaGlobal.length} ${fatiaGlobal.length === 1 ? "produto" : "produtos"})`;
+        det.appendChild(btn);
+
+        const sub = document.createElement("ul");
+        sub.className = "lista__sub";
+        sub.hidden = recolhido;
+        for (const id of ids) {
+          const doGrupo = id === null ? fatiaGlobal : fatiaGlobal.filter((l) => l.loja_id === id);
+          if (!doGrupo.length) continue;
+          if (agrupar) {
+            const cab = document.createElement("li");
+            cab.className = "lista__loja";
+            cab.textContent = lojaNome(id);
+            sub.appendChild(cab);
+          }
+          for (const l of doGrupo) sub.appendChild(itemLista(l));
+        }
+        det.appendChild(sub);
+
+        btn.addEventListener("click", () => {
+          const aberto = !sub.hidden;
+          sub.hidden = aberto;
+          btn.setAttribute("aria-expanded", String(!aberto));
+        });
+
+        alvo.appendChild(det);
+        continue;
+      }
+
+      const cab = document.createElement("li");
+      cab.className = "lista__grupo";
+      cab.textContent = `${g.rotulo} (${fatiaGlobal.length})`;
+      alvo.appendChild(cab);
+
+      for (const id of ids) {
+        const doGrupo = id === null ? fatiaGlobal : fatiaGlobal.filter((l) => l.loja_id === id);
+        if (!doGrupo.length) continue;
+        if (agrupar) {
+          const sub = document.createElement("li");
+          sub.className = "lista__loja";
+          sub.textContent = lojaNome(id);
+          alvo.appendChild(sub);
+        }
+        for (const l of doGrupo) alvo.appendChild(itemLista(l));
+      }
+    }
+  }
+
+  /* Ordem de impressao: loja -> urgencia. Cada loja comeca com o proprio
+     nome, e as urgencias viram sub-cabecalhos dentro dela. Assim a quebra
+     de pagina por loja produz 3 folhas iniciais, nao 9.
+
+     O nome da loja e repetido em CADA grupo, nao so no primeiro. Motivo
+     medido: quando a lista de uma loja transbordava para a pagina
+     seguinte, a folha nova comecava em "Bolo Vale Mais 1L / 38 KG" sem
+     dizer de que loja era. Repetir o nome a cada grupo custa uma linha e
+     garante que qualquer ponto de quebra caia dentro de um bloco
+     nomeado. */
+  function montarPorLoja(alvo) {
+    for (const id of ids) {
+      const daLoja = id === null ? linhas : linhas.filter((l) => l.loja_id === id);
+      if (!daLoja.length) continue;
+
+      let primeiroDaSala = true;
+      for (const g of GRUPOS) {
+        const fatia = daLoja.filter((l) => g.classes.includes(l.situacao));
+        if (!fatia.length) continue;
+
+        if (agrupar) {
+          const cabLoja = document.createElement("li");
+          cabLoja.className = primeiroDaSala
+            ? "lista__loja"
+            : "lista__loja lista__loja--continuacao";
+          cabLoja.textContent = lojaNome(id);
+          alvo.appendChild(cabLoja);
+          primeiroDaSala = false;
+        }
+
+        // Na impressao nada fica recolhido: "O resto" tambem sai.
+        const sub = document.createElement("li");
+        sub.className = "lista__grupo";
+        sub.textContent = `${g.rotulo} (${fatia.length})`;
+        alvo.appendChild(sub);
+        for (const l of fatia) alvo.appendChild(itemLista(l));
+      }
+    }
+  }
+
   function itemLista(l) {
     const li = document.createElement("li");
     li.className = "lista__item" + (l.situacao === "RUPTURA" ? " lista__item--acabou" : "");
@@ -3007,70 +3299,10 @@ function renderLista(linhas) {
     return li;
   }
 
-  for (const g of GRUPOS) {
-    // Agrupa por urgencia PRIMEIRO, loja depois. Antes era loja primeiro,
-    // o que repetia "Acabou — compre primeiro" uma vez por loja: o dono
-    // lia o mesmo titulo tres vezes e nao sabia qual urgencia olhar
-    // primeiro. A urgencia e o criterio de acao; a loja e detalhe.
-    const fatiaGlobal = linhas.filter((l) => g.classes.includes(l.situacao));
-    if (!fatiaGlobal.length) continue;
-
-    const recolhido = g.chave === "RESTO" && linhas.some(
-      (l) => l.situacao === "RUPTURA" || l.situacao === "CRITICO");
-
-    if (g.chave === "RESTO") {
-      const det = document.createElement("li");
-      det.className = "lista__resto";
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "lista__toggle";
-      btn.setAttribute("aria-expanded", String(!recolhido));
-      btn.textContent = `${g.rotulo} (${fatiaGlobal.length} ${fatiaGlobal.length === 1 ? "produto" : "produtos"})`;
-      det.appendChild(btn);
-
-      const sub = document.createElement("ul");
-      sub.className = "lista__sub";
-      sub.hidden = recolhido;
-      for (const id of ids) {
-        const doGrupo = id === null ? fatiaGlobal : fatiaGlobal.filter((l) => l.loja_id === id);
-        if (!doGrupo.length) continue;
-        if (agrupar) {
-          const cab = document.createElement("li");
-          cab.className = "lista__loja";
-          cab.textContent = lojaNome(id);
-          sub.appendChild(cab);
-        }
-        for (const l of doGrupo) sub.appendChild(itemLista(l));
-      }
-      det.appendChild(sub);
-
-      btn.addEventListener("click", () => {
-        const aberto = !sub.hidden;
-        sub.hidden = aberto;
-        btn.setAttribute("aria-expanded", String(!aberto));
-      });
-
-      ul.appendChild(det);
-      continue;
-    }
-
-    const cab = document.createElement("li");
-    cab.className = "lista__grupo";
-    cab.textContent = `${g.rotulo} (${fatiaGlobal.length})`;
-    ul.appendChild(cab);
-
-    for (const id of ids) {
-      const doGrupo = id === null ? fatiaGlobal : fatiaGlobal.filter((l) => l.loja_id === id);
-      if (!doGrupo.length) continue;
-      if (agrupar) {
-        const sub = document.createElement("li");
-        sub.className = "lista__loja";
-        sub.textContent = lojaNome(id);
-        ul.appendChild(sub);
-      }
-      for (const l of doGrupo) ul.appendChild(itemLista(l));
-    }
-  }
+  // Tela: urgencia -> loja. Papel: loja -> urgencia. Ver o comentario
+  // das duas funcoes acima.
+  montarPorUrgencia(ul);
+  if (ulPapel) montarPorLoja(ulPapel);
 }
 
 /* Alterna entre a lista e a tabela. O estado e visual, nao muda o calculo. */
@@ -3453,12 +3685,15 @@ function renderTabela(agg) {
   // fornecedor) - sem nada dizendo de quem era cada um. O dono lia o
   // rodape como se fosse o pedido todo.
   const escopo = estado.fornecedor
-    ? `${estado.fornecedor} · ${fmtPct(100 * cent / (aggCent || cent), 0)} do pedido`
+    ? `<span class="escopo__quem">${estado.fornecedor}</span>` +
+      `<span class="escopo__pct"> · ${fmtPct(100 * cent / (aggCent || cent), 0)} do pedido</span>`
     : "todos os fornecedores";
 
   el("picking-total").innerHTML =
-    `${fmtBRLcents(cent)}<small>${volume} em ${fmtInt(linhas.length)} ` +
-    `${linhas.length === 1 ? "linha" : "linhas"} · ${escopo}</small>`;
+    `<span class="picking-total__valor">${fmtBRLcents(cent)}</span>` +
+    `<small>${volume} em ${fmtInt(linhas.length)} ` +
+    `${linhas.length === 1 ? "linha" : "linhas"} · ` +
+    `<span class="picking-total__escopo">${escopo}</span></small>`;
 
   el("picking-hint").textContent =
     !linhas.length
@@ -4105,6 +4340,32 @@ function resumirUnidades(linhas) {
 }
 
 /* ---------------------------------------------------------------------
+   Cabecalho de impressao.
+
+   Preenche a faixa que o CSS de @media print repete em cada folha. O
+   escopo entra aqui porque a folha e separavel na chegada de tres
+   entregas diferentes: a pagina precisa dizer de qual loja e de qual
+   fornecedor ela e, sem depender de quem imprimiu lembrar.
+
+   A data e a de referencia do DADO, nao a do relogio. Imprimir "hoje"
+   numa carga de 31/10 seria afirmar frescor que o arquivo nao tem.
+   --------------------------------------------------------------------- */
+function renderPrintHeader() {
+  const elHeader = el("print-header");
+  if (!elHeader) return;
+
+  const loja = estado.loja ? lojaNome(estado.loja) : `Todas as lojas (${DADOS.lojas.length})`;
+  const fornecedor = estado.fornecedor || "todos os fornecedores";
+  const ref = DADOS.referencia && DADOS.referencia.fim ? fmtData(DADOS.referencia.fim) : "-";
+
+  elHeader.innerHTML =
+    `<div class="print-header__linha">` +
+    `<span><b>Giro</b> — lista de separação · <b>${loja}</b></span>` +
+    `<span>${fornecedor} · vendas até ${ref}</span>` +
+    `</div>`;
+}
+
+/* ---------------------------------------------------------------------
    Render
    --------------------------------------------------------------------- */
 // render() recria os segmentos da faixa, entao o no que tinha o foco
@@ -4126,6 +4387,7 @@ function render(de = null) {
   renderBand(agg);
   renderTabela(agg);
   renderProgresso();
+  renderPrintHeader();
   renderPerda(agg);
   renderCapital(linhas);
   // O painel de selos depende do mesmo numero que calcular() usa para
