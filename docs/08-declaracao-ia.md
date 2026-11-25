@@ -5,11 +5,10 @@
 
 ## Resumo
 
-Usamos IA (assistente de código) como **ferramenta de desenvolvimento**, do mesmo
-modo que se usa um IDE com autocomplete ou um linter. A IA não tomou decisões de
+Usamos IA (assistente de código) como **ferramenta de desenvolvimento**. É o mesmo
+papel de um IDE com autocomplete ou de um linter. A IA não tomou decisões de
 arquitetura isoladamente, não inventou dados de negócio e não foi usada para
 fabricar resultados.
-
 **O que é de responsabilidade do grupo:** toda decisão de modelagem, a escolha do
 banco, a definição dos KPIs, a validação de cada resultado e a defesa no pitch.
 
@@ -81,8 +80,7 @@ Por isso cada afirmação do relatório tem um caminho de verificação:
 
 ---
 
-**Declaração final:** o grupo compreende integralmente o conteúdo do projeto,
-sabe explicar cada decisão de modelagem e de escolha de banco, e assume
-responsabilidade por todo o código e por todas as afirmações técnicas deste
-relatório. As ferramentas de IA aceleraram a produção; não substituíram o
-entendimento.
+**Declaração final:** o grupo compreende integralmente o conteúdo do projeto. Sabe
+explicar cada decisão de modelagem e de escolha de banco. Assume responsabilidade
+por todo o código e por todas as afirmações técnicas deste relatório. As
+ferramentas de IA aceleraram a produção. Não substituíram o entendimento.

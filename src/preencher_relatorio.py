@@ -372,14 +372,16 @@ Parquet exportado com compressão ZSTD: {tam_txt}.
 {chr(10).join(linhas)}
 
 **Leitura do resultado:** PostgreSQL venceu {n_pg} de {len(vencedores)}
-consultas e DuckDB venceu {n_duck}. O padrão não é acidente:
+consultas e DuckDB venceu {n_duck}. O padrão tem explicação:
 
 - **Varredura ampla** (agregação de 24 meses) favorece o colunar, que lê
   só as colunas usadas e comprime por coluna.
 - **Filtro seletivo** (um SKU em um mês) favorece o row store, que usa o
   índice B-tree e toca poucas páginas.
 
-É por isso que a conclusão da seção 4.7 não é "trocar de banco", e sim **separar as duas cargas**. Um benchmark que só mostrasse o caso favorável seria propaganda, não evidência — e o cenário real tem os dois padrões convivendo.
+A conclusão da seção 4.7 **separa as duas cargas**, em vez de trocar de banco. Um
+benchmark que mostrasse só o caso favorável seria propaganda. O cenário real tem
+os dois padrões convivendo.
 """
 
 
