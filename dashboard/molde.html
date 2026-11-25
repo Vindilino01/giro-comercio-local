@@ -2480,10 +2480,50 @@ function agregar(linhas) {
 function renderResumo(agg) {
   const perda = DADOS.perda.find((p) => p.loja_id === estado.loja) || DADOS.perda[0];
 
-  // Estado vazio: sem produto a comprar, a lede deixa de narrar um pedido
-  // que nao existe. "R$ 0,00 de 0 fornecedores para as 3 lojas" era uma
-  // frase impossivel - ninguem fala assim.
+  /* ------------------------------------------------------------------
+     ESTADO VAZIO: DUAS CAUSAS OPOSTAS, DUAS FRASES OPOSTAS.
+
+     O caso vazio tem duas origens que nao se parecem em nada:
+
+       a) o estoque esta bom de verdade - nao ha o que comprar;
+       b) o estoque NAO E CONFIAVEL - o sistema parou de sugerir.
+
+     A versao anterior tratava as duas com a mesma frase: "Nada a comprar
+     agora: o estoque cobre os proximos dias em todos os produtos". No
+     caso (b) isso e uma afirmacao falsa e perigosa. Medido: com o selo da
+     loja em 70%, a lede dizia "nada a comprar" e o aviso verdadeiro
+     ("NAO DA PARA CONFIAR") ficava a 3.175px abaixo, fora da tela.
+
+     O produto se vende por dizer a verdade sobre o dado. Este era o unico
+     lugar da pagina em que ele dizia o contrario.
+     ------------------------------------------------------------------ */
+  const bloqueadasNoEscopo = (agg.bloqueadas || []).filter(
+    (l) => !estado.loja || l.loja_id === estado.loja);
+
   if (!agg.fornecedores.length) {
+    if (bloqueadasNoEscopo.length) {
+      // Caso (b): o dado foi rejeitado. Nomear a loja, a nota e a acao.
+      const lojas = [...new Set(bloqueadasNoEscopo.map((l) => l.loja_id))];
+      const nomes = lojas.map((id) => lojaNome(id)).join(" e ");
+      const pior = Math.min(...bloqueadasNoEscopo.map((l) => l.confianca ?? 100));
+      el("lede").innerHTML =
+        `<b data-tone="red">Não dá para confiar no estoque de ${nomes}</b> ` +
+        `(nota ${fmtDec(pior, 2)}%, abaixo de 85%). ` +
+        `O sistema parou de sugerir compra porque a contagem não bate. ` +
+        `Corrija o inventário para o pedido voltar a aparecer.`;
+
+      el("total-pedido").textContent = "—";
+      el("total-meta").innerHTML =
+        `sugestão suspensa · ${fmtInt(bloqueadasNoEscopo.length)} produtos aguardando inventário`;
+
+      // A escala compara com o pedido das 3 lojas e deixa de fazer sentido
+      // quando o pedido nao existe. Some em vez de mentir.
+      const escala = document.querySelector(".poster__escala");
+      if (escala) escala.textContent = "";
+      return;
+    }
+
+    // Caso (a): estoque saudavel, nada a comprar. Frase calma e correta.
     el("lede").innerHTML =
       `Nada a comprar agora${estado.loja ? " em " + lojaNome(estado.loja) : ""}: ` +
       `o estoque cobre os próximos dias em todos os produtos. ` +
@@ -3680,7 +3720,12 @@ function renderLojas() {
     o.textContent = `${l.nome} – ${l.cidade}/${l.uf}`;
     sel.appendChild(o);
   }
-  sel.value = "0";
+  // Sincroniza o controle com o estado, em vez de forcar "Todas as
+  // lojas". Antes esta linha era `sel.value = "0"` fixo: restaurarEstado()
+  // definia estado.loja = 2, renderLojas() reescrevia o select para "0", e
+  // a tela ficava com o painel de uma loja e o filtro dizendo outra.
+  // Medido: select="0" com R$ 95.514,64 de uma loja na lede.
+  sel.value = String(estado.loja);
 }
 
 /* ---------------------------------------------------------------------
