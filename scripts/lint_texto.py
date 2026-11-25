@@ -64,6 +64,9 @@ METAFORAS = {
 
 # ---------------------------------------------------------------------
 # Muletas: nao acrescentam informacao.
+#
+# Excecao: "fonte de verdade" e termo tecnico de arquitetura de dados, nao
+# muleta de entusiasmo. A expressao e neutralizada antes da varredura.
 # ---------------------------------------------------------------------
 MULETAS = [
     "de verdade",
@@ -207,8 +210,10 @@ def _checar_linha(texto: str, linha: int, saida: list) -> None:
             saida.append((linha, "metafora", f"{termo!r} -> use {troca!r}"))
 
     # 3. muleta
+    # "fonte de verdade" e termo tecnico: nao conta como muleta.
+    sem_termo_tecnico = baixo.replace("fonte de verdade", "fonte primaria")
     for muleta in MULETAS:
-        if muleta in baixo:
+        if muleta in sem_termo_tecnico:
             saida.append((linha, "muleta", f"{muleta!r} nao acrescenta informacao"))
 
     # 4. "nao e X, e Y"
