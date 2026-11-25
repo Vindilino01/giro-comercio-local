@@ -10,9 +10,15 @@ data/bronze_teste/
 data/*_teste/
 
 # Backup do banco: é evidência, mas pesa 180 MB. Fica fora do git e é
-# entregue à parte (ou regenerado com `python src/backup.py`).
+# entregue à parte (ou regenerado com `scripts/backup.ps1`).
+#
+# `data/*.dump` NÃO casa com `data/backups/*.dump`: o padrão do gitignore
+# não atravessa diretório. Foi assim que um dump de 179 MB entrou no
+# commit a184b70 e o .git chegou a 184 MB. O `**` cobre qualquer nível.
 data/backup_giro.dump
 data/*.dump
+data/**/*.dump
+data/backups/
 
 # Evidências: versionadas. São a prova do trabalho — resultados das
 # consultas e os planos de execução que o relatório cita. Os planos
