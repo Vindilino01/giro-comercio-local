@@ -774,12 +774,13 @@ dialog#dlg-copia form { text-align: right; }
   min-width: 0;
   cursor: pointer;
   /* Preenche a altura da linha: clicar em qualquer ponto do nome marca.
-     43px em vez de 44 porque o li ja tem 1px de borda: a soma fecha os
-     44px de alvo sem estourar a altura da linha. */
+     44px exatos no label, e o li leva box-sizing: border-box com a borda
+     de 1px dentro da conta. Antes eram 43px porque a borda do li ficava
+     FORA do min-height, e o alvo media 43 - 1px abaixo do piso. */
   align-self: stretch;
   display: flex;
   align-items: center;
-  min-height: 43px;
+  min-height: 44px;
 }
 .lista__item--feito .lista__nome {
   text-decoration: line-through;
