@@ -2839,6 +2839,22 @@ function renderLista(linhas) {
     rotulo.className = "lista__rotulo";
     rotulo.htmlFor = box.id;
 
+    /* Nome acessivel completo.
+
+       O label envolve so o nome do produto, entao o leitor de tela
+       anunciava "Frango Inteiro, caixa de selecao, nao marcada". Faltava
+       o essencial: quanto comprar, em que unidade e de qual loja. Pior:
+       "Frango Inteiro" aparece uma vez por loja, e as tres soavam
+       identicas.
+
+       O aria-label repete a informacao visivel, na ordem em que o dono
+       leria: produto, quantidade com unidade, loja. Nao substitui o
+       texto na tela - so o que o leitor de tela fala. */
+    box.setAttribute("aria-label",
+      `${l.nome} — ${fmtInt(l.qtd)} ${l.unidade || "UN"}` +
+      `${agrupar ? ` — ${lojaNome(l.loja_id)}` : ""}` +
+      `${l.bloqueada ? " — contagem de estoque não confiável" : ""}`);
+
     const nome = document.createElement("span");
     nome.className = "lista__nome";
     nome.textContent = l.nome;
