@@ -79,6 +79,75 @@ de fornecedores já tinha o padrão correto.
 43 KB em base64. Medido: os únicos três elementos em itálico são `<i>`
 vazios de legenda, e herdam Archivo. O painel caiu de 1.022 para 988 KB.
 
+## Os achados da revisão de design (Assessment A)
+
+A revisão independente de design não viu a avaliação técnica. Ela
+encontrou **dois P0** que a medição automática não pegaria, porque não
+são quebra de layout nem de contraste. São o produto mentindo sobre si.
+
+### P0 — A loja bloqueada dizia "nada a comprar"
+
+Com a única loja do escopo abaixo de 85% no selo, a tela exibia:
+
+> "Nada a comprar agora em Mercado Bom Preco: o estoque cobre os
+> próximos dias em todos os produtos."
+
+A verdade era o oposto: o sistema parou de sugerir **porque não confia
+na contagem**. E o aviso correto estava a 3.175 px do topo, fora da tela.
+
+Este é o defeito mais caro do projeto. Ele inverte a tese no único
+momento em que a tese importa. A correção separa as duas causas do estado
+vazio. Dado rejeitado nomeia a loja, a nota e a ação: "Corrija o
+inventário". Estoque saudável mantém a frase calma. A escala desaparece
+quando o pedido não existe.
+
+### P0 — O filtro de loja mentia depois do reload
+
+`restaurarEstado()` definia a loja, e `renderLojas()` reescrevia o
+`select` para "Todas as lojas". Medido: o controle dizia "Todas as
+lojas" enquanto a lede e o poster mostravam R$ 95.514,64 de **uma** loja.
+
+O controle que define o escopo de R$ 95 mil exibia o escopo errado.
+
+### P1 — A legenda da assinatura sumia no aparelho do persona
+
+A única frase que explica "largura é valor" era escondida pela media
+query de altura em 1366×657. O elemento mais original do projeto ficava
+sem legenda exatamente onde é lido.
+
+Resolvido junto com outro P1. A lede repetia o total do poster em corpo
+de texto: o mesmo R$ 259.577,64, 20 px acima do número em 41 px.
+Removida a duplicação, a legenda voltou **e** sobrou espaço. A primeira
+linha do pedido saiu de y=617 para y=590, inteira em 657 px.
+
+### P1 — O controle que remapeia o painel não mostrava efeito
+
+"Ajustes do cenário" fica a ~3.200 px do total que ele muda. Quem
+escolhia "99 de 100" via o rádio mudar e mais nada — parecia controle
+morto. Agora a consequência aparece ao lado da escolha, com o total novo
+e o delta contra o padrão.
+
+### P1 — Nome acessível incompleto
+
+O leitor de tela anunciava "Frango Inteiro, caixa de seleção". Sem
+quantidade, sem unidade, sem loja. E o mesmo produto aparece uma vez por
+loja, então as três soavam idênticas. Agora: "Frango Inteiro — 273 KG —
+Mercadinho da Familia".
+
+## O que continua em aberto na revisão de design
+
+- **Impressão em 8 páginas**, das quais 3 são material de banca, não
+  lista de separação. O botão diz "Imprimir" dentro do cabeçalho do
+  pedido, então promete lista e entrega relatório. As páginas 2–4 não
+  têm cabeçalho corrente com fornecedor, loja, data e número.
+- **Ordem da lista no papel** é por urgência, não por seção. Quem separa
+  mercadoria anda a loja inteira para trás e para frente.
+- **"Limpar seleção"** apaga 137 marcações com um clique, sem desfazer.
+- **O mesmo produto em três fornecedores** com três preços, sem dizer se
+  é o mesmo item físico.
+- **Gráfico de cobertura** com trilhos a 1,48:1 — os meses anteriores
+  quase não aparecem.
+
 ## Hipóteses que a medição derrubou
 
 Registrar o que **não** era problema importa mais que listar acertos: é
