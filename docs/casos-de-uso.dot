@@ -1,0 +1,112 @@
+digraph CasosDeUso {
+  graph [rankdir=LR, fontname="Segoe UI", fontsize=10,
+         bgcolor="white", pad=0.5, nodesep=0.42, ranksep=1.5];
+  node  [fontname="Segoe UI", fontsize=9];
+  edge  [color="#a9a79c", penwidth=0.9, arrowsize=0.6];
+
+  // ================= ATORES =================
+  subgraph cluster_atores {
+    label=""; style="invis";
+    "nelson" [shape=plaintext, group=ator, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD><FONT POINT-SIZE="28">&#128100;</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9"><B>Nelson</B></FONT></TD></TR><TR><TD><FONT POINT-SIZE="7" COLOR="#6a756e">dono do mercado</FONT></TD></TR></TABLE>>];
+    "fornecedor" [shape=plaintext, group=ator, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD><FONT POINT-SIZE="28">&#128100;</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9"><B>Fornecedor</B></FONT></TD></TR><TR><TD><FONT POINT-SIZE="7" COLOR="#6a756e">recebe o pedido</FONT></TD></TR></TABLE>>];
+    "banca" [shape=plaintext, group=ator, label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="1"><TR><TD><FONT POINT-SIZE="28">&#128100;</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9"><B>Banca</B></FONT></TD></TR><TR><TD><FONT POINT-SIZE="7" COLOR="#6a756e">avalia o projeto</FONT></TD></TR></TABLE>>];
+  }
+
+  // ================= SISTEMA =================
+  subgraph cluster_sistema {
+    label="Giro — painel de decisão de compra";
+    fontsize=12; fontname="Segoe UI Semibold";
+    color="#0b4f3c"; fontcolor="#0b4f3c";
+    style="rounded,dashed"; penwidth=1.4; margin=20;
+    "UC01" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC01\nVer o pedido da semana", margin="0.12,0.06", width=2.2];
+    "UC02" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC02\nEscolher o fornecedor", margin="0.12,0.06", width=2.2];
+    "UC03" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC03\nMudar a disponibilidade desejada", margin="0.12,0.06", width=2.2];
+    "UC04" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC04\nFiltrar por loja", margin="0.12,0.06", width=2.2];
+    "UC05" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC05\nSeparar a mercadoria", margin="0.12,0.06", width=2.2];
+    "UC06" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC06\nImprimir a folha de separação", margin="0.12,0.06", width=2.2];
+    "UC07" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC07\nConferir a conta", margin="0.12,0.06", width=2.2];
+    "UC08" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC08\nSaber se o dado é confiável", margin="0.12,0.06", width=2.2];
+    "UC09" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC09\nCopiar o pedido", margin="0.12,0.06", width=2.2];
+    "UC10" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC10\nReceber o pedido", margin="0.12,0.06", width=2.2];
+    "UC11" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC11\nVer quanto a falta custou", margin="0.12,0.06", width=2.2];
+    "UC12" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC12\nVer onde o dinheiro está parado", margin="0.12,0.06", width=2.2];
+    "UC13" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC13\nConferir a rastreabilidade", margin="0.12,0.06", width=2.2];
+    "UC14" [shape=ellipse, style="filled", group=caso, fillcolor="#e2e9e5", color="#0b4f3c", penwidth=1.1, label="UC14\nVer o modelo de dados", margin="0.12,0.06", width=2.2];
+  }
+
+  // ================= ONDE NO PAINEL =================
+  "cUC01" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="pôster do total + faixa de fornecedores", margin="0.08,0.04"];
+  "UC01" -> "cUC01" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC02" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="segmento da faixa · largura = valor", margin="0.08,0.04"];
+  "UC02" -> "cUC02" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC03" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="Ajustes do cenário · 90 / 95 / 99", margin="0.08,0.04"];
+  "UC03" -> "cUC03" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC04" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="seletor de loja no masthead", margin="0.08,0.04"];
+  "UC04" -> "cUC04" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC05" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="caixas da lista · progresso salvo", margin="0.08,0.04"];
+  "UC05" -> "cUC05" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC06" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="botão Imprimir · 4 páginas, 1 por loja", margin="0.08,0.04"];
+  "UC06" -> "cUC06" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC07" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="aba «Conferir a conta» · 10 colunas", margin="0.08,0.04"];
+  "UC07" -> "cUC07" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC08" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="selo por loja · pior dimensão", margin="0.08,0.04"];
+  "UC08" -> "cUC08" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC09" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="Copiar deste fornecedor / completo", margin="0.08,0.04"];
+  "UC09" -> "cUC09" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC10" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="texto copiado (WhatsApp) ou folha", margin="0.08,0.04"];
+  "UC10" -> "cUC10" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC11" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="seção «Quanto a prateleira vazia custou»", margin="0.08,0.04"];
+  "UC11" -> "cUC11" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC12" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="seção do capital · cobertura por produto", margin="0.08,0.04"];
+  "UC12" -> "cUC12" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC13" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="notas de método + rodapé com o gerador", margin="0.08,0.04"];
+  "UC13" -> "cUC13" [style="dotted", arrowhead="none", color="#dcd9ce"];
+  "cUC14" [shape=note, style="filled", group=onde, fillcolor="#fbfaf5", color="#dcd9ce", fontsize=7, fontcolor="#5e6961", label="dicionário do catálogo + MER", margin="0.08,0.04"];
+  "UC14" -> "cUC14" [style="dotted", arrowhead="none", color="#dcd9ce"];
+
+  // ================= ALINHAMENTO =================
+  { rank=same; "cUC01"; }
+  { rank=same; "cUC02"; }
+  { rank=same; "cUC03"; }
+  { rank=same; "cUC04"; }
+  { rank=same; "cUC05"; }
+  { rank=same; "cUC06"; }
+  { rank=same; "cUC07"; }
+  { rank=same; "cUC08"; }
+  { rank=same; "cUC09"; }
+  { rank=same; "cUC10"; }
+  { rank=same; "cUC11"; }
+  { rank=same; "cUC12"; }
+  { rank=same; "cUC13"; }
+  { rank=same; "cUC14"; }
+
+  // ================= ASSOCIACOES =================
+  "nelson" -> "UC01" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC02" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC03" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC04" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC05" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC06" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC07" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC08" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC09" [dir="none", color="#c9c7be", penwidth=0.8];
+  "fornecedor" -> "UC10" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC11" [dir="none", color="#c9c7be", penwidth=0.8];
+  "nelson" -> "UC12" [dir="none", color="#c9c7be", penwidth=0.8];
+  "banca" -> "UC13" [dir="none", color="#c9c7be", penwidth=0.8];
+  "banca" -> "UC14" [dir="none", color="#c9c7be", penwidth=0.8];
+
+  // ================= «include» / «extend» =================
+  "UC02" -> "UC01" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC03" -> "UC01" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC04" -> "UC01" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC08" -> "UC01" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC11" -> "UC01" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC12" -> "UC01" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC13" -> "UC01" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC14" -> "UC01" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC06" -> "UC05" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC07" -> "UC05" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC09" -> "UC02" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «extend»", fontsize=6, fontcolor="#909a93", constraint=false];
+  "UC10" -> "UC09" [style="dashed", arrowhead="open", color="#b9b7ae", label=" «include»", fontsize=6, fontcolor="#909a93", constraint=false];
+}

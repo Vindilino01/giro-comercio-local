@@ -910,6 +910,144 @@ def montar_apendice(doc) -> None:
     )
 
 
+def montar_diagramas(doc) -> None:
+    """Apendice B: MER e casos de uso, em pagina deitada.
+
+    Os desenhos existem em docs/ como SVG (nativo, da zoom sem perder
+    nitidez) e PNG (para colar em slide). Aqui entra o PNG, porque
+    python-docx nao embute SVG.
+
+    POR QUE A SECAO MUDA PARA PAISAGEM
+    -----------------------------------
+    Medido: os PNGs tem 36, 36, 82 e 28 cm de altura. Uma folha A4 em pe
+    tem 25,7 cm uteis. Reduzir para caber deixaria o texto das colunas em
+    ~4pt - ilegivel, e o diagrama existe justamente para ser lido.
+    Na horizontal, A4 tem 27,7 x 19,0 cm uteis; o desenho entra na
+    largura e a leitura continua possivel.
+
+    A secao volta para retrato no fim, senao as Referencias herdariam a
+    orientacao.
+
+    Sao gerados do catalogo por src/gerar_mer.py e
+    src/gerar_casos_uso.py - nao desenhados a mao. Se uma migration
+    mudar, o desenho muda na proxima execucao.
+    """
+    figuras = [
+        ("mer-ouro.png",
+         "Figura B.1 — Star schema da camada ouro",
+         "Três tabelas de fato (vendas, estoque diário, compras), cinco "
+         "dimensões e as cinco views materializadas que alimentam o "
+         "painel. As setas são as chaves estrangeiras reais."),
+        ("casos-de-uso.png",
+         "Figura B.2 — Casos de uso",
+         "Três atores: o dono (Nelson), o fornecedor que recebe o pedido "
+         "e a banca que confere a rastreabilidade. A coluna da direita "
+         "nomeia o controle do painel que executa cada caso — caso de uso "
+         "sem controle correspondente não entra no desenho."),
+        ("mer.png",
+         "Figura B.3 — As três camadas lado a lado",
+         "Prata (verde, 3FN, fonte de verdade), gov (cinza) e ouro (âmbar, "
+         "star schema derivado). Esta visão é muito larga para o papel: "
+         "use `docs/mer.svg`, que abre no navegador e permite zoom."),
+    ]
+
+    inseridas = [(RAIZ / "docs" / arq, tit, nota)
+                 for arq, tit, nota in figuras
+                 if (RAIZ / "docs" / arq).exists()]
+
+    # A prata com todas as colunas NAO entra como figura: 15 tabelas x ~14
+    # colunas dao um desenho 1:2, que numa folha A4 deitada sobra 7 cm de
+    # largura e poe o texto em 3 pt. Ela fica no SVG, onde se da zoom sem
+    # perder nitidez.
+    nota_prata = (
+        "A camada prata completa, com a tipagem de cada coluna, está em "
+        "`docs/mer-prata.svg`. Ela não entra nesta página porque 15 tabelas "
+        "com todas as colunas formam um desenho vertical: reduzido para "
+        "caber numa folha, o texto ficaria em 3 pt. O SVG mantém a nitidez "
+        "em qualquer zoom e é o arquivo que se abre na apresentação.")
+
+    if not inseridas:
+        return
+
+    # ---- secao em paisagem: A4 deitado ----
+    deitada = doc.add_section(WD_SECTION.NEW_PAGE)
+    from docx.enum.section import WD_ORIENT
+    deitada.orientation = WD_ORIENT.LANDSCAPE
+    deitada.page_width = Mm(297)
+    deitada.page_height = Mm(210)
+    deitada.left_margin = Cm(1.5)
+    deitada.right_margin = Cm(1.5)
+    deitada.top_margin = Cm(1.4)
+    deitada.bottom_margin = Cm(1.2)
+
+    LARGURA_PAISAGEM = Cm(26.0)   # 297 - 15 - 15 mm, com folga
+    # Altura util real: 210 - 14 (topo) - 12 (base) = 184 mm = 18.4 cm.
+    # Desse espaco saem o titulo (~1.2 cm), a nota (~1.0 cm), a legenda
+    # (~0.6 cm) e os respiros. Sobram ~13.5 cm para o desenho - medido,
+    # nao estimado: com 17.6 cm o Word empurrava a figura para a pagina
+    # seguinte e a folha saia em branco.
+    ALTURA_PAISAGEM = Cm(13.2)
+
+    cab = doc.add_heading("Apêndice B — Diagramas do modelo", level=1)
+    cab.paragraph_format.page_break_before = False
+    cab.paragraph_format.space_before = Pt(0)
+    cab.paragraph_format.space_after = Pt(2)
+    p = doc.add_paragraph()
+    escrever_inline(
+        p,
+        "Gerados do catálogo do PostgreSQL, não desenhados à mão. A prata "
+        "completa fica em `docs/mer-prata.svg` — vertical demais para o "
+        "papel, legível com zoom na tela.")
+    p.paragraph_format.space_after = Pt(3)
+
+    for i, (caminho, titulo, nota) in enumerate(inseridas):
+        if i > 0:
+            doc.add_page_break()
+
+        from PIL import Image
+        with Image.open(caminho) as im:
+            px_w, px_h = im.size
+        razao = px_h / px_w
+
+        # Cabecalho do desenho: na primeira figura vai o titulo da secao e
+        # a nota geral; nas demais, so o titulo e a nota.
+        h = doc.add_heading(titulo, level=2)
+        h.paragraph_format.space_before = Pt(0)
+        h.paragraph_format.space_after = Pt(1)
+        p = doc.add_paragraph()
+        escrever_inline(p, nota)
+        p.paragraph_format.space_after = Pt(2)
+
+        # O desenho precisa de toda a altura restante. Medido: numa folha
+        # A4 deitada sobram ~14,2 cm depois do titulo da secao, do titulo
+        # da figura, da nota de duas linhas e da legenda. Com 15,0 cm a
+        # primeira figura era empurrada para a pagina seguinte e a folha
+        # saia com titulo e sem desenho.
+        ALTURA_MAX = Cm(14.0)
+        largura = ALTURA_MAX / razao
+        if largura > LARGURA_PAISAGEM:
+            largura = LARGURA_PAISAGEM
+        doc.add_picture(str(caminho), width=largura)
+
+        legenda = doc.add_paragraph()
+        legenda.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        legenda.paragraph_format.space_before = Pt(1)
+        gerador = "gerar_mer.py" if "mer" in caminho.name else "gerar_casos_uso.py"
+        r = legenda.add_run(f"Gerado por src/{gerador}")
+        r.font.size = Pt(7.5)
+        r.font.color.rgb = CINZA
+
+    # ---- volta para retrato ----
+    retrato = doc.add_section(WD_SECTION.NEW_PAGE)
+    retrato.orientation = WD_ORIENT.PORTRAIT
+    retrato.page_width = Mm(210)
+    retrato.page_height = Mm(297)
+    retrato.left_margin = Cm(2)
+    retrato.right_margin = Cm(2)
+    retrato.top_margin = Cm(2)
+    retrato.bottom_margin = Cm(1.8)
+
+
 def montar_anexo_autorizacao(doc) -> str | None:
     """Pagina final com a autorizacao da professora, se o arquivo existir.
 
@@ -1054,6 +1192,7 @@ def gerar(saida: Path) -> Path:
 
     montar_declaracao(doc)
     montar_apendice(doc)
+    montar_diagramas(doc)
     montar_referencias(doc)
     montar_anexo_autorizacao(doc)
 
