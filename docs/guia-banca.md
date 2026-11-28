@@ -106,7 +106,7 @@ Esta é a demonstração que fecha a arguição. Rode:
 
 ```sql
 -- O total do pedido que o painel mostra no topo
-select to_char(sum(valor_compra_sugerido), 'L999G999G990D00') as total
+select round(sum(valor_compra_sugerido)::numeric, 2) as total_do_pedido
   from ouro.mv_sugestao_compra;
 
 -- A taxa de ruptura
@@ -115,7 +115,13 @@ select round(100.0 * count(*) filter (where houve_ruptura)
   from ouro.mv_demanda_diaria;
 ```
 
-Compare com o que está na tela. **É o mesmo número**, e ele saiu daqui.
+Resposta esperada na primeira: **259577.64**. É o mesmo número do
+painel (R$ 259.577,64), só sem a formatação brasileira.
+
+> **Por que não `to_char` com `'L999G999G990D00'`.** Testei: devolve
+> `259,577.64` — formato americano, porque a formatação segue o locale do
+> Windows, não o do banco. Na frente da banca, o número sem vírgula de
+> milhar é mais seguro que um formato meio brasileiro, meio americano.
 
 ---
 
